@@ -189,7 +189,7 @@ const Home = () => {
             {blogs.map((blog) => (
               <div key={blog.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition flex flex-col">
                 <div className="relative h-52">
-                  <img src="" alt={blog.title} className="w-full h-full object-cover" />
+                  <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800">
                     {blog.date}
                   </div>
@@ -251,7 +251,7 @@ const Home = () => {
               >
                 {/* Replace src with elv8.works actual logo URL */}
                 <img 
-                  src="https://via.placeholder.com/24" 
+                 src={process.env.PUBLIC_URL + "/logo.png"}  
                   alt="elv8.works" 
                   className="h-5 w-5 rounded object-cover"
                 />

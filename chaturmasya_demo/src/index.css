@@ -9,5 +9,28 @@ body {
 }
 
 html {
+  /* Keep your smooth scrolling */
   scroll-behavior: smooth;
+  
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+  
+  /* Hide scrollbar for IE and Edge */
+  -ms-overflow-style: none;
+}
+
+/* Hide scrollbar for Chrome, Safari, and newer Edge */
+html::-webkit-scrollbar {
+  display: none;
+}
+
+/* Optional: If you want to use this as a Tailwind class on specific divs instead of globally */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
