@@ -9,6 +9,9 @@ import Blogs from "../admin/Blogs";
 import Schedule from "../admin/Schedule";
 import VirtualBookings from "../admin/VirtualBookings";
 import AdminVirtualPuja from "../admin/AdminVirtualPuja";
+import Accounts from "../admin/Accounts";
+import Mantrakshata from "../admin/Mantrakshata";
+
 
 const AppRoutes = () => {
   return (
@@ -21,6 +24,8 @@ const AppRoutes = () => {
         <Route path="/admin/blogs" element={<Blogs/>}/>
         <Route path="/admin/schedule" element={<Schedule/>}/>
         <Route path="/admin/book-seva" element={<AdminVirtualPuja/>}/>
+        <Route path="/admin/accounts" element={<Accounts/>}/>
+        <Route path="/admin/mantrakshata" element={<Mantrakshata/>}/>
         <Route path="/book-seva" element={<BookSeva />} />
         <Route path="/virtual-pada-puja" element={<VirtualPadaPuja />} />
       </Routes>
