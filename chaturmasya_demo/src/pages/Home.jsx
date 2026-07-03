@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Menu
 } from "lucide-react";
+import InvitationSection from "./InvitationSection";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -345,7 +346,7 @@ const Home = () => {
           >
             <motion.div variants={fadeUp} className="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm border border-[#E8DCC4] px-4 py-2 rounded-full shadow-sm">
               <span className="w-2 h-2 rounded-full bg-[#E86A33] animate-pulse"></span>
-              <span className="text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">Day 14 of Chaturmasya</span>
+              <span className="text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">Chaturmasya starts from 29th July</span>
             </motion.div>
             
             <motion.h2 variants={fadeUp} className="text-5xl lg:text-7xl font-bold text-[#2a0b06] font-serif leading-[1.05] tracking-tight">
@@ -460,6 +461,7 @@ const Home = () => {
           ))}
         </div>
       </section>
+      <InvitationSection />
 
       <main className="max-w-7xl mx-auto px-6 space-y-40 mb-32">
 

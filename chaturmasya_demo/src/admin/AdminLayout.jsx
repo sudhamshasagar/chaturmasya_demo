@@ -1,4 +1,12 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebase";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -26,19 +34,41 @@ const Dashboard = () => {
     { name: "Ledger", path: "/admin/accounts" }
   ];
 
+  const [bookings, setBookings] = useState([]);
+
+useEffect(() => {
+  const q = query(
+    collection(db, "bookings"),
+    orderBy("createdAt", "desc")
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    setBookings(data);
+  });
+
+  return unsubscribe;
+}, []);
+
   // --- Dashboard Data ---
   const stats = {
-    physicalToday: 18,
+    // physicalToday: 18,
     virtualToday: 12,
     mantraPending: 8,
     visitorsToday: 1432,
   };
 
-  const recentBookings = [
-    { id: "KM26-0081", name: "Ramesh Sharma", type: "Physical", time: "09:00 AM", status: "Confirmed" },
-    { id: "VP26-0042", name: "Suresh Kumar", type: "Virtual", time: "10:30 AM", status: "Confirmed" },
-    { id: "KM26-0082", name: "Mahesh Bhat", type: "Physical", time: "11:00 AM", status: "Confirmed" },
-  ];
+  const today = new Date().toDateString();
+
+const physicalToday = bookings.filter(
+  b => b.date?.toDate().toDateString() === today
+).length;
+
+  const recentBookings = bookings.slice(0, 5);
 
   const [mantraRequests, setMantraRequests] = useState([
     { id: "REQ-849201", name: "Kiran Rao", purpose: "Health & Prosperity", city: "Bengaluru", status: "Pending", tracking: "", date: "05-Jun-2026" },
@@ -53,6 +83,11 @@ const Dashboard = () => {
     { time: "07:00 PM", title: "Bhajane & Sandhya Vandana", status: "upcoming" },
   ];
 
+  let date =   new Date().toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
   // --- Handlers ---
   const openUpdateModal = (req) => {
     setSelectedRequest({ ...req });
@@ -77,7 +112,7 @@ const Dashboard = () => {
             
             <div className="hidden md:block flex-1">
               <p className="text-xs font-bold text-stone-500 uppercase tracking-widest">
-                June 5, 2026 {/* Updated to reflect current context */}
+                {date}
               </p>
               <p className="text-xs text-stone-400 font-serif italic mt-0.5">
                 Sagara, Karnataka
@@ -158,7 +193,7 @@ const Dashboard = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10"><span className="text-6xl">🪔</span></div>
             <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Physical Sevas</h3>
-            <div className="flex items-end gap-3 mt-2"><span className="text-4xl font-black text-stone-900">{stats.physicalToday}</span><span className="text-sm font-bold text-orange-600 mb-1">Today</span></div>
+            <div className="flex items-end gap-3 mt-2"><span className="text-4xl font-black text-stone-900">{physicalToday}</span><span className="text-sm font-bold text-orange-600 mb-1">Today</span></div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 relative overflow-hidden group">
@@ -256,11 +291,11 @@ const Dashboard = () => {
                   <tbody className="divide-y divide-stone-50 text-sm">
                     {recentBookings.map((booking) => (
                       <tr key={booking.id} className="hover:bg-stone-50 transition-colors">
-                        <td className="p-4 pl-6 font-bold text-stone-900">{booking.id}</td>
+                        <td className="p-4 pl-6 font-bold text-stone-900">{booking.bookingId}</td>
                         <td className="p-4 font-medium text-stone-700">{booking.name}</td>
                         <td className="p-4">
                           <span className={`inline-flex px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${booking.type === 'Physical' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {booking.type}
+                            {booking.seva}
                           </span>
                         </td>
                         <td className="p-4 font-medium text-stone-500">{booking.time}</td>

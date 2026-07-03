@@ -1,41 +1,63 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebase";
 
 const Bookings = () => {
   const [search, setSearch] = useState("");
 
-  const bookings = [
-    {
-      bookingId: "KM26-0001",
-      name: "Ramesh Sharma",
-      mobile: "9876543210",
-      seva: "Pada Puja",
-      date: "15-Jul-2026",
-      time: "09:00 AM",
-      participants: "2",
-      status: "Confirmed",
+ const [bookings, setBookings] = useState([]);
+ const [loading, setLoading] = useState(true);
+
+ useEffect(() => {
+  const q = query(
+    collection(db, "bookings"),
+    orderBy("createdAt", "desc")
+  );
+
+  const unsubscribe = onSnapshot(
+    q,
+    (snapshot) => {
+      const data = snapshot.docs.map((doc) => {
+        const booking = doc.data();
+
+        return {
+          id: doc.id,
+          ...booking,
+          date: booking.date?.toDate().toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          status: "Confirmed",
+        };
+      });
+
+      setBookings(data);
+      setLoading(false);
     },
-    {
-      bookingId: "KM26-0002",
-      name: "Suresh Kumar",
-      mobile: "9999999999",
-      seva: "Pada Puja",
-      date: "16-Jul-2026",
-      time: "10:00 AM",
-      participants: "1",
-      status: "Confirmed",
-    },
-    {
-      bookingId: "KM26-0003",
-      name: "Mahesh Bhat",
-      mobile: "8888888888",
-      seva: "Pada Puja",
-      date: "17-Jul-2026",
-      time: "11:00 AM",
-      participants: "4",
-      status: "Confirmed",
-    },
-  ];
+    (error) => {
+      console.error("Error fetching bookings:", error);
+      setLoading(false);
+    }
+  );
+
+  return () => unsubscribe();
+}, []);
+
+if (loading) {
+  return (
+    <div className="flex justify-center items-center h-64">
+      <p className="text-gray-600">Loading bookings...</p>
+    </div>
+  );
+}
 
   const filteredBookings = bookings.filter(
     (booking) =>

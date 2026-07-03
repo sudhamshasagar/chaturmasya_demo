@@ -1,16 +1,61 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { QRCodeCanvas } from "qrcode.react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  Timestamp,
+  doc,
+  runTransaction,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
+// --- CONSTANTS & HELPERS ---
+const START_DATE = new Date(2026, 6, 29); // July 29, 2026 (0-indexed month)
+const END_DATE = new Date(2026, 8, 26);   // September 26, 2026
+
+
+// const snapshot = await getDocs(collection(db, "bookings"));
+
+// const nextNumber = snapshot.size + 1;
+
+// const bookingId = `KM26-${String(nextNumber).padStart(3, "0")}`;
+
+// Dynamic valid slots strictly between 5:30 PM and 7:45 PM
+const generateTimeSlots = (duration) => {
+  switch (duration) {
+    case "30 mins":
+      return ["05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:15 PM"];
+    case "45 mins":
+      return ["05:30 PM", "06:15 PM", "07:00 PM"];
+    case "1 hr":
+      return ["05:30 PM", "06:30 PM"];
+    default:
+      return [];
+  }
+};
+
+// Zero out time for accurate Firestore equality checks
+const normalizeDate = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+// --- MAIN COMPONENT ---
 const BookSeva = () => {
-  const navigate = useNavigate();
-  
+  // State Machine: 'MOBILE' | 'EXISTING' | 'FORM' | 'RECEIPT'
+  const [currentStep, setCurrentStep] = useState("MOBILE");
   const [mobile, setMobile] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [showExisting, setShowExisting] = useState(false);
+  const [existingBookings, setExistingBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [bookingData, setBookingData] = useState({
     bookingId: "",
@@ -18,327 +63,520 @@ const BookSeva = () => {
     address: "",
     date: null,
     time: "",
-    seva: "Pada Puja",
+    duration: "30 mins",
+    seva: "Physical Pada Pooja",
     participants: "1",
   });
 
-  const [existingBookings] = useState([
-    {
-      bookingId: "KM26-0001",
-      seva: "Pada Puja",
-      date: "15-Jul-2026",
-      time: "09:00 AM",
-      participants: "2",
-    },
-  ]);
+  const availableSlots = useMemo(
+    () => generateTimeSlots(bookingData.duration),
+    [bookingData.duration]
+  );
 
-  const checkMobile = () => {
-    // Basic mock check
-    if (!mobile) return;
-
-    if (mobile === "9999999999") {
-      setShowExisting(true);
-      setShowForm(false);
-      setShowReceipt(false);
-    } else {
-      setShowForm(true);
-      setShowExisting(false);
-      setShowReceipt(false);
-    }
-  };
-
-  const generateBookingId = () => {
-    return `KM26-${Math.floor(1000 + Math.random() * 9000)}`;
-  };
-
-  const handleBooking = () => {
-    const bookingId = generateBookingId();
-    setBookingData({
-      ...bookingData,
-      bookingId,
-    });
-    setShowForm(false);
-    setShowReceipt(true);
-  };
-
+  // --- HANDLERS ---
   const resetFlow = () => {
     setMobile("");
-    setShowForm(false);
-    setShowReceipt(false);
-    setShowExisting(false);
+    setExistingBookings([]);
+    setError("");
+    setCurrentStep("MOBILE");
     setBookingData({
       bookingId: "",
       name: "",
       address: "",
       date: null,
       time: "",
-      seva: "Pada Puja",
+      duration: "30 mins",
+      seva: "Physical Pada Pooja",
       participants: "1",
     });
   };
 
+  const checkMobile = async () => {
+    if (!mobile || mobile.length < 10) return;
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const q = query(collection(db, "bookings"), where("mobile", "==", mobile));
+      const snapshot = await getDocs(q);
+      const today = normalizeDate(new Date());
+
+      const upcoming = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((data) => {
+          if (!data.date) return false;
+          const bookingDate = data.date.toDate ? data.date.toDate() : new Date(data.date);
+          return normalizeDate(bookingDate) >= today;
+        })
+        .sort((a, b) => (a.date?.toDate() > b.date?.toDate() ? 1 : -1));
+
+      if (upcoming.length > 0) {
+        setExistingBookings(upcoming);
+        setCurrentStep("EXISTING");
+      } else {
+        setCurrentStep("FORM");
+      }
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+      alert("Failed to access sacred records. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDurationChange = (e) => {
+    setBookingData({ ...bookingData, duration: e.target.value, time: "" });
+  };
+
+  const handleBookingSubmit = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const normalizedBookingDate = normalizeDate(bookingData.date);
+
+      // Check Firestore for duplicate slots on the same date and time
+      const slotQuery = query(
+        collection(db, "bookings"),
+        where("date", "==", Timestamp.fromDate(normalizedBookingDate)),
+        where("time", "==", bookingData.time)
+      );
+
+      const existingSlot = await getDocs(slotQuery);
+
+      if (!existingSlot.empty) {
+        setError("This sacred slot has already been reserved. Please select another time or date.");
+        setIsLoading(false);
+        return;
+      }
+
+      const counterRef = doc(db, "counters", "bookingCounter");
+
+      const bookingId = await runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+
+        if (!counterDoc.exists()) {
+          throw new Error("Booking counter does not exist.");
+        }
+
+        const currentNumber = counterDoc.data().lastNumber || 0;
+        const nextNumber = currentNumber + 1;
+
+        transaction.update(counterRef, {
+          lastNumber: nextNumber,
+        });
+
+        return `KM26-${String(nextNumber).padStart(3, "0")}`;
+      });
+      const newBooking = {
+        ...bookingData,
+        bookingId,
+        mobile,
+        date: Timestamp.fromDate(normalizedBookingDate),
+        createdAt: Timestamp.now(),
+      };
+
+      await addDoc(collection(db, "bookings"), newBooking);
+      setBookingData(newBooking);
+      setCurrentStep("RECEIPT");
+    } catch (err) {
+      console.error("Booking Error:", err);
+      setError("An error occurred while securing your offering. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const formattedReceiptDate = bookingData.date?.toDate
+    ? bookingData.date.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    : bookingData.date
+    ? new Date(bookingData.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    : "";
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans flex flex-col items-center">
+    <div className="min-h-screen bg-[#FFFDF8] font-sans flex flex-col items-center py-8 px-4 text-[#333333]">
       
-      {/* Top Navigation Back Button */}
-      <div className="w-full max-w-2xl mb-6">
-        <Link 
-          to="/" 
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-orange-600 font-medium transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100"
+      {/* Top Navigation & Header */}
+      <div className="w-full max-w-3xl mb-8 flex flex-col items-center print:hidden">
+        <div className="w-full flex justify-start mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-[#555555] hover:text-orange-600 font-medium transition-colors bg-white px-5 py-2.5 rounded-full shadow-sm border border-[#E8E2D2]"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Ashram
+          </Link>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          Back to Home
-        </Link>
+          <div className="flex justify-center mb-3">
+            <span className="text-4xl">🪔</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold text-[#333333] tracking-tight mb-2">
+            Physical Pada Pooja
+          </h1>
+          <p className="text-[#800000] font-medium text-lg opacity-90">
+            Reserve your sacred offering
+          </p>
+          <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto mt-4 rounded-full"></div>
+        </motion.div>
       </div>
 
-      {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight flex items-center justify-center gap-3">
-          <span className="text-orange-600">🪔</span> Book Seva
-        </h1>
-        <p className="text-gray-600 mt-3 text-lg">Reserve your sacred offering online</p>
-      </div>
-
-      <div className="w-full max-w-2xl">
-        
-        {/* Step 1: Mobile Check */}
-        {!showForm && !showReceipt && !showExisting && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 md:p-10 text-center max-w-md mx-auto transform transition-all">
-            <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Devotee</h2>
-            <p className="text-gray-500 mb-8 text-sm">Enter your mobile number to view existing bookings or create a new one.</p>
-            
-            <input
-              type="tel"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-              maxLength="10"
-              className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 p-4 rounded-xl text-center text-lg font-medium transition duration-200 outline-none mb-4"
-              placeholder="10-digit Mobile Number"
-            />
-            
-            <button
-              onClick={checkMobile}
-              disabled={mobile.length < 10}
-              className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300 text-white font-bold py-4 rounded-xl transition-all duration-300"
+      {/* Dynamic Step Content Area */}
+      <div className="w-full max-w-3xl relative">
+        <AnimatePresence mode="wait">
+          
+          {/* STEP 1: MOBILE ENTRY */}
+          {currentStep === "MOBILE" && (
+            <motion.div
+              key="mobile"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E8E2D2] p-8 md:p-12 text-center max-w-md mx-auto"
             >
-              Continue
-            </button>
-          </div>
-        )}
+              <h2 className="text-2xl font-bold text-[#333333] mb-2">Welcome Devotee</h2>
+              <p className="text-[#666666] mb-8 text-sm">
+                Enter your mobile number to view your sacred schedule or arrange a new offering.
+              </p>
 
-        {/* Step 2: Existing Bookings */}
-        {showExisting && !showReceipt && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10 animate-fade-in">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Your Bookings</h2>
-              <button onClick={resetFlow} className="text-sm text-gray-500 hover:text-orange-600 font-medium">Change Number</button>
-            </div>
+              <input
+                type="tel"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+                maxLength="10"
+                className="w-full border-2 border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-4 rounded-xl text-center text-xl font-medium transition-all duration-300 outline-none mb-6"
+                placeholder="10-digit Mobile Number"
+              />
 
-            <div className="space-y-4 mb-8">
-              {existingBookings.map((booking) => (
-                <div key={booking.bookingId} className="border border-gray-200 rounded-2xl p-5 hover:border-orange-300 transition-colors bg-gray-50">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <span className="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Confirmed</span>
-                      <h3 className="text-xl font-bold text-gray-900 mt-2">{booking.seva}</h3>
-                    </div>
-                    <span className="text-sm font-medium text-gray-500 border border-gray-300 px-2 py-1 rounded bg-white">{booking.bookingId}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4 mt-4">
-                    <div><span className="block text-xs text-gray-400 uppercase">Date</span><span className="font-medium text-gray-800">{booking.date}</span></div>
-                    <div><span className="block text-xs text-gray-400 uppercase">Time</span><span className="font-medium text-gray-800">{booking.time}</span></div>
-                    <div><span className="block text-xs text-gray-400 uppercase">Participants</span><span className="font-medium text-gray-800">{booking.participants} Persons</span></div>
-                  </div>
+              <button
+                onClick={checkMobile}
+                disabled={mobile.length < 10 || isLoading}
+                className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex justify-center items-center gap-2"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  "Continue"
+                )}
+              </button>
+            </motion.div>
+          )}
 
-                  <button className="w-full sm:w-auto bg-white border-2 border-orange-600 text-orange-600 hover:bg-orange-50 font-bold px-5 py-2.5 rounded-xl transition duration-200 text-sm">
-                    Download e-Receipt
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => { setShowForm(true); setShowExisting(false); }}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl transition duration-200 flex justify-center items-center gap-2"
+          {/* STEP 2: EXISTING BOOKINGS */}
+          {currentStep === "EXISTING" && (
+            <motion.div
+              key="existing"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E8E2D2] p-6 md:p-10"
             >
-              <span>➕</span> Book Another Seva
-            </button>
-          </div>
-        )}
-
-        {/* Step 3: Booking Form */}
-        {showForm && !showReceipt && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10 animate-fade-in">
-            <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                New {bookingData.seva}
-              </h2>
-              <button onClick={resetFlow} className="text-sm text-gray-500 hover:text-orange-600 font-medium">Cancel</button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Grid for two-column layout on medium screens */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Devotee Name</label>
-                  <input
-                    type="text"
-                    placeholder="Enter full name"
-                    value={bookingData.name}
-                    className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 p-3.5 rounded-xl transition outline-none"
-                    onChange={(e) => setBookingData({ ...bookingData, name: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">No. of Participants</label>
-                  <select
-                    value={bookingData.participants}
-                    className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 p-3.5 rounded-xl transition outline-none appearance-none"
-                    onChange={(e) => setBookingData({ ...bookingData, participants: e.target.value })}
-                  >
-                    {[...Array(15)].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} {i === 0 ? "Person" : "Persons"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Complete Address</label>
-                <textarea
-                  placeholder="Enter your full address"
-                  value={bookingData.address}
-                  className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 p-3.5 rounded-xl transition outline-none resize-none"
-                  rows="3"
-                  onChange={(e) => setBookingData({ ...bookingData, address: e.target.value })}
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Date</label>
-                  <DatePicker
-                    selected={bookingData.date}
-                    onChange={(date) => setBookingData({ ...bookingData, date })}
-                    dateFormat="dd MMM yyyy"
-                    className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 p-3.5 rounded-xl transition outline-none"
-                    placeholderText="Select Date"
-                    minDate={new Date()}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Time</label>
-                  <select
-                    value={bookingData.time}
-                    className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 p-3.5 rounded-xl transition outline-none appearance-none"
-                    onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
-                  >
-                    <option value="" disabled>Select Time Slot</option>
-                    <option>09:00 AM</option>
-                    <option>09:30 AM</option>
-                    <option>10:00 AM</option>
-                    <option>10:30 AM</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-4">
+              <div className="flex justify-between items-center mb-8 border-b border-[#E8E2D2] pb-4">
+                <h2 className="text-2xl font-bold text-[#333333]">Upcoming Sevas</h2>
                 <button
-                  onClick={handleBooking}
-                  disabled={!bookingData.name || !bookingData.date || !bookingData.time}
-                  className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300 text-white font-bold py-4 rounded-xl text-lg transition duration-300 shadow-md hover:shadow-lg"
+                  onClick={resetFlow}
+                  className="text-sm text-[#800000] hover:text-orange-600 font-semibold transition-colors"
                 >
-                  Confirm Booking
+                  Change Number
                 </button>
               </div>
 
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Digital Receipt */}
-        {showReceipt && (
-          <div className="max-w-md mx-auto bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden animate-fade-in relative">
-            
-            {/* Ticket Header */}
-            <div className="bg-orange-600 p-8 text-center text-white">
-              <p className="text-orange-200 text-sm font-bold tracking-widest uppercase mb-1">Seva e-Receipt</p>
-              <h2 className="text-2xl font-bold mb-1">Karki Mutt Chaturmasya</h2>
-              <p className="text-orange-100 text-sm opacity-90">Sagara, Karnataka - 2026</p>
-            </div>
-
-            {/* Ticket Body */}
-            <div className="p-8 bg-white relative">
-              {/* Cutouts for ticket effect */}
-              <div className="absolute -top-3 -left-3 w-6 h-6 bg-gray-50 rounded-full border-b border-r border-gray-100"></div>
-              <div className="absolute -top-3 -right-3 w-6 h-6 bg-gray-50 rounded-full border-b border-l border-gray-100"></div>
-              
-              {/* Dashed Line */}
-              <div className="absolute top-0 left-4 right-4 h-px border-t-2 border-dashed border-gray-300"></div>
-
-              <div className="flex justify-center my-6">
-                <div className="p-3 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
-                  <QRCodeCanvas value={bookingData.bookingId} size={140} fgColor="#ea580c" />
-                </div>
+              <div className="space-y-4 mb-8">
+                {existingBookings.map((booking, index) => (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    key={booking.bookingId}
+                    className="border border-[#E8E2D2] rounded-xl p-5 hover:border-[#D4AF37] hover:shadow-md transition-all bg-[#FFFDF8]"
+                  >
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div>
+                        <span className="text-xs font-bold text-orange-600 uppercase tracking-widest bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
+                          Confirmed
+                        </span>
+                        <h3 className="text-lg font-bold text-[#333333] mt-3">{booking.seva}</h3>
+                        <p className="text-sm text-[#666666] mt-1">
+                          {booking.date?.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} • {booking.time}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setBookingData(booking);
+                          setCurrentStep("RECEIPT");
+                        }}
+                        className="w-full md:w-auto bg-white border border-[#D4AF37] text-[#333333] hover:bg-[#FFFDF8] font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm shadow-sm"
+                      >
+                        View e-Pass
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
 
-              <div className="text-center mb-6">
-                <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Booking Reference</p>
-                <p className="text-2xl font-black text-gray-900">{bookingData.bookingId}</p>
-              </div>
-
-              <div className="space-y-4 bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <div className="flex justify-between">
-                  <span className="text-gray-500 text-sm">Seva Type</span>
-                  <span className="font-bold text-gray-900 text-sm text-right">{bookingData.seva}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 text-sm">Devotee</span>
-                  <span className="font-bold text-gray-900 text-sm text-right">{bookingData.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 text-sm">Date & Time</span>
-                  <span className="font-bold text-gray-900 text-sm text-right">
-                    {bookingData.date?.toLocaleDateString('en-GB')} at {bookingData.time}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 text-sm">Participants</span>
-                  <span className="font-bold text-gray-900 text-sm text-right">{bookingData.participants}</span>
-                </div>
-              </div>
-
-              <p className="text-center text-xs text-gray-400 mt-6 italic">
-                This is a computer-generated receipt.<br/>Please present this QR code at the venue.
-              </p>
-            </div>
-
-            {/* Ticket Footer Actions */}
-            <div className="bg-gray-50 p-6 border-t border-gray-100 flex gap-3">
-              <button 
-                onClick={() => navigate("/")}
-                className="flex-1 bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-100 font-bold py-3 rounded-xl transition text-sm"
+              <button
+                onClick={() => setCurrentStep("FORM")}
+                className="w-full bg-[#FFFDF8] border-2 border-orange-600 text-orange-700 hover:bg-orange-50 font-bold py-4 rounded-xl transition-all shadow-sm flex justify-center items-center gap-2"
               >
-                Home
+                <span className="text-xl">+</span> Book Another Seva
               </button>
-              <button className="flex-[2] bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition shadow-md text-sm">
-                Download PDF
-              </button>
-            </div>
+            </motion.div>
+          )}
 
-          </div>
-        )}
+          {/* STEP 3: BOOKING FORM */}
+          {currentStep === "FORM" && (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E8E2D2] p-6 md:p-10"
+            >
+              <div className="flex justify-between items-center mb-8 border-b border-[#E8E2D2] pb-4">
+                <h2 className="text-2xl font-bold text-[#333333]">{bookingData.seva}</h2>
+                <button
+                  onClick={resetFlow}
+                  className="text-sm text-[#800000] hover:text-orange-600 font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
 
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm font-medium rounded-r-lg">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-[#333333] mb-2">Devotee Name</label>
+                    <input
+                      type="text"
+                      placeholder="Enter full name"
+                      value={bookingData.name}
+                      onChange={(e) => setBookingData({ ...bookingData, name: e.target.value })}
+                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-[#333333] mb-2">Participants</label>
+                    <select
+                      value={bookingData.participants}
+                      onChange={(e) => setBookingData({ ...bookingData, participants: e.target.value })}
+                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none appearance-none"
+                    >
+                      {[...Array(10)].map((_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {i + 1} {i === 0 ? "Person" : "Persons"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#333333] mb-2">Complete Address</label>
+                  <textarea
+                    placeholder="Enter your full residential address"
+                    value={bookingData.address}
+                    onChange={(e) => setBookingData({ ...bookingData, address: e.target.value })}
+                    className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none resize-none"
+                    rows="2"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-[#333333] mb-2">Preferred Date</label>
+                    <DatePicker
+                      selected={bookingData.date}
+                      onChange={(date) => setBookingData({ ...bookingData, date, time: "" })}
+                      minDate={START_DATE}
+                      maxDate={END_DATE}
+                      dateFormat="dd MMMM yyyy"
+                      placeholderText="Select Date"
+                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#333333] mb-2">Duration</label>
+                    <select
+                      value={bookingData.duration}
+                      onChange={handleDurationChange}
+                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none appearance-none"
+                    >
+                      <option value="30 mins">30 Minutes</option>
+                      <option value="45 mins">45 Minutes</option>
+                      <option value="1 hr">1 Hour</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#333333] mb-2">Start Time (PM)</label>
+                    <select
+                      value={bookingData.time}
+                      onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
+                      disabled={!bookingData.date}
+                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none appearance-none disabled:opacity-50"
+                    >
+                      <option value="" disabled>Select Time</option>
+                      {availableSlots.map((slot) => (
+                        <option key={slot} value={slot}>{slot}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button
+                    onClick={handleBookingSubmit}
+                    disabled={!bookingData.name || !bookingData.date || !bookingData.time || isLoading}
+                    className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg transition duration-300 shadow-md hover:shadow-lg flex justify-center items-center gap-2"
+                  >
+                    {isLoading ? (
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      "Confirm Seva Booking"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 4: DIGITAL RECEIPT */}
+          {currentStep === "RECEIPT" && (
+            <motion.div
+              key="receipt"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md mx-auto"
+            >
+              {/* Printable Pass Card */}
+              <div
+                id="seva-receipt"
+                className="bg-white rounded-2xl shadow-xl border border-[#D4AF37] overflow-hidden relative print:shadow-none print:border-2 print:border-black"
+              >
+                {/* Luxury Temple Header */}
+                <div className="bg-[#FFFDF8] border-b border-[#E8E2D2] p-8 text-center relative overflow-hidden">
+                  <div
+                    className="absolute inset-0 opacity-5 pointer-events-none"
+                    style={{ backgroundImage: "radial-gradient(#D4AF37 1px, transparent 1px)", backgroundSize: "10px 10px" }}
+                  ></div>
+                  <p className="text-[#800000] text-xs font-bold tracking-[0.2em] uppercase mb-2 relative z-10">
+                    Karki Mutt Chaturmasya
+                  </p>
+                  <h2 className="text-2xl font-black text-[#333333] mb-1 relative z-10">Seva e-Pass</h2>
+                  <p className="text-[#666666] text-sm relative z-10">Sagara, Karnataka - 2026</p>
+                </div>
+
+                {/* Body Details */}
+                <div className="p-8 bg-white relative">
+                  <div className="flex justify-center mb-6">
+                    <div className="p-4 bg-white border border-[#E8E2D2] rounded-xl shadow-sm">
+                      <QRCodeCanvas value={bookingData.bookingId || "KM26-0000"} size={140} fgColor="#333333" />
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-8 border-b border-dashed border-[#E8E2D2] pb-6">
+                    <p className="text-[#800000] text-xs uppercase font-bold tracking-widest mb-1">Booking Reference</p>
+                    <p className="text-3xl font-black text-[#333333] tracking-wider">{bookingData.bookingId}</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[#666666] text-sm">Seva Type</span>
+                      <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
+                        {bookingData.seva}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <span className="text-[#666666] text-sm">Devotee</span>
+                      <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
+                        {bookingData.name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <span className="text-[#666666] text-sm">Date</span>
+                      <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
+                        {formattedReceiptDate}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <span className="text-[#666666] text-sm">Time</span>
+                      <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
+                        {bookingData.time} ({bookingData.duration})
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <span className="text-[#666666] text-sm">Participants</span>
+                      <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
+                        {bookingData.participants}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 text-center">
+                    <p className="text-xs text-[#666666] italic">
+                      Please present this QR code at the temple entrance.<br />
+                      May the divine blessings be with you.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons (Hidden when Printing) */}
+              <div className="mt-6 flex gap-4 print:hidden">
+                <button
+                  onClick={resetFlow}
+                  className="flex-1 bg-white border border-[#E8E2D2] text-[#333333] hover:bg-[#FFFDF8] font-bold py-3.5 rounded-xl transition text-sm shadow-sm"
+                >
+                  Done
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex-[2] bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold py-3.5 rounded-xl transition shadow-md text-sm flex justify-center items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download PDF / Print
+                </button>
+              </div>
+
+              {/* Dynamic Print CSS */}
+              <style>{`
+                @media print {
+                  body * { visibility: hidden; }
+                  #seva-receipt, #seva-receipt * { visibility: visible; }
+                  #seva-receipt { 
+                    position: absolute; 
+                    left: 0; 
+                    top: 0; 
+                    width: 100%; 
+                    border: none !important; 
+                    box-shadow: none !important; 
+                  }
+                }
+              `}</style>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
       </div>
     </div>
   );
