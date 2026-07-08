@@ -27,11 +27,12 @@ const Dashboard = () => {
     { name: "Dashboard", path: "/admin" },
     { name: "Bookings", path: "/admin/bookings" },
     { name: "Virtual Puja", path: "/admin/v-bookings" },
-    { name: "Mantrakshata", path: "/admin/mantrakshata" },
+    { name: "Cultural Programs", path: "/admin/c-programs"},
+    // { name: "Mantrakshata", path: "/admin/mantrakshata" },
     { name: "Blogs", path: "/admin/blogs" },
     { name: "Schedule", path: "/admin/schedule" },
     { name: "Walk-in", path: "/admin/book-seva" },
-    { name: "Ledger", path: "/admin/accounts" }
+    // { name: "Ledger", path: "/admin/accounts" }
   ];
 
   const [bookings, setBookings] = useState([]);

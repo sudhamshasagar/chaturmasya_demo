@@ -39,7 +39,7 @@ export default function InvitationSection() {
   ];
 
   const specialEvents = [
-    { id: 1, date: "July 4, 2026", title: "Vyasa Pooja & Sankalpa", desc: "The grand inauguration and holy vow of Chaturmasya.", isImportant: true },
+    { id: 1, date: "July 29, 2026", title: "Vyasa Pooja & Sankalpa", desc: "The grand inauguration and holy vow of Chaturmasya.", isImportant: true },
     { id: 2, date: "August 15, 2026", title: "Sri Krishna Janmashtami", desc: "Midnight pooja, arghya pradana, and special bhajans.", isImportant: false },
     { id: 3, date: "September 6, 2026", title: "Ganesh Chaturthi", desc: "Special homa and pooja dedicated to Lord Ganesha.", isImportant: false },
     { id: 4, date: "October 12, 2026", title: "Seemollanghana", desc: "The concluding ceremony and Swamiji's departure.", isImportant: true },
@@ -96,7 +96,7 @@ export default function InvitationSection() {
 
         <div className="relative z-10 flex flex-col items-center">
           <Flower2 className="w-10 h-10 text-[#D4AF37] mb-6" />
-          <p className="text-sm font-bold text-[#722013] uppercase tracking-[0.3em] mb-4">With the divine blessings of Lord Sri Hari</p>
+          <p className="text-sm font-bold text-[#722013] uppercase tracking-[0.3em] mb-4">With the divine blessings of Jnaneshwari</p>
           <h3 className="text-4xl md:text-5xl font-serif font-bold text-[#2a0b06] mb-6 leading-tight">
             Sri Karki Mutt<br/>Chaturmasya Vrata
           </h3>
@@ -108,13 +108,13 @@ export default function InvitationSection() {
           </div>
 
           <h4 className="text-2xl font-serif text-[#722013] font-bold mb-8">
-            H.H. Sri Swamiji
+            Ubhaya Swamiji's
           </h4>
 
           <div className="grid sm:grid-cols-2 gap-8 w-full max-w-2xl bg-[#FAF6F0] p-8 rounded-3xl border border-[#E8DCC4]/50">
             <div className="flex flex-col items-center gap-2">
               <CalendarDays className="w-6 h-6 text-[#D4AF37]" />
-              <p className="font-bold text-gray-900">July 4 - Oct 12, 2026</p>
+              <p className="font-bold text-gray-900">July 29 - Sep 26, 2026</p>
               <p className="text-xs text-gray-500 uppercase tracking-widest">Shravana to Ashwayuja</p>
             </div>
             <div className="flex flex-col items-center gap-2">
@@ -124,21 +124,7 @@ export default function InvitationSection() {
             </div>
           </div>
         </div>
-      </motion.div>
-
-      {/* --- INVITATION HIGHLIGHTS --- */}
-      <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {highlights.map((item) => (
-          <motion.div key={item.id} variants={fadeUp} className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8DCC4]/50 hover:shadow-xl hover:shadow-[#722013]/5 hover:-translate-y-1 transition-all duration-300 text-center group">
-            <div className="mb-4 bg-[#FAF6F0] w-14 h-14 mx-auto rounded-full text-[#722013] group-hover:bg-[#722013] group-hover:text-[#D4AF37] flex items-center justify-center transition-colors duration-500">
-              <item.icon className="w-6 h-6" />
-            </div>
-            <h4 className="text-lg font-bold text-gray-900 font-serif mb-1 group-hover:text-[#722013] transition-colors">{item.title}</h4>
-            <p className="text-gray-500 text-xs font-medium">{item.desc}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-
+      </motion.div>      
       {/* --- SPECIAL EVENTS TIMELINE --- */}
       <div className="space-y-12">
         <div className="text-center border-b border-[#E8DCC4] pb-6">
@@ -163,7 +149,7 @@ export default function InvitationSection() {
       </div>
 
       {/* --- DAILY IMPORTANT PROGRAMS --- */}
-      <div className="space-y-12">
+      {/* <div className="space-y-12">
         <div className="text-center border-b border-[#E8DCC4] pb-6">
           <h3 className="text-3xl font-bold text-[#2a0b06] font-serif mb-2">Daily Schedule</h3>
           <p className="text-gray-600 font-medium">The routine followed every day during the vow.</p>
@@ -186,10 +172,10 @@ export default function InvitationSection() {
             </motion.div>
           ))}
         </motion.div>
-      </div>
+      </div> */}
 
       {/* --- SEVA PRICE LIST --- */}
-      <div className="space-y-12 bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-[#E8DCC4]/50">
+      {/* <div className="space-y-12 bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-[#E8DCC4]/50">
         <div className="text-center mb-8">
           <h3 className="text-3xl font-bold text-[#2a0b06] font-serif mb-2">Seva Offerings</h3>
           <p className="text-gray-600 font-medium">Contribute to the divine cause and seek blessings.</p>
@@ -207,7 +193,7 @@ export default function InvitationSection() {
             </motion.div>
           ))}
         </motion.div>
-      </div>
+      </div> */}
 
       {/* --- ORGANIZING COMMITTEE & CONTACTS --- */}
       <div className="grid lg:grid-cols-12 gap-12">
@@ -250,7 +236,7 @@ export default function InvitationSection() {
       </div>
 
       {/* --- QR CODES --- */}
-      <div className="flex flex-col sm:flex-row justify-center gap-6 md:gap-12 pt-8">
+      {/* <div className="flex flex-col sm:flex-row justify-center gap-6 md:gap-12 pt-8">
         {[
           { title: "Official Website", desc: "Scan to visit portal", id: "web" },
           { title: "Donation Portal", desc: "Scan for Seva contributions", id: "donate" }
@@ -263,7 +249,7 @@ export default function InvitationSection() {
             <p className="text-xs text-gray-500 font-medium">{qr.desc}</p>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* --- DOWNLOAD INVITATION CTA --- */}
       <motion.div 
@@ -287,23 +273,6 @@ export default function InvitationSection() {
           </div>
         </div>
       </motion.div>
-
-      {/* --- BOTTOM CTA (Pre-Footer) --- */}
-      <div className="text-center pt-16 border-t border-[#E8DCC4]">
-        <h2 className="text-3xl md:text-4xl font-bold text-[#2a0b06] font-serif mb-8">Become a part of this sacred Chaturmasya.</h2>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link to="/book-seva" className="bg-gradient-to-r from-[#D4AF37] to-[#b5952f] text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 transition-all duration-300 flex items-center gap-2">
-            <Sparkles className="w-5 h-5" /> Book Seva
-          </Link>
-          <Link to="/virtual-pada-puja" className="bg-[#722013] text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:bg-[#5a190f] shadow-lg shadow-[#722013]/20 hover:scale-105 transition-all duration-300 flex items-center gap-2">
-            <Flower2 className="w-5 h-5" /> Virtual Pada Puja
-          </Link>
-          <button className="bg-white border border-[#E8DCC4] text-[#722013] px-8 py-3.5 rounded-full font-semibold text-sm hover:border-[#722013] hover:scale-105 transition-all duration-300 flex items-center gap-2">
-            <Download className="w-5 h-5" /> Get Invitation
-          </button>
-        </div>
-      </div>
-
     </section>
   );
 }

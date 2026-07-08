@@ -6,7 +6,7 @@ import BookSeva from "../pages/BookSeva";
 import VirtualPadaPuja from "../pages/VirtualPadaPuja";
 
 import ProtectedRoute from "./ProtectedRoute";
-
+import CulturalRequests from "../admin/CulturalRequests";
 import AdminLayout from "../admin/AdminLayout";
 import Bookings from "../admin/Bookings";
 import Blogs from "../admin/Blogs";
@@ -81,7 +81,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
+        <Route
+         path="/admin/c-programs"
+         element={
+          <ProtectedRoute>
+            <CulturalRequests/>
+          </ProtectedRoute>
+         }
+         />
         <Route
           path="/admin/accounts"
           element={

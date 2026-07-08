@@ -1,5 +1,15 @@
 import React, { useState, useEffect,useRef } from "react";
 import { Link } from "react-router-dom";
+import {db} from "../firebase/firebase";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  where,
+  getDocs,
+  serverTimestamp
+} from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   CalendarDays, 
@@ -119,78 +129,237 @@ const Home = () => {
     {
       id: 1,
       tag: "A SACRED VOW. A TIMELESS TRANSFORMATION.",
-      title: "Chaturmasya.\nDeepen Sadhana.\nDiscover Yourself.",
+      title: "41st\n Chaturmasya Vratothsava - 2026\nDeepen Sadhana.\nDiscover Yourself.",
       desc: "Welcome to the official digital portal. Participate in daily rituals, book sevas, and seek blessings from anywhere in the world.",
       img: "/hero.jpeg"
     },
-    // {
-    //   id: 2,
-    //   tag: "JOIN THE SPIRITUAL JOURNEY.",
-    //   title: "Experience the\nDivine Presence.",
-    //   desc: "Immerse yourself in spiritual discipline, study, and seva under the guidance of our revered Acharyas.",
-    //   img: "https://images.unsplash.com/photo-1604068545802-9a3b6805b5aa?w=1200&q=80"
-    // }
   ];
   const [isMenuOpen, setIsMenuOpen] = useState(false);
  // --- Cultural Booking Form State ---
-  // --- NEW Cultural Booking Form State ---
-  const [selectedDate, setSelectedDate] = useState("2026-07-15");
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [culturalForm, setCulturalForm] = useState({ name: "", contact: "" });
+  const MAX_BOOKINGS_PER_DAY = 3;
+  const [selectedDateId, setSelectedDateId] = useState("");
+  const [approvedBookings, setApprovedBookings] = useState([]);
+  const [culturalForm, setCulturalForm] = useState({
+    name: "",
+    contact: "",
+  });
+  const [bookingType, setBookingType] = useState("solo");
+  const [groupCount, setGroupCount] = useState(2);
+  const [isSubmittingCultural, setIsSubmittingCultural] = useState(false);
+  // ------------------------------------------------------------
+  // Generate every booking date from July 29 to September 26
+  // ------------------------------------------------------------
 
-  // Now a state variable so the UI updates when someone requests a slot
-  const [culturalCalendar, setCulturalCalendar] = useState([
-    { 
-      id: "2026-07-15", displayDate: "15", month: "July", day: "Wed", 
-      slots: [
-        { id: "s1", time: "04:00 PM - 05:30 PM", title: "Classical Bhajan", status: "open" },
-        { id: "s2", time: "06:00 PM - 07:30 PM", title: "Veda Parayana Reading", status: "blocked" },
-      ]
-    },
-    { 
-      id: "2026-07-16", displayDate: "16", month: "July", day: "Thu", 
-      slots: [
-        { id: "s3", time: "09:00 AM - 11:00 AM", title: "Satsanga Assembly", status: "blocked" },
-        { id: "s4", time: "05:00 PM - 06:30 PM", title: "Youth Spiritual Discourse", status: "open" },
-      ]
-    },
-    { 
-      id: "2026-07-17", displayDate: "17", month: "July", day: "Fri", 
-      slots: [
-        { id: "s5", time: "04:30 PM - 06:00 PM", title: "Special Pravachana", status: "open" },
-      ]
-    },
-  ]);
+  const generateCulturalDates = () => {
+    const startDate = new Date(2026, 6, 29);
+    const endDate = new Date(2026, 8, 26);
 
-  const activeDayData = culturalCalendar.find(d => d.id === selectedDate);
+    const dates = [];
+    const currentDate = new Date(startDate);
 
-  // --- REPLACES handleBookingRequest ---
-  const handleCulturalSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedSlot) return alert("Please select an available time slot first.");
+    while (currentDate <= endDate) {
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+      const day = String(currentDate.getDate()).padStart(2, "0");
 
-    // Update the state to change the slot to "requested" (Disables it in UI)
-    setCulturalCalendar(prevCalendar => 
-      prevCalendar.map(day => ({
-        ...day,
-        slots: day.slots.map(slot => 
-          slot.id === selectedSlot.id ? { ...slot, status: "blocked" } : slot
-        )
-      }))
+      const dateId = `${year}-${month}-${day}`;
+
+      dates.push({
+        id: dateId,
+
+        dayNumber: currentDate.getDate(),
+
+        monthShort: currentDate.toLocaleDateString("en-US", {
+          month: "short",
+        }),
+
+        monthLong: currentDate.toLocaleDateString("en-US", {
+          month: "long",
+        }),
+
+        weekday: currentDate.toLocaleDateString("en-US", {
+          weekday: "short",
+        }),
+
+        fullDate: currentDate.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates;
+  };
+
+  const culturalDates = generateCulturalDates();
+
+  // ------------------------------------------------------------
+  // Listen to approved bookings
+  // ------------------------------------------------------------
+
+  useEffect(() => {
+    const culturalRequestsRef = collection(db, "culturalRequests");
+
+    const unsubscribe = onSnapshot(
+      culturalRequestsRef,
+
+      (snapshot) => {
+        const bookings = snapshot.docs.map((bookingDoc) => ({
+          id: bookingDoc.id,
+          ...bookingDoc.data(),
+        }));
+
+        setApprovedBookings(
+          bookings.filter(
+            (booking) =>
+              booking.status?.toLowerCase() === "approved"
+          )
+        );
+      },
+
+      (error) => {
+        console.error(
+          "Unable to load Cultural Seva availability:",
+          error
+        );
+      }
     );
 
-    alert(`Request Sent!\nThank you, ${culturalForm.name}. Admin will review and confirm your slot for ${selectedSlot.title} on ${activeDayData.month} ${activeDayData.displayDate}.`);
-    
-    // Reset form after submission
-    setCulturalForm({ name: "", contact: "" });
-    setSelectedSlot(null);
+    return () => unsubscribe();
+  }, []);
+
+  // ------------------------------------------------------------
+  // Availability helpers
+  // ------------------------------------------------------------
+
+  const getApprovedBookingCount = (dateId) => {
+    return approvedBookings.filter(
+      (booking) => booking.date === dateId
+    ).length;
   };
+
+  const getRemainingSlots = (dateId) => {
+    return Math.max(
+      0,
+      MAX_BOOKINGS_PER_DAY - getApprovedBookingCount(dateId)
+    );
+  };
+
+  const selectedDateData = culturalDates.find(
+    (date) => date.id === selectedDateId
+  );
+
+  const selectedDateRemainingSlots = selectedDateId
+    ? getRemainingSlots(selectedDateId)
+    : null;
+
+  // ------------------------------------------------------------
+  // Submit booking request
+  // ------------------------------------------------------------
+
+  const handleCulturalSubmit = async (e) => {
+    e.preventDefault();
+
+    const name = culturalForm.name.trim();
+    const contact = culturalForm.contact.trim();
+
+    if (!name) {
+      alert("Please enter your full name.");
+      return;
+    }
+
+    if (!/^[6-9]\d{9}$/.test(contact)) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (!selectedDateId) {
+      alert("Please select an available date.");
+      return;
+    }
+
+    if (getRemainingSlots(selectedDateId) <= 0) {
+      alert(
+        "All Cultural Seva booking slots for this date are already booked."
+      );
+      return;
+    }
+
+    if (
+      bookingType === "group" &&
+      (!groupCount || Number(groupCount) < 2)
+    ) {
+      alert("Please enter a valid number of group members.");
+      return;
+    }
+
+  const uniqueId = `KMCP${Date.now()
+    .toString()
+    .slice(-7)}`;
+
+  try {
+    setIsSubmittingCultural(true);
+
+    await addDoc(collection(db, "culturalRequests"), {
+      bookingId: uniqueId,
+
+      name,
+
+      contact,
+
+      date: selectedDateId,
+
+      participationType: bookingType,
+
+      participantCount:
+        bookingType === "group"
+          ? Number(groupCount)
+          : 1,
+
+      status: "pending",
+
+      createdAt: serverTimestamp(),
+    });
+
+    alert(
+      `Request Submitted Successfully!\n\nReference ID: ${uniqueId}\n\nYour Cultural Seva request has been sent to the administration for review.\n\nYour program will be booked only after Admin approval.`
+    );
+
+    setCulturalForm({
+      name: "",
+      contact: "",
+    });
+
+    setBookingType("solo");
+    setGroupCount(2);
+    setSelectedDateId("");
+  } catch (error) {
+    console.error(
+      "Cultural booking submission failed:",
+      error
+    );
+
+    alert(
+      "Unable to submit your request. Please try again."
+    );
+  } finally {
+    setIsSubmittingCultural(false);
+  }
+};
   // --- 2. State & Effects ---
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState(null);
   const [formData, setFormData] = useState({ name: "", contact: "" });
   const [isScrolled, setIsScrolled] = useState(false);
+  const [statusSearch, setStatusSearch] = useState("");
+  const [statusResults, setStatusResults] = useState([]);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [statusSearched, setStatusSearched] = useState(false);
+  const [statusError, setStatusError] = useState("");
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -225,6 +394,126 @@ const Home = () => {
   const ongoingEvent = dailySchedule.find(item => item.status === 'ongoing') 
     || dailySchedule.find(item => item.status === 'future') 
     || dailySchedule[dailySchedule.length - 1];
+
+  const formatCulturalTimestamp = (timestamp) => {
+  if (!timestamp?.toDate) return "Not available";
+
+  return timestamp.toDate().toLocaleString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const formatCulturalTime = (time) => {
+  if (!time) return "Not allocated";
+
+  const [hours, minutes] = time.split(":").map(Number);
+
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  return date.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const getDurationLabel = (duration) => {
+  const value = Number(duration);
+
+  if (value === 60) return "1 Hour";
+  if (value === 45) return "45 Minutes";
+  if (value === 30) return "30 Minutes";
+
+  return duration ? `${duration} Minutes` : "Not allocated";
+};
+
+const handleCheckCulturalStatus = async (e) => {
+  e.preventDefault();
+
+  const searchValue = statusSearch.trim();
+
+  setStatusResults([]);
+  setStatusError("");
+  setStatusSearched(false);
+
+  if (!searchValue) {
+    setStatusError(
+      "Please enter your Cultural Seva Booking ID or mobile number."
+    );
+    return;
+  }
+
+  try {
+    setIsCheckingStatus(true);
+
+    const requestsRef = collection(db, "culturalRequests");
+
+    let statusQuery;
+
+    /*
+      Booking IDs generated by your current application
+      begin with KMCP.
+
+      Otherwise, treat a 10-digit value as a mobile number.
+    */
+
+    if (/^KMCP\d+$/i.test(searchValue)) {
+      statusQuery = query(
+        requestsRef,
+        where("bookingId", "==", searchValue.toUpperCase())
+      );
+    } else if (/^[6-9]\d{9}$/.test(searchValue)) {
+      statusQuery = query(
+        requestsRef,
+        where("contact", "==", searchValue)
+      );
+    } else {
+      setStatusError(
+        "Enter a valid Booking ID or 10-digit mobile number."
+      );
+
+      return;
+    }
+
+    const snapshot = await getDocs(statusQuery);
+
+    const results = snapshot.docs.map((requestDoc) => ({
+      id: requestDoc.id,
+      ...requestDoc.data(),
+    }));
+
+    results.sort((a, b) => {
+      const firstTime =
+        a.createdAt?.toMillis?.() || 0;
+
+      const secondTime =
+        b.createdAt?.toMillis?.() || 0;
+
+      return secondTime - firstTime;
+    });
+
+    setStatusResults(results);
+    setStatusSearched(true);
+
+  } catch (error) {
+    console.error(
+      "Failed to check Cultural Seva status:",
+      error
+    );
+
+    setStatusError(
+      "Unable to check the booking status. Please try again."
+    );
+  } finally {
+    setIsCheckingStatus(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#FCF8F2] font-sans text-gray-900 selection:bg-[#722013] selection:text-[#FCF8F2] overflow-x-hidden">
@@ -336,108 +625,201 @@ const Home = () => {
       </header>
 
       {/* --- CINEMATIC HERO SECTION --- */}
-      <section className="relative w-full min-h-[90vh] flex items-center pt-24 pb-12 z-10">
-        <div className="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Left Text Content */}
-          <motion.div 
-            initial="hidden" animate="visible" variants={staggerContainer}
-            className="lg:col-span-6 space-y-8"
-          >
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm border border-[#E8DCC4] px-4 py-2 rounded-full shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-[#E86A33] animate-pulse"></span>
-              <span className="text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">Chaturmasya starts from 29th July</span>
-            </motion.div>
-            
-            <motion.h2 variants={fadeUp} className="text-5xl lg:text-7xl font-bold text-[#2a0b06] font-serif leading-[1.05] tracking-tight">
-              {heroSlides[currentSlide].title.split('\n').map((line, i) => (
-                <span key={i} className="block">{line}</span>
-              ))}
-            </motion.h2>
-            
-            <motion.p variants={fadeUp} className="text-lg text-gray-600 max-w-md leading-relaxed font-medium">
-              {heroSlides[currentSlide].desc}
-            </motion.p>
-            
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-5 pt-4">
-              <a href="#live-darshan" className="bg-[#722013] text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:bg-[#5a190f] transition shadow-xl shadow-[#722013]/20 flex items-center gap-2 group">
-                <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" /> Watch Live
-              </a>
-              <Link to="/explore" className="bg-white border border-[#E8DCC4] text-[#722013] px-8 py-3.5 rounded-full font-semibold text-sm hover:border-[#722013] transition shadow-sm">
-                Explore Programs
-              </Link>
-            </motion.div>
-          </motion.div>
+      <section className="relative w-full pt-20 pb-6 md:pt-28 md:pb-24 z-10 overflow-hidden flex items-centre">
+  {/* Soft ambient wash */}
+  <div className="absolute top-16 -left-32 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/10 blur-[120px] pointer-events-none -z-10" />
+  <div className="absolute bottom-0 right-0 w-[420px] h-[420px] rounded-full bg-[#722013]/10 blur-[100px] pointer-events-none -z-10" />
 
-          {/* Right Imagery & Floating Dashboard Cards */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="lg:col-span-6 relative h-[600px] w-full"
-          >
-            {/* Main Image */}
-            <div className="absolute inset-4 md:inset-8 rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <AnimatePresence mode="wait">
-                <motion.img 
-                  key={currentSlide}
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1.5 }}
-                  src={heroSlides[currentSlide].img} 
-                  alt="Mutt Scenery" 
-                  className="w-full h-full object-cover"
-                />
-              </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-            </div>
+  <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full">
+   <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">  
 
-            {/* Floating Glassmorphism Cards */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -left-6 top-20 bg-white/80 backdrop-blur-xl border border-white p-4 rounded-2xl shadow-xl w-48"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-[#FCF8F2] rounded-lg text-[#E86A33]"><Sun className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tithi</p>
-                  <p className="text-sm font-bold text-gray-900">Shukla Ekadashi</p>
+      {/* ==================== LEFT: TEXT ==================== */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={staggerContainer}
+        className="lg:col-span-5 order-2 lg:order-1"
+      >
+        {/* Credit line — top left of title */}
+        <motion.div variants={fadeUp} className="mb-5 flex items-center gap-3">
+          <span className="w-8 h-[1px] bg-[#D4AF37]" />
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-[#722013]">
+            Daivajna Brahman Samaja<sup className="text-[8px] mx-0.5">®</sup> Sagara
+          </p>
+        </motion.div>
+
+        {/* Live tag */}
+        <motion.div
+          variants={fadeUp}
+          className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#E8DCC4] px-3.5 py-1.5 rounded-full shadow-sm mb-6"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E86A33]" />
+          </span>
+          <span className="text-[9px] sm:text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">
+            Commencing 29 July 2026
+          </span>
+        </motion.div>
+
+        {/* Ordinal + main title */}
+        <motion.div variants={fadeUp} className="mb-6">
+          <p className="font-serif italic text-[#c2410c] text-3xl sm:text-4xl mb-1 leading-none">
+            <span className="tabular-nums font-black not-italic text-[#2a0b06]">41</span>
+            <sup className="text-lg font-bold not-italic text-[#722013] ml-0.5">st</sup>
+          </p>
+          <h1 className="font-serif font-bold text-[#2a0b06] leading-[0.95] tracking-tight text-4xl sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
+            Chaturmasya
+            <span className="block italic font-light text-[#722013]">
+              Vratothsava
+            </span>
+            <span className="block text-[#2a0b06] tabular-nums">
+              — 2026
+            </span>
+          </h1>
+        </motion.div>
+
+        {/* Sanskrit invocation */}
+        <motion.div variants={fadeUp} className="mb-6 pl-4 border-l-2 border-[#D4AF37]">
+          <p className="font-serif italic text-[#722013] text-base sm:text-lg leading-snug">
+            Jai Jnaneshwari
+          </p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-[0.22em] font-bold mt-1">
+            The Sacred Months
+          </p>
+        </motion.div>
+
+        {/* Description */}
+        <motion.p
+          variants={fadeUp}
+          className="text-[15px] sm:text-base text-gray-600 max-w-md leading-relaxed"
+        >
+          <p className="text-xs font-serif italic text-[#722013] leading-relaxed">
+              May the sacred vow of Chaturmasya bring inner light to every devotee.
+            </p>
+            <p className="text-[9px] font-bold text-stone-900 uppercase tracking-widest mt-3">— Pujya Sri Swamiji</p>
+        </motion.p>
+
+        {/* CTAs */}
+        {/* <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-8">
+          <a
+            href="#live-darshan"
+            className="group inline-flex items-center gap-2 bg-[#2a0b06] text-white px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:bg-[#722013] transition-all shadow-xl shadow-[#722013]/20"
+          >
+            <PlayCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            Watch Live Darshana
+          </a>
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#E8DCC4] text-[#722013] px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:border-[#722013] hover:bg-white transition-all"
+          >
+            Explore Programs
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </motion.div> */}
+
+        {/* Ornamental footer meta */}
+        <motion.div
+          variants={fadeUp}
+          className="mt-10 pt-6 border-t border-[#E8DCC4] grid grid-cols-3 gap-4 max-w-md"
+        >
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Duration</p>
+            <p className="font-serif font-bold text-sm text-[#2a0b06]">60 Days</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Venue</p>
+            <p className="font-serif font-bold text-sm text-[#2a0b06]">Sagara</p>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* ==================== RIGHT: IMAGE ==================== */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        className="lg:col-span-7 order-1 lg:order-2 relative"
+      >
+        {/* Editorial frame with folio marks */}
+        <div className="relative">
+
+          {/* Corner folio marks (top-left) */}
+          <div className="hidden md:block absolute -top-4 -left-4 z-20">
+            <div className="w-8 h-8 border-l-2 border-t-2 border-[#D4AF37]" />
+          </div>
+          <div className="hidden md:block absolute -bottom-4 -right-4 z-20">
+            <div className="w-8 h-8 border-r-2 border-b-2 border-[#D4AF37]" />
+          </div>
+
+          {/* Main image container — taller & richer */}
+          <div
+  className="
+    relative
+    w-full
+    max-w-[620px]
+    mx-auto
+    h-[420px]
+    sm:h-[500px]
+    md:h-[560px]
+    lg:h-[min(68vh,620px)]
+    xl:h-[min(72vh,660px)]
+    rounded-[2rem]
+    lg:rounded-[2.5rem]
+    overflow-hidden
+    shadow-2xl
+    shadow-[#722013]/20
+  "
+>
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentSlide}
+                initial={{ opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5 }}
+                src={heroSlides[currentSlide].img}
+                alt="Chaturmasya Vratothsava"
+                className="w-full h-full object-cover"
+              />
+            </AnimatePresence>
+
+            {/* Layered gradients for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2a0b06]/70 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#722013]/20" />
+            {/* Bottom overlay — sacred quote & meta */}
+            <div className="absolute inset-x-5 bottom-5 md:inset-x-8 md:bottom-8">
+              <div className="bg-black/30 backdrop-blur-xl border border-white/15 rounded-2xl p-4 md:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="font-serif text-4xl text-[#D4AF37] leading-none mt-1">"</span>
+                  <div className="min-w-0">
+                    <p className="font-serif italic text-white text-sm md:text-base leading-snug">
+                      Peace is not the absence of trouble, but the presence of divinity.
+                    </p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="w-6 h-[1px] bg-[#D4AF37]" />
+                      <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">
+                        Śloka of the Day
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </motion.div>
-
-            <motion.div 
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -right-2 bottom-24 bg-white/80 backdrop-blur-xl border border-white p-4 rounded-2xl shadow-xl w-56"
-            >
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Quote of the Day</p>
-              <p className="text-sm font-serif text-[#722013] italic leading-tight">"Peace is not the absence of trouble, but the presence of divinity."</p>
-            </motion.div>
-            
-            {/* <motion.div 
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute left-12 bottom-10 bg-[#722013]/90 backdrop-blur-md border border-white/20 p-4 rounded-2xl shadow-2xl flex items-center gap-4 text-white"
-            >
-               <CloudSun className="w-8 h-8 text-[#D4AF37]" />
-               <div>
-                  <p className="text-xs font-medium opacity-80">Sagara Weather</p>
-                  <p className="text-lg font-bold">26°C, Serene</p>
-               </div>
-            </motion.div> */}
-          </motion.div>
+            </div>
+          </div>
         </div>
-      </section>
+      </motion.div>
+    </div>
+  </div>
+</section>
+
 
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
       <section className="max-w-7xl mx-auto px-6 relative z-20 -mt-15 mb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { title: "Book Seva", desc: "Reserve sacred rituals digitally.", icon: Sparkles, link: "/book-seva" },
-            { title: "Pada Pooja", desc: "Submit details for participation.", icon: BookHeart, link: "/virtual-pada-puja" },
+            { title: "Book Pada Pooja", desc: "Reserve sacred rituals digitally.", icon: Sparkles, link: "/book-seva" },
+            { title: "Virtual Pada Pooja", desc: "Submit details for participation.", icon: BookHeart, link: "/virtual-pada-puja" },
             { title: "Cultural Events", desc: "View & book mutt activities.", icon: CalendarDays, href: "#cultural" },
             { title: "Daily Schedule", desc: "Timings for all rituals.", icon: Clock, href: "#schedule" }
           ].map((item, idx) => (
@@ -514,8 +896,6 @@ const Home = () => {
             </div>
           </motion.div>
         </section>
-
-        {/* --- 2. DAILY SCHEDULE (Premium Timeline) --- */}
         {/* --- 2. DAILY SCHEDULE (Calendar & Live Highlight) --- */}
         <section id="schedule" className="max-w-7xl mx-auto scroll-mt-32">
           
@@ -638,139 +1018,954 @@ const Home = () => {
         </section>
 
         {/* --- 3. CULTURAL ACTIVITIES (Inline Calendar Form) --- */}
-        <section id="cultural" className="scroll-mt-32 max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[#2a0b06] font-serif mb-3">Cultural Programs</h2>
-            <p className="text-gray-600 font-medium">Select an available date and time to request a performance or discourse slot.</p>
+       <section
+          id="cultural"
+          className="scroll-mt-32 max-w-7xl mx-auto"
+        >
+          {/* ========================================================
+              SECTION HEADER
+          ======================================================== */}
+          <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+            <div className="inline-flex items-center gap-2 bg-[#722013]/5 border border-[#722013]/10 px-4 py-2 rounded-full mb-5">
+
+              <span className="relative flex h-2 w-2">
+
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-75" />
+
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E86A33]" />
+
+              </span>
+
+              <span className="text-[10px] md:text-xs font-bold text-[#722013] uppercase tracking-[0.18em]">
+
+                Bookings Open
+
+              </span>
+
+            </div>
+
+            <h2 className="text-4xl md:text-5xl font-bold text-[#2a0b06] font-serif mb-4">
+
+              Cultural Seva Booking
+
+            </h2>
+
+            <p className="text-gray-600 leading-relaxed">
+
+              Offer music, bhajans, dance, Harikatha, discourse, or
+              another cultural program during Chaturmasya.
+
+            </p>
+
+            <p className="text-sm font-bold text-[#722013] mt-4">
+
+              July 29 — September 26, 2026
+
+              <span className="mx-2 text-[#D4AF37]">•</span>
+
+              Maximum 3 approved programs per day
+
+            </p>
+
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-[#722013]/5 border border-[#E8DCC4]/60"
+
+          {/* ========================================================
+              ADMIN APPROVAL NOTICE
+          ======================================================== */}
+
+          <div className="max-w-5xl mx-auto mb-8">
+
+            <div className="bg-[#FFF8E8] border border-[#E8D3A5] rounded-2xl p-5 md:p-6 flex gap-4">
+
+              <div className="w-10 h-10 shrink-0 rounded-full bg-[#D4AF37]/15 flex items-center justify-center">
+
+                <Clock className="w-5 h-5 text-[#9A7625]" />
+
+              </div>
+
+              <div>
+
+                <h3 className="font-bold text-[#2a0b06] mb-1">
+
+                  Admin approval is required
+
+                </h3>
+
+                <p className="text-sm text-gray-600 leading-relaxed">
+
+                  Submitting this form does not confirm your Cultural
+                  Seva booking. Your request will be reviewed by the
+                  administration. Your program will be considered booked
+                  only after Admin approval and confirmation.
+
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* ========================================================
+              MAIN BOOKING CARD
+          ======================================================== */}
+
+          <form
+            onSubmit={handleCulturalSubmit}
+            className="bg-white rounded-[2rem] md:rounded-[3rem]
+                      shadow-[0_20px_60px_rgba(42,11,6,0.06)]
+                      border border-[#E8DCC4]/60
+                      overflow-hidden"
           >
-            <form onSubmit={handleCulturalSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-              
-              {/* Left Column: Calendar & Slots */}
-              <div className="space-y-8">
-                {/* Date Selector */}
-                <div>
-                  <h3 className="text-sm font-bold text-[#722013] uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4" /> Select Date
-                  </h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {culturalCalendar.map((date) => (
+
+            <div className="grid lg:grid-cols-12">
+
+
+              {/* ====================================================
+                  CALENDAR
+              ==================================================== */}
+
+              <div className="lg:col-span-7 p-5 sm:p-8 md:p-10 lg:p-12">
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+
+                  <div>
+
+                    <p className="text-[10px] font-bold text-[#722013] uppercase tracking-[0.2em] mb-2">
+
+                      Select Date
+
+                    </p>
+
+                    <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#2a0b06]">
+
+                      Choose an available day
+
+                    </h3>
+
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[10px] font-bold text-gray-500">
+
+                    <div className="flex items-center gap-1.5">
+
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37]" />
+
+                      Available
+
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+
+                      <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+
+                      Full
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* DATE GRID */}
+
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2 md:gap-3">
+
+                  {culturalDates.map((date) => {
+
+                    const remainingSlots = getRemainingSlots(date.id);
+
+                    const isFullyBooked = remainingSlots === 0;
+
+                    const isSelected =
+                      selectedDateId === date.id;
+
+                    return (
+
                       <button
                         key={date.id}
                         type="button"
-                        onClick={() => { setSelectedDate(date.id); setSelectedSlot(null); }}
-                        className={`flex flex-col items-center min-w-[72px] p-3 rounded-2xl border transition-all duration-300 ${
-                          selectedDate === date.id 
-                            ? 'bg-[#722013] border-[#722013] text-white shadow-md' 
-                            : 'bg-[#FAF6F0] border-[#E8DCC4] text-gray-600 hover:border-[#722013]/40 hover:bg-white'
-                        }`}
+                        disabled={isFullyBooked}
+                        onClick={() => setSelectedDateId(date.id)}
+                        className={`
+                          relative min-h-[88px] md:min-h-[100px]
+                          rounded-2xl border
+                          flex flex-col items-center justify-center
+                          transition-all duration-300
+
+                          ${
+                            isSelected
+
+                              ? "bg-[#2a0b06] text-white border-[#2a0b06] shadow-xl scale-[1.03]"
+
+                              : isFullyBooked
+
+                                ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+
+                                : "bg-[#FCF8F2] text-[#2a0b06] border-[#E8DCC4] hover:border-[#722013] hover:bg-white hover:shadow-md"
+                          }
+                        `}
                       >
-                        <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${selectedDate === date.id ? 'text-[#D4AF37]' : 'text-[#722013]'}`}>{date.month}</span>
-                        <span className="text-2xl font-serif font-bold leading-none mb-1">{date.displayDate}</span>
-                        <span className="text-xs font-medium opacity-80">{date.day}</span>
+
+                        <span
+                          className={`text-[9px] uppercase tracking-wider font-bold mb-1 ${
+                            isSelected
+                              ? "text-[#D4AF37]"
+                              : "text-gray-400"
+                          }`}
+                        >
+
+                          {date.weekday}
+
+                        </span>
+
+                        <span className="text-xl md:text-2xl font-serif font-bold leading-none">
+
+                          {date.dayNumber}
+
+                        </span>
+
+                        <span
+                          className={`text-[9px] uppercase tracking-wider mt-1 ${
+                            isSelected
+                              ? "text-white/60"
+                              : "text-gray-400"
+                          }`}
+                        >
+
+                          {date.monthShort}
+
+                        </span>
+
+
+                        {/* AVAILABILITY */}
+
+                        <span
+                          className={`
+                            mt-2 text-[8px] md:text-[9px]
+                            px-2 py-1 rounded-full font-bold
+
+                            ${
+                              isSelected
+
+                                ? "bg-white/10 text-[#D4AF37]"
+
+                                : isFullyBooked
+
+                                  ? "bg-gray-200 text-gray-400"
+
+                                  : remainingSlots === 1
+
+                                    ? "bg-orange-100 text-orange-700"
+
+                                    : "bg-[#D4AF37]/10 text-[#8A6B1F]"
+                            }
+                          `}
+                        >
+
+                          {isFullyBooked
+                            ? "Fully Booked"
+                            : `${remainingSlots} ${
+                                remainingSlots === 1
+                                  ? "slot"
+                                  : "slots"
+                              } left`}
+
+                        </span>
+
                       </button>
-                    ))}
-                  </div>
+
+                    );
+
+                  })}
+
                 </div>
 
-                {/* Time Slot Selector */}
-                <div>
-                  <h3 className="text-sm font-bold text-[#722013] uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> Available Slots
-                  </h3>
-                  <div className="space-y-3">
-                    {activeDayData?.slots.map((slot) => (
-                      <button
-                        key={slot.id}
-                        type="button"
-                        disabled={slot.status === 'blocked'}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all duration-300 ${
-                          slot.status === 'blocked' 
-                            ? 'bg-gray-50 border-gray-100 opacity-60 cursor-not-allowed'
-                            : selectedSlot?.id === slot.id
-                              ? 'bg-[#FCF8F2] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
-                              : 'bg-white border-[#E8DCC4] hover:border-[#722013]/40'
-                        }`}
-                      >
-                        <div>
-                          <div className={`font-serif font-bold text-lg ${slot.status === 'blocked' ? 'text-gray-500' : 'text-gray-900'}`}>
-                            {slot.title}
-                          </div>
-                          <div className="text-sm text-gray-500 font-medium mt-0.5">{slot.time}</div>
-                        </div>
-                        <div className="shrink-0 pl-4">
-                          {slot.status === 'blocked' ? (
-                            <span className="text-[10px] font-bold bg-gray-200 text-gray-500 px-3 py-1.5 rounded-full uppercase tracking-wider">Booked</span>
-                          ) : selectedSlot?.id === slot.id ? (
-                            <span className="text-[10px] font-bold bg-[#D4AF37] text-white px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Selected</span>
-                          ) : (
-                            <span className="text-[10px] font-bold bg-[#FAF6F0] text-[#722013] border border-[#E8DCC4] px-3 py-1.5 rounded-full uppercase tracking-wider">Available</span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
-              {/* Right Column: Devotee Details */}
-              <div className="bg-[#FAF6F0] rounded-3xl p-6 md:p-8 border border-[#E8DCC4]/50 flex flex-col justify-center">
-                <h3 className="text-2xl font-serif font-bold text-[#2a0b06] mb-2">Devotee Details</h3>
-                <p className="text-sm text-gray-500 font-medium mb-8">Enter your information to request the selected time slot. The administration will confirm your booking.</p>
-                
-                <div className="space-y-5 flex-grow">
+
+              {/* ====================================================
+                  BOOKING FORM
+              ==================================================== */}
+
+              <div className="lg:col-span-5 bg-[#FAF6F0] border-t lg:border-t-0 lg:border-l border-[#E8DCC4] p-5 sm:p-8 md:p-10 lg:p-12">
+
+                <p className="text-[10px] font-bold text-[#722013] uppercase tracking-[0.2em] mb-2">
+
+                  Devotee Information
+
+                </p>
+
+                <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#2a0b06] mb-8">
+
+                  Request Cultural Seva
+
+                </h3>
+
+
+                <div className="space-y-5">
+
+
+                  {/* NAME */}
+
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Full Name</label>
-                    <input 
-                      type="text" 
+
+                    <label className="block text-xs font-bold text-gray-600 mb-2">
+
+                      Full Name
+
+                    </label>
+
+                    <input
+                      type="text"
                       required
                       value={culturalForm.name}
-                      onChange={(e) => setCulturalForm({...culturalForm, name: e.target.value})}
-                      className="w-full px-5 py-3.5 rounded-xl border border-[#E8DCC4] focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none text-sm transition bg-white shadow-sm font-medium"
+                      onChange={(e) =>
+                        setCulturalForm({
+                          ...culturalForm,
+                          name: e.target.value,
+                        })
+                      }
                       placeholder="Enter your full name"
+                      className="w-full bg-white border border-[#E8DCC4]
+                                rounded-2xl px-5 py-4 outline-none
+                                focus:ring-2 focus:ring-[#D4AF37]/30
+                                focus:border-[#D4AF37]
+                                transition"
                     />
+
                   </div>
+
+
+                  {/* MOBILE */}
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Contact Number</label>
-                    <input 
-                      type="tel" 
-                      required
-                      value={culturalForm.contact}
-                      onChange={(e) => setCulturalForm({...culturalForm, contact: e.target.value})}
-                      className="w-full px-5 py-3.5 rounded-xl border border-[#E8DCC4] focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none text-sm transition bg-white shadow-sm font-medium"
-                      placeholder="+91 XXXXX XXXXX"
-                    />
-                  </div>
-                </div>
 
-                <div className="pt-8">
-                  <button 
-                    type="submit"
-                    disabled={!selectedSlot}
-                    className={`w-full py-4 rounded-xl font-bold text-sm transition-all duration-300 flex justify-center items-center gap-2 ${
-                      selectedSlot 
-                        ? 'bg-[#722013] text-white hover:bg-[#5a190f] shadow-lg shadow-[#722013]/20 cursor-pointer' 
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    Request Booking <ArrowRight className="w-4 h-4" />
-                  </button>
-                  {!selectedSlot && (
-                    <p className="text-center text-xs text-gray-500 mt-3 font-medium">Please select an available slot to continue</p>
+                    <label className="block text-xs font-bold text-gray-600 mb-2">
+
+                      Mobile Number
+
+                    </label>
+
+                    <input
+                      type="tel"
+                      required
+                      inputMode="numeric"
+                      maxLength={10}
+                      value={culturalForm.contact}
+                      onChange={(e) =>
+                        setCulturalForm({
+                          ...culturalForm,
+                          contact: e.target.value.replace(/\D/g, ""),
+                        })
+                      }
+                      placeholder="10-digit mobile number"
+                      className="w-full bg-white border border-[#E8DCC4]
+                                rounded-2xl px-5 py-4 outline-none
+                                focus:ring-2 focus:ring-[#D4AF37]/30
+                                focus:border-[#D4AF37]
+                                transition"
+                    />
+
+                  </div>
+
+
+                  {/* SOLO / GROUP */}
+
+                  <div>
+
+                    <label className="block text-xs font-bold text-gray-600 mb-2">
+
+                      Participation Type
+
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-2 bg-white border border-[#E8DCC4] p-1.5 rounded-2xl">
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBookingType("solo");
+                          setGroupCount(2);
+                        }}
+                        className={`py-3.5 rounded-xl text-sm font-bold transition-all ${
+                          bookingType === "solo"
+                            ? "bg-[#2a0b06] text-white shadow-md"
+                            : "text-gray-500 hover:bg-[#FAF6F0]"
+                        }`}
+                      >
+
+                        Solo
+
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setBookingType("group")}
+                        className={`py-3.5 rounded-xl text-sm font-bold transition-all ${
+                          bookingType === "group"
+                            ? "bg-[#2a0b06] text-white shadow-md"
+                            : "text-gray-500 hover:bg-[#FAF6F0]"
+                        }`}
+                      >
+
+                        Group
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* GROUP COUNT */}
+
+                  <AnimatePresence>
+
+                    {bookingType === "group" && (
+
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+
+                        <label className="block text-xs font-bold text-gray-600 mb-2">
+
+                          Number of Participants
+
+                        </label>
+
+                        <input
+                          type="number"
+                          min="2"
+                          required
+                          value={groupCount}
+                          onChange={(e) =>
+                            setGroupCount(e.target.value)
+                          }
+                          className="w-full bg-white border border-[#E8DCC4]
+                                    rounded-2xl px-5 py-4 outline-none
+                                    focus:ring-2 focus:ring-[#D4AF37]/30
+                                    focus:border-[#D4AF37]"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {/* SELECTED DATE SUMMARY */}
+                  {selectedDateData ? (
+                    <div className="bg-white border border-[#D4AF37]/40 rounded-2xl p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 mb-1">
+                            Selected Date
+                          </p>
+                          <p className="font-serif font-bold text-lg text-[#2a0b06]">
+                            {selectedDateData.fullDate}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-[#722013]">
+                            {selectedDateRemainingSlots}
+                          </p>
+                          <p className="text-[9px] uppercase tracking-wider text-gray-400">
+                            Slots Left
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border border-dashed border-[#D4AF37] rounded-2xl p-5 text-center">
+                      <CalendarDays className="w-5 h-5 text-[#D4AF37] mx-auto mb-2" />
+                      <p className="text-xs font-medium text-gray-500">
+                        Select an available date from the calendar.
+                      </p>
+                    </div>
                   )}
+                  {/* SUBMIT */}
+                  <button
+                    type="submit"
+                    disabled={
+                      !selectedDateId ||
+                      isSubmittingCultural
+                    }
+                    className={`
+                      w-full py-4 rounded-2xl font-bold
+                      flex items-center justify-center gap-2
+                      transition-all duration-300
+
+                      ${
+                        selectedDateId &&
+                        !isSubmittingCultural
+
+                          ? "bg-[#2a0b06] text-white hover:bg-[#722013] shadow-lg"
+
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }
+                    `}
+                  >
+                    {isSubmittingCultural
+                      ? "Submitting Request..."
+                      : "Submit Request"}
+
+                    {!isSubmittingCultural && (
+                      <ArrowRight className="w-4 h-4" />
+                    )}
+
+                  </button>
+
+
+                  <p className="text-[11px] text-gray-500 leading-relaxed text-center">
+
+                    Your request remains pending until reviewed and approved by the administration.
+
+                  </p>
                 </div>
               </div>
-              
-            </form>
-          </motion.div>
+            </div>
+          </form>
+          <div className="max-w-5xl mx-auto mt-10 md:mt-14">
+
+  <div
+    className="
+      bg-gradient-to-br
+      from-[#2a0b06]
+      to-[#4a150c]
+      rounded-[2rem]
+      md:rounded-[3rem]
+      overflow-hidden
+      shadow-2xl
+      border
+      border-[#722013]/40
+      relative
+    "
+  >
+
+    {/* DECORATION */}
+
+    <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#D4AF37]/10 blur-3xl pointer-events-none" />
+
+    <div className="relative z-10 p-6 sm:p-8 md:p-10 lg:p-12">
+
+      {/* HEADER */}
+
+      <div className="max-w-2xl mb-8">
+
+        <p className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-[0.22em] mb-3">
+          Track Your Request
+        </p>
+
+        <h3 className="text-3xl md:text-4xl font-serif font-bold text-white">
+          Check Cultural Program Status
+        </h3>
+
+        <p className="text-sm md:text-base text-[#D8C3BD] leading-relaxed mt-3">
+          Enter your Booking ID or registered mobile number to
+          check the latest status of your Cultural Seva request.
+        </p>
+
+      </div>
+
+
+      {/* SEARCH FORM */}
+
+      <form
+        onSubmit={handleCheckCulturalStatus}
+        className="
+          bg-white/10
+          backdrop-blur-md
+          border
+          border-white/10
+          rounded-2xl
+          p-4
+          md:p-5
+        "
+      >
+
+        <div className="flex flex-col sm:flex-row gap-3">
+
+          <input
+            type="text"
+            value={statusSearch}
+            onChange={(e) => {
+              setStatusSearch(e.target.value);
+              setStatusError("");
+              setStatusSearched(false);
+              setStatusResults([]);
+            }}
+            placeholder="Booking ID or Mobile Number"
+            className="
+              flex-1
+              min-w-0
+              bg-white
+              text-[#2a0b06]
+              border
+              border-white
+              rounded-xl
+              px-5
+              py-4
+              outline-none
+              focus:ring-2
+              focus:ring-[#D4AF37]
+            "
+          />
+
+          <button
+            type="submit"
+            disabled={isCheckingStatus}
+            className="
+              sm:w-auto
+              bg-gradient-to-r
+              from-[#D4AF37]
+              to-[#b5952f]
+              text-white
+              px-7
+              py-4
+              rounded-xl
+              font-bold
+              whitespace-nowrap
+              hover:shadow-lg
+              disabled:opacity-60
+              disabled:cursor-not-allowed
+              transition
+            "
+          >
+            {isCheckingStatus
+              ? "Checking..."
+              : "Check Status"}
+          </button>
+        </div>
+      </form>
+                {/* ERROR */}
+                {statusError && (
+                  <div className="mt-5 bg-red-500/10 border border-red-400/30 rounded-2xl p-4">
+
+                    <p className="text-sm font-medium text-red-200">
+                      {statusError}
+                    </p>
+
+                  </div>
+
+                )}
+
+
+                {/* NO RESULTS */}
+
+                {statusSearched &&
+                  !isCheckingStatus &&
+                  statusResults.length === 0 && (
+
+                    <div className="mt-6 bg-white/10 border border-white/10 rounded-2xl p-6 text-center">
+
+                      <p className="font-bold text-white">
+                        No Cultural Seva request found.
+                      </p>
+
+                      <p className="text-sm text-[#D8C3BD] mt-2">
+                        Please verify the Booking ID or registered mobile number.
+                      </p>
+
+                    </div>
+
+                )}
+
+
+                {/* RESULTS */}
+
+                {statusResults.length > 0 && (
+
+                  <div className="mt-8 space-y-5">
+
+                    {statusResults.map((booking) => {
+
+                      const status =
+                        booking.status?.toLowerCase() || "pending";
+
+                      const isApproved = status === "approved";
+
+                      const isRejected = status === "rejected";
+
+                      return (
+
+                        <div
+                          key={booking.id}
+                          className="
+                            bg-[#FCF8F2]
+                            rounded-2xl
+                            md:rounded-3xl
+                            p-5
+                            md:p-7
+                            shadow-xl
+                          "
+                        >
+
+                          {/* RESULT HEADER */}
+
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-[#E8DCC4]">
+
+                            <div>
+
+                              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">
+                                Booking ID
+                              </p>
+
+                              <p className="font-black text-[#2a0b06] mt-1 break-all">
+                                {booking.bookingId}
+                              </p>
+
+                            </div>
+
+
+                            <span
+                              className={`
+                                self-start
+                                px-4
+                                py-2
+                                rounded-full
+                                text-xs
+                                font-black
+                                uppercase
+                                tracking-wider
+
+                                ${
+                                  isApproved
+
+                                    ? "bg-green-100 text-green-700"
+
+                                    : isRejected
+
+                                      ? "bg-red-100 text-red-700"
+
+                                      : "bg-orange-100 text-orange-700"
+                                }
+                              `}
+                            >
+
+                              {isApproved
+                                ? "Approved"
+                                : isRejected
+                                  ? "Rejected"
+                                  : "Pending Approval"}
+
+                            </span>
+
+                          </div>
+
+
+                          {/* COMMON BOOKING DETAILS */}
+
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 py-6">
+
+                            <div>
+
+                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                Devotee
+                              </p>
+
+                              <p className="font-bold text-[#2a0b06] mt-1">
+                                {booking.name}
+                              </p>
+
+                            </div>
+
+
+                            <div>
+
+                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                Requested Date
+                              </p>
+
+                              <p className="font-bold text-[#2a0b06] mt-1">
+                                {booking.date}
+                              </p>
+
+                            </div>
+
+
+                            <div>
+
+                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                Participation
+                              </p>
+
+                              <p className="font-bold capitalize text-[#2a0b06] mt-1">
+                                {booking.participationType || "Solo"}
+                              </p>
+
+                            </div>
+
+
+                            <div>
+
+                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                Participants
+                              </p>
+
+                              <p className="font-bold text-[#2a0b06] mt-1">
+                                {booking.participantCount || 1}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* PENDING STATUS */}
+
+                          {!isApproved && !isRejected && (
+
+                            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
+
+                              <p className="font-bold text-orange-800">
+                                Your request is awaiting Admin approval.
+                              </p>
+
+                              <p className="text-sm text-orange-700/80 mt-2 leading-relaxed">
+                                The requested date is not confirmed yet.
+                                The administration will allocate the program time
+                                and duration before approving your request.
+                              </p>
+
+                            </div>
+
+                          )}
+
+
+                          {/* APPROVED STATUS */}
+
+                          {isApproved && (
+
+                            <div>
+
+                              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 md:p-6">
+
+                                <div className="flex items-center justify-between gap-4 mb-5">
+
+                                  <div>
+
+                                    <p className="text-[9px] uppercase tracking-wider font-bold text-green-600">
+                                      Confirmed Program Slot
+                                    </p>
+
+                                    <p className="text-xl md:text-2xl font-serif font-bold text-green-900 mt-1">
+
+                                      {formatCulturalTime(
+                                        booking.startTime
+                                      )}
+
+                                      {" — "}
+
+                                      {formatCulturalTime(
+                                        booking.endTime
+                                      )}
+
+                                    </p>
+
+                                  </div>
+
+                                </div>
+
+
+                                <div className="grid sm:grid-cols-2 gap-4">
+
+                                  <div className="bg-white rounded-xl p-4 border border-green-100">
+
+                                    <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                      Duration
+                                    </p>
+
+                                    <p className="font-black text-[#2a0b06] mt-1">
+                                      {getDurationLabel(
+                                        booking.durationMinutes
+                                      )}
+                                    </p>
+
+                                  </div>
+
+
+                                  <div className="bg-white rounded-xl p-4 border border-green-100">
+
+                                    <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                      Approved On
+                                    </p>
+
+                                    <p className="font-black text-[#2a0b06] mt-1">
+                                      {formatCulturalTimestamp(
+                                        booking.approvedAt
+                                      )}
+                                    </p>
+
+                                  </div>
+
+                                </div>
+
+                              </div>
+
+                            </div>
+
+                          )}
+
+
+                          {/* REJECTED STATUS */}
+
+                          {isRejected && (
+
+                            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 md:p-6">
+
+                              <p className="text-[9px] uppercase tracking-wider font-bold text-red-600">
+                                Request Status
+                              </p>
+
+                              <p className="text-xl font-serif font-bold text-red-900 mt-1">
+                                Cultural Seva Request Rejected
+                              </p>
+
+
+                              <div className="mt-5 bg-white rounded-xl p-4 border border-red-100">
+
+                                <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
+                                  Reason for Rejection
+                                </p>
+
+                                <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
+                                  {booking.rejectionReason ||
+                                    "No rejection reason was provided."}
+                                </p>
+
+                              </div>
+
+
+                              <p className="text-xs text-red-700 mt-4">
+                                Rejected on:{" "}
+                                <span className="font-bold">
+                                  {formatCulturalTimestamp(
+                                    booking.rejectedAt
+                                  )}
+                                </span>
+                              </p>
+
+                            </div>
+
+                          )}
+
+                        </div>
+
+                      );
+
+                    })}
+
+                  </div>
+
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
         </section>
         {/* --- 4. LATEST UPDATES (Carousel Top + Expanded Reader Bottom) --- */}
         <section id="updates" className="scroll-mt-32">
