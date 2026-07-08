@@ -3,27 +3,124 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ============================================================
+    // EXISTING SEVA BOOKINGS
+    // ============================================================
+
     match /bookings/{bookingId} {
       allow read, write: if true;
     }
+
+
+    // ============================================================
+    // COUNTERS
+    // ============================================================
 
     match /counters/{counterId} {
       allow read, write: if true;
     }
 
+
+    // ============================================================
+    // VIRTUAL BOOKINGS / PADA POOJA
+    // ============================================================
+
     match /virtualBookings/{bookingId} {
       allow read, write: if true;
     }
+
+
+    // ============================================================
+    // MANTRAKSHATA
+    // ============================================================
 
     match /mantrakshata/{docId} {
       allow read, write: if true;
     }
 
+
+    // ============================================================
+    // DAILY SCHEDULE
+    // ============================================================
+
     match /schedule/{docId} {
       allow read, write: if true;
     }
 
+
+    // ============================================================
+    // BLOGS
+    // ============================================================
+
     match /blogs/{docId} {
+      allow read, write: if true;
+    }
+
+
+    // ============================================================
+    // CULTURAL SEVA REQUESTS
+    //
+    // USER:
+    // - Submit request
+    // - Read availability/status
+    // - Search status by Booking ID
+    // - Search status by Mobile Number
+    //
+    // ADMIN:
+    // - Read pending requests
+    // - Read approved requests
+    // - Allocate program duration
+    // - Allocate start/end time
+    // - Approve request
+    // - Reject request
+    // - Add rejection reason
+    // ============================================================
+
+    match /culturalRequests/{requestId} {
+      allow read, write: if true;
+    }
+
+
+    // ============================================================
+    // CULTURAL AVAILABILITY
+    //
+    // Used by:
+    //
+    // ADMIN:
+    // - Firestore transaction
+    // - Check approvedCount
+    // - Increment approvedCount
+    // - Enforce maxSlots = 3
+    //
+    // USER:
+    // - Listen using onSnapshot
+    // - Display:
+    //
+    //      3 slots left
+    //      2 slots left
+    //      1 slot left
+    //      Fully Booked
+    //
+    // ============================================================
+
+    match /culturalAvailability/{dateId} {
+      allow read, write: if true;
+    }
+
+
+    // ============================================================
+    // CULTURAL CALENDAR
+    //
+    // Keep this collection if you are using it for:
+    //
+    // - Opening/closing booking dates
+    // - Special date configuration
+    // - Blocking particular dates
+    // - Calendar metadata
+    //
+    // ============================================================
+
+    match /culturalCalendar/{dateId} {
       allow read, write: if true;
     }
   }

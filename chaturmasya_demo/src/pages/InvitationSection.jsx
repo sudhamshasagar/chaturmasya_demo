@@ -60,16 +60,19 @@ export default function InvitationSection() {
   ];
 
   const committee = [
-    { id: 1, name: "Sri Ramachandra Bhat", role: "President" },
-    { id: 2, name: "Sri Narayana Sharma", role: "Secretary" },
-    { id: 3, name: "Sri Venkatesh Rao", role: "Treasurer" },
-    { id: 4, name: "Sri Krishna Prasad", role: "Chief Coordinator" },
+    { id: 1, name: "Shri Mohan Shet M K", role: "President" },
+    { id: 2, name: "Shri Arun Kumar M S", role: "Trustee" },
+    { id: 3, name: "Shri Manjunatha V Varnekar", role: "Secretary" },
+    { id: 4, name: "Shri Suryakantha N Raikar", role: "Chief Executive" },
+    { id: 4, name: "Shri Raghavendra R", role: "Board Member" },
+
   ];
 
   const contacts = [
-    { id: 1, name: "Swagatha Samithi", role: "General Inquiries", phone: "+91 98765 43210" },
-    { id: 2, name: "Seva Booking Desk", role: "Poojas & Donations", phone: "+91 98765 43211" },
-    { id: 3, name: "Accommodation", role: "Devotee Stay", phone: "+91 98765 43212" },
+    { id: 1, name: "Swagatha Samithi", role: "Shri Chandrashekhara Shet K S", phone: "+91 9448724275" },
+    { id: 2, name: "Seva Desk for Womens", role: "Smt. Mamatha Arun Kumar & Smt. Mamatha Rajkumar", phone: "+91 9739493673, 9731159009" },
+    { id: 3, name: "Alankara Samithi", role: "Shri Prashantha M Shet ", phone: "+91 9900797631" },
+    { id: 4, name: "Cultural Desk", role: "Shri C A Shashikanth Rajkumar Shet ", phone: "+91 9448519501" },
   ];
 
   return (
