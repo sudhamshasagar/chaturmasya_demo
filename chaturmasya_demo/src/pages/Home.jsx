@@ -33,6 +33,7 @@ import {
 import InvitationSection from "./InvitationSection";
 import CBookingUser from "./CulturalProgram";
 import CulturalStatusTracker from "./CulturalStatusTracker";
+import Footer from "./Footer";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -54,6 +55,7 @@ const Home = () => {
   // --- Blog, Filters & Carousel State ---
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [activeFilter, setActiveFilter] = useState({ type: 'all', value: 'all' });
+  
   const carouselRef = useRef(null);
 
   const blogs = [
@@ -142,11 +144,17 @@ const Home = () => {
   const [selectedDateId, setSelectedDateId] = useState("");
   const [approvedBookings, setApprovedBookings] = useState([]);
   const [culturalForm, setCulturalForm] = useState({
-  name: "",
-  contact: "",
-  category: "",
-  otherCategory: "",
-});
+    name: "",
+    contact: "",
+    category: "",
+    otherCategory: "",
+    groupName: "",
+    address: "",
+    state: "",
+    district: "",
+    city: "",
+    pincode: "",
+  });
   const [bookingType, setBookingType] = useState("solo");
   const [groupCount, setGroupCount] = useState(2);
   const [isSubmittingCultural, setIsSubmittingCultural] = useState(false);
@@ -349,11 +357,11 @@ if (category === "Others" && !finalCategory) {
     );
 
     setCulturalForm({
-  name: "",
-  contact: "",
-  category: "",
-  otherCategory: "",
-});
+      name: "",
+      contact: "",
+      category: "",
+      otherCategory: "",
+    });
 
     setBookingType("solo");
     setGroupCount(2);
@@ -537,6 +545,41 @@ const handleCheckCulturalStatus = async (e) => {
   }
 };
 
+const CHATURMASYA_START_DATE = new Date("2026-07-29T00:00:00+05:30");
+
+const calculateTimeLeft = () => {
+  const difference =
+    CHATURMASYA_START_DATE.getTime() - new Date().getTime();
+
+  if (difference <= 0) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      hasStarted: true,
+    };
+  }
+
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / (1000 * 60)) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+    hasStarted: false,
+  };
+};
+
+const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
+
+useEffect(() => {
+  const countdownTimer = setInterval(() => {
+    setTimeLeft(calculateTimeLeft());
+  }, 1000);
+
+  return () => clearInterval(countdownTimer);
+}, []);
+
   return (
     <div className="min-h-screen bg-[#FCF8F2] font-sans text-gray-900 selection:bg-[#722013] selection:text-[#FCF8F2] overflow-x-hidden">
       
@@ -547,8 +590,8 @@ const handleCheckCulturalStatus = async (e) => {
       {/* --- TOP ADMIN BAR --- */}
       <div id="top" className="bg-[#FAF6F0] text-[#722013] py-2 px-6 text-[10px] tracking-[0.2em] uppercase font-bold flex justify-between items-center z-50 relative border-b border-[#E8DCC4]">
         <span className="flex items-center gap-2 opacity-80">
-          <span className="w-1.5 h-1.5 bg-[#E86A33] rounded-full"></span> 
-          Auspicious Day: Ekadashi
+          {/* <span className="w-1.5 h-1.5 bg-[#E86A33] rounded-full"></span>  */}
+           Jai Jnaneshwari
         </span>
         <Link to="/admin" className="flex items-center gap-2 hover:text-[#E86A33] transition-colors">
           <Users className="w-3.5 h-3.5" />
@@ -648,192 +691,268 @@ const handleCheckCulturalStatus = async (e) => {
 
       {/* --- CINEMATIC HERO SECTION --- */}
       <section className="relative w-full pt-20 pb-6 md:pt-28 md:pb-24 z-10 overflow-hidden flex items-centre">
-  {/* Soft ambient wash */}
-  <div className="absolute top-16 -left-32 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/10 blur-[120px] pointer-events-none -z-10" />
-  <div className="absolute bottom-0 right-0 w-[420px] h-[420px] rounded-full bg-[#722013]/10 blur-[100px] pointer-events-none -z-10" />
+        {/* Soft ambient wash */}
+        <div className="absolute top-16 -left-32 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/10 blur-[120px] pointer-events-none -z-10" />
+        <div className="absolute bottom-0 right-0 w-[420px] h-[420px] rounded-full bg-[#722013]/10 blur-[100px] pointer-events-none -z-10" />
 
-  <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full">
-   <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">  
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">  
 
-      {/* ==================== LEFT: TEXT ==================== */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={staggerContainer}
-        className="lg:col-span-5 order-2 lg:order-1"
-      >
-        {/* Credit line — top left of title */}
-        <motion.div variants={fadeUp} className="mb-5 flex items-center gap-3">
-          <span className="w-8 h-[1px] bg-[#D4AF37]" />
-          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-[#722013]">
-            Daivajna Brahman Samaja<sup className="text-[8px] mx-0.5">®</sup> Sagara
-          </p>
-        </motion.div>
+            {/* ==================== LEFT: TEXT ==================== */}
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
+              className="lg:col-span-5 order-2 lg:order-1"
+            >
+              {/* Credit line — top left of title */}
+              <motion.div variants={fadeUp} className="mb-5 flex items-center gap-3">
+                <span className="w-8 h-[1px] bg-[#D4AF37]" />
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-[#722013]">
+                  Daivajna Brahman Samaja<sup className="text-[8px] mx-0.5">®</sup> Sagara
+                </p>
+              </motion.div>
 
-        {/* Live tag */}
-        <motion.div
-          variants={fadeUp}
-          className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#E8DCC4] px-3.5 py-1.5 rounded-full shadow-sm mb-6"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E86A33]" />
-          </span>
-          <span className="text-[9px] sm:text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">
-            Commencing 29 July 2026
-          </span>
-        </motion.div>
+              {/* Live tag */}
+              <motion.div
+                variants={fadeUp}
+                className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#E8DCC4] px-3.5 py-1.5 rounded-full shadow-sm mb-6"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E86A33]" />
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">
+                  Commencing 29 July 2026
+                </span>
+              </motion.div>
 
-        {/* Ordinal + main title */}
-        <motion.div variants={fadeUp} className="mb-6">
-          <p className="font-serif italic text-[#c2410c] text-3xl sm:text-4xl mb-1 leading-none">
-            <span className="tabular-nums font-black not-italic text-[#2a0b06]">41</span>
-            <sup className="text-lg font-bold not-italic text-[#722013] ml-0.5">st</sup>
-          </p>
-          <h1 className="font-serif font-bold text-[#2a0b06] leading-[0.95] tracking-tight text-4xl sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
-            Chaturmasya
-            <span className="block italic font-light text-[#722013]">
-              Vratothsava
-            </span>
-            <span className="block text-[#2a0b06] tabular-nums">
-              — 2026
-            </span>
-          </h1>
-        </motion.div>
+              {/* Ordinal + main title */}
+              <motion.div variants={fadeUp} className="mb-6">
+                <p className="font-serif italic text-[#c2410c] text-3xl sm:text-4xl mb-1 leading-none">
+                  <span className="tabular-nums font-black not-italic text-[#2a0b06]">41</span>
+                  <sup className="text-lg font-bold not-italic text-[#722013] ml-0.5">st</sup>
+                </p>
+                <h1 className="font-serif font-bold text-[#2a0b06] leading-[0.95] tracking-tight text-4xl sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
+                  Chaturmasya
+                  <span className="block italic font-light text-[#722013]">
+                    Vratothsava
+                  </span>
+                  <span className="block text-[#2a0b06] tabular-nums">
+                    — 2026
+                  </span>
+                </h1>
+              </motion.div>
 
-        {/* Sanskrit invocation */}
-        <motion.div variants={fadeUp} className="mb-6 pl-4 border-l-2 border-[#D4AF37]">
-          <p className="font-serif italic text-[#722013] text-base sm:text-lg leading-snug">
-            Jai Jnaneshwari
-          </p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-[0.22em] font-bold mt-1">
-            The Sacred Months
-          </p>
-        </motion.div>
+              {/* Sanskrit invocation */}
+              <motion.div variants={fadeUp} className="mb-6 pl-4 border-l-2 border-[#D4AF37]">
+                <p className="font-serif italic text-[#722013] text-base sm:text-lg leading-snug">
+                  Jai Jnaneshwari
+                </p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-[0.22em] font-bold mt-1">
+                  The Sacred Months
+                </p>
+              </motion.div>
 
-        {/* Description */}
-        <motion.p
-          variants={fadeUp}
-          className="text-[15px] sm:text-base text-gray-600 max-w-md leading-relaxed"
-        >
-          <p className="text-xs font-serif italic text-[#722013] leading-relaxed">
-              May the sacred vow of Chaturmasya bring inner light to every devotee.
-            </p>
-            <p className="text-[9px] font-bold text-stone-900 uppercase tracking-widest mt-3">— Pujya Sri Swamiji</p>
-        </motion.p>
+              {/* Description */}
+              <motion.p
+                variants={fadeUp}
+                className="text-[15px] sm:text-base text-gray-600 max-w-md leading-relaxed"
+              >
+                <p className="text-xs font-serif italic text-[#722013] leading-relaxed">
+                    May the sacred vow of Chaturmasya bring inner light to every devotee.
+                  </p>
+                  <p className="text-[9px] font-bold text-stone-900 uppercase tracking-widest mt-3">— Pujya Sri Swamiji</p>
+              </motion.p>
 
-        {/* CTAs */}
-        {/* <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-8">
-          <a
-            href="#live-darshan"
-            className="group inline-flex items-center gap-2 bg-[#2a0b06] text-white px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:bg-[#722013] transition-all shadow-xl shadow-[#722013]/20"
-          >
-            <PlayCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            Watch Live Darshana
-          </a>
-          <Link
-            to="/explore"
-            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#E8DCC4] text-[#722013] px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:border-[#722013] hover:bg-white transition-all"
-          >
-            Explore Programs
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </motion.div> */}
+              {/* CTAs */}
+              {/* <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-8">
+                <a
+                  href="#live-darshan"
+                  className="group inline-flex items-center gap-2 bg-[#2a0b06] text-white px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:bg-[#722013] transition-all shadow-xl shadow-[#722013]/20"
+                >
+                  <PlayCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  Watch Live Darshana
+                </a>
+                <Link
+                  to="/explore"
+                  className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#E8DCC4] text-[#722013] px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:border-[#722013] hover:bg-white transition-all"
+                >
+                  Explore Programs
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </motion.div> */}
 
-        {/* Ornamental footer meta */}
-        <motion.div
-          variants={fadeUp}
-          className="mt-10 pt-6 border-t border-[#E8DCC4] grid grid-cols-3 gap-4 max-w-md"
-        >
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Duration</p>
-            <p className="font-serif font-bold text-sm text-[#2a0b06]">60 Days</p>
-          </div>
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Venue</p>
-            <p className="font-serif font-bold text-sm text-[#2a0b06]">Sagara</p>
-          </div>
-        </motion.div>
-      </motion.div>
+              {/* Ornamental footer meta */}
+              <motion.div
+                variants={fadeUp}
+                className="mt-10 pt-6 border-t border-[#E8DCC4] grid grid-cols-3 gap-4 max-w-md"
+              >
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Duration</p>
+                  <p className="font-serif font-bold text-sm text-[#2a0b06]">60 Days</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Venue</p>
+                  <p className="font-serif font-bold text-sm text-[#2a0b06]">Sagara</p>
+                </div>
+              </motion.div>
+            </motion.div>
 
-      {/* ==================== RIGHT: IMAGE ==================== */}
+            {/* ==================== RIGHT: IMAGE ==================== */}
+            {/* ==================== RIGHT: COUNTDOWN + IMAGE ==================== */}
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         className="lg:col-span-7 order-1 lg:order-2 relative"
       >
-        {/* Editorial frame with folio marks */}
-        <div className="relative">
+        {/* ==================== COUNTDOWN ==================== */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="max-w-[620px] mx-auto mb-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl border border-[#E8DCC4] rounded-2xl px-4 sm:px-6 py-4 shadow-lg shadow-[#722013]/5">
 
-          {/* Corner folio marks (top-left) */}
-          <div className="hidden md:block absolute -top-4 -left-4 z-20">
-            <div className="w-8 h-8 border-l-2 border-t-2 border-[#D4AF37]" />
-          </div>
-          <div className="hidden md:block absolute -bottom-4 -right-4 z-20">
-            <div className="w-8 h-8 border-r-2 border-b-2 border-[#D4AF37]" />
-          </div>
+            {/* Label */}
+            <div className="shrink-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-60 animate-ping" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#E86A33]" />
+                </span>
 
-          {/* Main image container — taller & richer */}
-          <div
-  className="
-    relative
-    w-full
-    max-w-[620px]
-    mx-auto
-    h-[420px]
-    sm:h-[500px]
-    md:h-[560px]
-    lg:h-[min(68vh,620px)]
-    xl:h-[min(72vh,660px)]
-    rounded-[2rem]
-    lg:rounded-[2.5rem]
-    overflow-hidden
-    shadow-2xl
-    shadow-[#722013]/20
-  "
->
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={currentSlide}
-                initial={{ opacity: 0, scale: 1.08 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.5 }}
-                src={heroSlides[currentSlide].img}
-                alt="Chaturmasya Vratothsava"
-                className="w-full h-full object-cover"
-              />
-            </AnimatePresence>
+                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#722013]">
+                  Chaturmasya Begins In
+                </p>
+              </div>
 
-            {/* Layered gradients for depth */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2a0b06]/70 via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#722013]/20" />
-            {/* Bottom overlay — sacred quote & meta */}
-            <div className="absolute inset-x-5 bottom-5 md:inset-x-8 md:bottom-8">
-              <div className="bg-black/30 backdrop-blur-xl border border-white/15 rounded-2xl p-4 md:p-5">
-                <div className="flex items-start gap-3">
-                  <span className="font-serif text-4xl text-[#D4AF37] leading-none mt-1">"</span>
-                  <div className="min-w-0">
-                    <p className="font-serif italic text-white text-sm md:text-base leading-snug">
-                      Peace is not the absence of trouble, but the presence of divinity.
-                    </p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <span className="w-6 h-[1px] bg-[#D4AF37]" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">
-                        Śloka of the Day
+              <p className="font-serif text-xs text-gray-500">
+                29 July 2026
+              </p>
+            </div>
+
+            {/* Countdown Numbers */}
+            {!timeLeft.hasStarted ? (
+              <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+
+                {[
+                  { value: timeLeft.days, label: "Days" },
+                  { value: timeLeft.hours, label: "Hrs" },
+                  { value: timeLeft.minutes, label: "Mins" },
+                  { value: timeLeft.seconds, label: "Secs" },
+                ].map((item, index) => (
+                  <React.Fragment key={item.label}>
+
+                    <div className="min-w-[48px] sm:min-w-[58px] text-center">
+                      <p className="font-serif font-bold text-xl sm:text-2xl text-[#2a0b06] tabular-nums leading-none">
+                        {String(item.value).padStart(2, "0")}
                       </p>
+
+                      <p className="mt-1.5 text-[8px] sm:text-[9px] uppercase tracking-[0.16em] font-bold text-gray-400">
+                        {item.label}
+                      </p>
+                    </div>
+
+                    {index < 3 && (
+                      <span className="font-serif text-lg text-[#D4AF37] -mt-4">
+                        :
+                      </span>
+                    )}
+
+                  </React.Fragment>
+                ))}
+
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-[#722013]/5 border border-[#722013]/10 px-4 py-2 rounded-xl">
+                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+
+                <p className="font-serif font-bold text-sm text-[#722013]">
+                  Chaturmasya Vratothsava Has Commenced
+                </p>
+              </div>
+            )}
+
+          </div>
+        </motion.div>
+
+        {/* ==================== EXISTING IMAGE ==================== */}
+        <div className="relative">
+              {/* Editorial frame with folio marks */}
+              <div className="relative">
+
+                {/* Corner folio marks (top-left) */}
+                <div className="hidden md:block absolute -top-4 -left-4 z-20">
+                  <div className="w-8 h-8 border-l-2 border-t-2 border-[#D4AF37]" />
+                </div>
+                <div className="hidden md:block absolute -bottom-4 -right-4 z-20">
+                  <div className="w-8 h-8 border-r-2 border-b-2 border-[#D4AF37]" />
+                </div>
+
+                {/* Main image container — taller & richer */}
+                <div
+                    className="
+                      relative
+                      w-full
+                      max-w-[620px]
+                      mx-auto
+                      h-[420px]
+                      sm:h-[500px]
+                      md:h-[560px]
+                      lg:h-[min(68vh,620px)]
+                      xl:h-[min(72vh,660px)]
+                      rounded-[2rem]
+                      lg:rounded-[2.5rem]
+                      overflow-hidden
+                      shadow-2xl
+                      shadow-[#722013]/20
+                    "
+                  >
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={currentSlide}
+                      initial={{ opacity: 0, scale: 1.08 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1.5 }}
+                      src={heroSlides[currentSlide].img}
+                      alt="Chaturmasya Vratothsava"
+                      className="w-full h-full object-cover"
+                    />
+                  </AnimatePresence>
+
+                  {/* Layered gradients for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#2a0b06]/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#722013]/20" />
+                  {/* Bottom overlay — sacred quote & meta */}
+                  <div className="absolute inset-x-5 bottom-5 md:inset-x-8 md:bottom-8">
+                    <div className="bg-black/30 backdrop-blur-xl border border-white/15 rounded-2xl p-4 md:p-5">
+                      <div className="flex items-start gap-3">
+                        <span className="font-serif text-4xl text-[#D4AF37] leading-none mt-1">"</span>
+                        <div className="min-w-0">
+                          <p className="font-serif italic text-white text-sm md:text-base leading-snug">
+                            Peace is not the absence of trouble, but the presence of divinity.
+                          </p>
+                          <div className="flex items-center gap-2 mt-3">
+                            <span className="w-6 h-[1px] bg-[#D4AF37]" />
+                            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">
+                              Śloka of the Day
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </motion.div>
-    </div>
-  </div>
-</section>
+      </section>
 
 
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
@@ -1259,77 +1378,7 @@ const handleCheckCulturalStatus = async (e) => {
       </main>
 
       {/* --- PREMIUM FOOTER --- */}
-      <footer className="bg-gradient-to-b from-[#3a0f08] to-[#1a0402] text-white mt-32 rounded-t-[3rem] relative overflow-hidden">
-        {/* Abstract Temple Silhouette / Decoration */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl opacity-5 pointer-events-none">
-          <svg viewBox="0 0 1000 300" fill="currentColor"><path d="M500 0L600 100H400L500 0Z M300 300L400 150H200L300 300Z M700 300L800 150H600L700 300Z"/></svg>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 md:px-12 py-24 grid md:grid-cols-12 gap-12 relative z-10">
-          
-          <div className="md:col-span-5">
-            <div className="flex items-center gap-3 mb-6">
-              <Sun className="w-8 h-8 text-[#D4AF37]" />
-              <h2 className="text-3xl font-bold font-serif text-[#FAF6F0] tracking-wide">Karki Mutt</h2>
-            </div>
-            <p className="text-[#D8C3BD] text-sm leading-relaxed max-w-sm mb-8 font-light">
-              The official digital platform connecting devotees worldwide to the sacred traditions, rituals, and teachings during the holy Chaturmasya period.
-            </p>
-            <div className="flex gap-4">
-              {/* Social Placeholders */}
-              {[1, 2, 3].map(i => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-[#D4AF37] hover:border-[#D4AF37] transition-all duration-300">
-                  <div className="w-4 h-4 bg-white/80 rounded-sm"></div>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="md:col-span-3">
-            <h3 className="text-[11px] font-bold mb-6 uppercase tracking-[0.2em] text-[#D4AF37]">Quick Links</h3>
-            <ul className="space-y-4 text-sm text-[#D8C3BD] font-medium">
-              {['Home', 'Book Seva', 'Live Darshana', 'Daily Schedule'].map(link => (
-                <li key={link}>
-                  <a href={`#${link.toLowerCase().replace(' ', '-')}`} className="hover:text-white flex items-center gap-2 group transition-colors">
-                    <ChevronRight className="w-3 h-3 text-[#722013] group-hover:text-[#D4AF37] transition-colors" /> {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="md:col-span-4">
-            <h3 className="text-[11px] font-bold mb-6 uppercase tracking-[0.2em] text-[#D4AF37]">Contact Ashram</h3>
-            <ul className="space-y-5 text-sm text-[#D8C3BD]">
-              <li className="flex items-start gap-4">
-                <Phone className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                <span className="mt-0.5">+91 XXXXX XXXXX</span>
-              </li>
-              <li className="flex items-start gap-4">
-                <Mail className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                <span className="mt-0.5">info@chaturmasya.org</span>
-              </li>
-              <li className="flex items-start gap-4">
-                <MapPin className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                <span className="mt-0.5 leading-relaxed">Sagara, Karnataka<br/>India</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-white/10 bg-black/40 relative z-10">
-          <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between text-xs text-[#D8C3BD]">
-            <p>&copy; 2026 Karki Mutt. All rights reserved.</p>
-            <p className="font-serif italic text-[#D4AF37] text-sm my-4 md:my-0 tracking-wide">Sarveh Bhavantu Sukhinaha</p>
-            <div className="flex items-center gap-2">
-              <span>Crafted with devotion by</span>
-              <a href="https://elv8.works" target="_blank" rel="noreferrer" className="text-white font-bold hover:text-[#D4AF37] transition flex items-center gap-1.5">
-                elv8.works
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer/>
 
       {/* --- CULTURAL BOOKING MODAL (Glassmorphism) --- */}
       <AnimatePresence>
