@@ -60,11 +60,11 @@ export default function InvitationSection() {
   ];
 
   const committee = [
-    { id: 1, name: "Shri Mohan Shet M K", role: "President" },
-    { id: 2, name: "Shri Arun Kumar M S", role: "Trustee" },
-    { id: 3, name: "Shri Manjunatha V Varnekar", role: "Secretary" },
-    { id: 4, name: "Shri Suryakantha N Raikar", role: "Chief Executive" },
-    { id: 4, name: "Shri Raghavendra R", role: "Board Member" },
+    { id: 1, name: "Shri Mohan Shet M K", role: "Honarary President" },
+    { id: 2, name: "Shri Arun Kumar M S", role: "President" },
+    { id: 3, name: "Shri Manjunatha V Varnekar", role: "Working President" },
+    { id: 4, name: "Shri Suryakantha N Raikar", role: "Chief Secretary" },
+    { id: 4, name: "Shri Raghavendra R", role: "Treasurer" },
 
   ];
 

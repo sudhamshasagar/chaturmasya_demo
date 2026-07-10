@@ -31,6 +31,8 @@ import {
   Menu
 } from "lucide-react";
 import InvitationSection from "./InvitationSection";
+import CBookingUser from "./CulturalProgram";
+import CulturalStatusTracker from "./CulturalStatusTracker";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -140,9 +142,11 @@ const Home = () => {
   const [selectedDateId, setSelectedDateId] = useState("");
   const [approvedBookings, setApprovedBookings] = useState([]);
   const [culturalForm, setCulturalForm] = useState({
-    name: "",
-    contact: "",
-  });
+  name: "",
+  contact: "",
+  category: "",
+  otherCategory: "",
+});
   const [bookingType, setBookingType] = useState("solo");
   const [groupCount, setGroupCount] = useState(2);
   const [isSubmittingCultural, setIsSubmittingCultural] = useState(false);
@@ -265,6 +269,12 @@ const Home = () => {
 
     const name = culturalForm.name.trim();
     const contact = culturalForm.contact.trim();
+    const category = culturalForm.category;
+
+const finalCategory =
+  category === "Others"
+    ? culturalForm.otherCategory.trim()
+    : category;
 
     if (!name) {
       alert("Please enter your full name.");
@@ -275,6 +285,16 @@ const Home = () => {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
+
+    if (!category) {
+  alert("Please select a program category.");
+  return;
+}
+
+if (category === "Others" && !finalCategory) {
+  alert("Please enter the program category.");
+  return;
+}
 
     if (!selectedDateId) {
       alert("Please select an available date.");
@@ -329,9 +349,11 @@ const Home = () => {
     );
 
     setCulturalForm({
-      name: "",
-      contact: "",
-    });
+  name: "",
+  contact: "",
+  category: "",
+  otherCategory: "",
+});
 
     setBookingType("solo");
     setGroupCount(2);
@@ -1016,957 +1038,50 @@ const handleCheckCulturalStatus = async (e) => {
 
           </div>
         </section>
+        <CBookingUser
+          culturalDates={culturalDates}
+          getRemainingSlots={getRemainingSlots}
 
-        {/* --- 3. CULTURAL ACTIVITIES (Inline Calendar Form) --- */}
-       <section
-          id="cultural"
-          className="scroll-mt-32 max-w-7xl mx-auto"
-        >
-          {/* ========================================================
-              SECTION HEADER
-          ======================================================== */}
-          <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-            <div className="inline-flex items-center gap-2 bg-[#722013]/5 border border-[#722013]/10 px-4 py-2 rounded-full mb-5">
+          selectedDateId={selectedDateId}
+          setSelectedDateId={setSelectedDateId}
 
-              <span className="relative flex h-2 w-2">
+          selectedDateData={selectedDateData}
+          selectedDateRemainingSlots={selectedDateRemainingSlots}
 
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-75" />
+          culturalForm={culturalForm}
+          setCulturalForm={setCulturalForm}
 
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E86A33]" />
+          bookingType={bookingType}
+          setBookingType={setBookingType}
 
-              </span>
+          groupCount={groupCount}
+          setGroupCount={setGroupCount}
 
-              <span className="text-[10px] md:text-xs font-bold text-[#722013] uppercase tracking-[0.18em]">
+          isSubmittingCultural={isSubmittingCultural}
 
-                Bookings Open
+          handleCulturalSubmit={handleCulturalSubmit}
+        />
+        <CulturalStatusTracker
+          statusSearch={statusSearch}
+          setStatusSearch={setStatusSearch}
 
-              </span>
+          statusResults={statusResults}
+          setStatusResults={setStatusResults}
 
-            </div>
+          isCheckingStatus={isCheckingStatus}
 
-            <h2 className="text-4xl md:text-5xl font-bold text-[#2a0b06] font-serif mb-4">
+          statusSearched={statusSearched}
+          setStatusSearched={setStatusSearched}
 
-              Cultural Seva Booking
+          statusError={statusError}
+          setStatusError={setStatusError}
 
-            </h2>
+          handleCheckCulturalStatus={handleCheckCulturalStatus}
 
-            <p className="text-gray-600 leading-relaxed">
-
-              Offer music, bhajans, dance, Harikatha, discourse, or
-              another cultural program during Chaturmasya.
-
-            </p>
-
-            <p className="text-sm font-bold text-[#722013] mt-4">
-
-              July 29 — September 26, 2026
-
-              <span className="mx-2 text-[#D4AF37]">•</span>
-
-              Maximum 3 approved programs per day
-
-            </p>
-
-          </div>
-
-
-          {/* ========================================================
-              ADMIN APPROVAL NOTICE
-          ======================================================== */}
-
-          <div className="max-w-5xl mx-auto mb-8">
-
-            <div className="bg-[#FFF8E8] border border-[#E8D3A5] rounded-2xl p-5 md:p-6 flex gap-4">
-
-              <div className="w-10 h-10 shrink-0 rounded-full bg-[#D4AF37]/15 flex items-center justify-center">
-
-                <Clock className="w-5 h-5 text-[#9A7625]" />
-
-              </div>
-
-              <div>
-
-                <h3 className="font-bold text-[#2a0b06] mb-1">
-
-                  Admin approval is required
-
-                </h3>
-
-                <p className="text-sm text-gray-600 leading-relaxed">
-
-                  Submitting this form does not confirm your Cultural
-                  Seva booking. Your request will be reviewed by the
-                  administration. Your program will be considered booked
-                  only after Admin approval and confirmation.
-
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* ========================================================
-              MAIN BOOKING CARD
-          ======================================================== */}
-
-          <form
-            onSubmit={handleCulturalSubmit}
-            className="bg-white rounded-[2rem] md:rounded-[3rem]
-                      shadow-[0_20px_60px_rgba(42,11,6,0.06)]
-                      border border-[#E8DCC4]/60
-                      overflow-hidden"
-          >
-
-            <div className="grid lg:grid-cols-12">
-
-
-              {/* ====================================================
-                  CALENDAR
-              ==================================================== */}
-
-              <div className="lg:col-span-7 p-5 sm:p-8 md:p-10 lg:p-12">
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-
-                  <div>
-
-                    <p className="text-[10px] font-bold text-[#722013] uppercase tracking-[0.2em] mb-2">
-
-                      Select Date
-
-                    </p>
-
-                    <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#2a0b06]">
-
-                      Choose an available day
-
-                    </h3>
-
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[10px] font-bold text-gray-500">
-
-                    <div className="flex items-center gap-1.5">
-
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37]" />
-
-                      Available
-
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-
-                      <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-
-                      Full
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-
-                {/* DATE GRID */}
-
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2 md:gap-3">
-
-                  {culturalDates.map((date) => {
-
-                    const remainingSlots = getRemainingSlots(date.id);
-
-                    const isFullyBooked = remainingSlots === 0;
-
-                    const isSelected =
-                      selectedDateId === date.id;
-
-                    return (
-
-                      <button
-                        key={date.id}
-                        type="button"
-                        disabled={isFullyBooked}
-                        onClick={() => setSelectedDateId(date.id)}
-                        className={`
-                          relative min-h-[88px] md:min-h-[100px]
-                          rounded-2xl border
-                          flex flex-col items-center justify-center
-                          transition-all duration-300
-
-                          ${
-                            isSelected
-
-                              ? "bg-[#2a0b06] text-white border-[#2a0b06] shadow-xl scale-[1.03]"
-
-                              : isFullyBooked
-
-                                ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
-
-                                : "bg-[#FCF8F2] text-[#2a0b06] border-[#E8DCC4] hover:border-[#722013] hover:bg-white hover:shadow-md"
-                          }
-                        `}
-                      >
-
-                        <span
-                          className={`text-[9px] uppercase tracking-wider font-bold mb-1 ${
-                            isSelected
-                              ? "text-[#D4AF37]"
-                              : "text-gray-400"
-                          }`}
-                        >
-
-                          {date.weekday}
-
-                        </span>
-
-                        <span className="text-xl md:text-2xl font-serif font-bold leading-none">
-
-                          {date.dayNumber}
-
-                        </span>
-
-                        <span
-                          className={`text-[9px] uppercase tracking-wider mt-1 ${
-                            isSelected
-                              ? "text-white/60"
-                              : "text-gray-400"
-                          }`}
-                        >
-
-                          {date.monthShort}
-
-                        </span>
-
-
-                        {/* AVAILABILITY */}
-
-                        <span
-                          className={`
-                            mt-2 text-[8px] md:text-[9px]
-                            px-2 py-1 rounded-full font-bold
-
-                            ${
-                              isSelected
-
-                                ? "bg-white/10 text-[#D4AF37]"
-
-                                : isFullyBooked
-
-                                  ? "bg-gray-200 text-gray-400"
-
-                                  : remainingSlots === 1
-
-                                    ? "bg-orange-100 text-orange-700"
-
-                                    : "bg-[#D4AF37]/10 text-[#8A6B1F]"
-                            }
-                          `}
-                        >
-
-                          {isFullyBooked
-                            ? "Fully Booked"
-                            : `${remainingSlots} ${
-                                remainingSlots === 1
-                                  ? "slot"
-                                  : "slots"
-                              } left`}
-
-                        </span>
-
-                      </button>
-
-                    );
-
-                  })}
-
-                </div>
-
-              </div>
-
-
-              {/* ====================================================
-                  BOOKING FORM
-              ==================================================== */}
-
-              <div className="lg:col-span-5 bg-[#FAF6F0] border-t lg:border-t-0 lg:border-l border-[#E8DCC4] p-5 sm:p-8 md:p-10 lg:p-12">
-
-                <p className="text-[10px] font-bold text-[#722013] uppercase tracking-[0.2em] mb-2">
-
-                  Devotee Information
-
-                </p>
-
-                <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#2a0b06] mb-8">
-
-                  Request Cultural Seva
-
-                </h3>
-
-
-                <div className="space-y-5">
-
-
-                  {/* NAME */}
-
-                  <div>
-
-                    <label className="block text-xs font-bold text-gray-600 mb-2">
-
-                      Full Name
-
-                    </label>
-
-                    <input
-                      type="text"
-                      required
-                      value={culturalForm.name}
-                      onChange={(e) =>
-                        setCulturalForm({
-                          ...culturalForm,
-                          name: e.target.value,
-                        })
-                      }
-                      placeholder="Enter your full name"
-                      className="w-full bg-white border border-[#E8DCC4]
-                                rounded-2xl px-5 py-4 outline-none
-                                focus:ring-2 focus:ring-[#D4AF37]/30
-                                focus:border-[#D4AF37]
-                                transition"
-                    />
-
-                  </div>
-
-
-                  {/* MOBILE */}
-
-                  <div>
-
-                    <label className="block text-xs font-bold text-gray-600 mb-2">
-
-                      Mobile Number
-
-                    </label>
-
-                    <input
-                      type="tel"
-                      required
-                      inputMode="numeric"
-                      maxLength={10}
-                      value={culturalForm.contact}
-                      onChange={(e) =>
-                        setCulturalForm({
-                          ...culturalForm,
-                          contact: e.target.value.replace(/\D/g, ""),
-                        })
-                      }
-                      placeholder="10-digit mobile number"
-                      className="w-full bg-white border border-[#E8DCC4]
-                                rounded-2xl px-5 py-4 outline-none
-                                focus:ring-2 focus:ring-[#D4AF37]/30
-                                focus:border-[#D4AF37]
-                                transition"
-                    />
-
-                  </div>
-
-
-                  {/* SOLO / GROUP */}
-
-                  <div>
-
-                    <label className="block text-xs font-bold text-gray-600 mb-2">
-
-                      Participation Type
-
-                    </label>
-
-                    <div className="grid grid-cols-2 gap-2 bg-white border border-[#E8DCC4] p-1.5 rounded-2xl">
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBookingType("solo");
-                          setGroupCount(2);
-                        }}
-                        className={`py-3.5 rounded-xl text-sm font-bold transition-all ${
-                          bookingType === "solo"
-                            ? "bg-[#2a0b06] text-white shadow-md"
-                            : "text-gray-500 hover:bg-[#FAF6F0]"
-                        }`}
-                      >
-
-                        Solo
-
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setBookingType("group")}
-                        className={`py-3.5 rounded-xl text-sm font-bold transition-all ${
-                          bookingType === "group"
-                            ? "bg-[#2a0b06] text-white shadow-md"
-                            : "text-gray-500 hover:bg-[#FAF6F0]"
-                        }`}
-                      >
-
-                        Group
-
-                      </button>
-
-                    </div>
-
-                  </div>
-
-
-                  {/* GROUP COUNT */}
-
-                  <AnimatePresence>
-
-                    {bookingType === "group" && (
-
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-
-                        <label className="block text-xs font-bold text-gray-600 mb-2">
-
-                          Number of Participants
-
-                        </label>
-
-                        <input
-                          type="number"
-                          min="2"
-                          required
-                          value={groupCount}
-                          onChange={(e) =>
-                            setGroupCount(e.target.value)
-                          }
-                          className="w-full bg-white border border-[#E8DCC4]
-                                    rounded-2xl px-5 py-4 outline-none
-                                    focus:ring-2 focus:ring-[#D4AF37]/30
-                                    focus:border-[#D4AF37]"
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  {/* SELECTED DATE SUMMARY */}
-                  {selectedDateData ? (
-                    <div className="bg-white border border-[#D4AF37]/40 rounded-2xl p-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 mb-1">
-                            Selected Date
-                          </p>
-                          <p className="font-serif font-bold text-lg text-[#2a0b06]">
-                            {selectedDateData.fullDate}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-[#722013]">
-                            {selectedDateRemainingSlots}
-                          </p>
-                          <p className="text-[9px] uppercase tracking-wider text-gray-400">
-                            Slots Left
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border border-dashed border-[#D4AF37] rounded-2xl p-5 text-center">
-                      <CalendarDays className="w-5 h-5 text-[#D4AF37] mx-auto mb-2" />
-                      <p className="text-xs font-medium text-gray-500">
-                        Select an available date from the calendar.
-                      </p>
-                    </div>
-                  )}
-                  {/* SUBMIT */}
-                  <button
-                    type="submit"
-                    disabled={
-                      !selectedDateId ||
-                      isSubmittingCultural
-                    }
-                    className={`
-                      w-full py-4 rounded-2xl font-bold
-                      flex items-center justify-center gap-2
-                      transition-all duration-300
-
-                      ${
-                        selectedDateId &&
-                        !isSubmittingCultural
-
-                          ? "bg-[#2a0b06] text-white hover:bg-[#722013] shadow-lg"
-
-                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      }
-                    `}
-                  >
-                    {isSubmittingCultural
-                      ? "Submitting Request..."
-                      : "Submit Request"}
-
-                    {!isSubmittingCultural && (
-                      <ArrowRight className="w-4 h-4" />
-                    )}
-
-                  </button>
-
-
-                  <p className="text-[11px] text-gray-500 leading-relaxed text-center">
-
-                    Your request remains pending until reviewed and approved by the administration.
-
-                  </p>
-                </div>
-              </div>
-            </div>
-          </form>
-          <div className="max-w-5xl mx-auto mt-10 md:mt-14">
-
-  <div
-    className="
-      bg-gradient-to-br
-      from-[#2a0b06]
-      to-[#4a150c]
-      rounded-[2rem]
-      md:rounded-[3rem]
-      overflow-hidden
-      shadow-2xl
-      border
-      border-[#722013]/40
-      relative
-    "
-  >
-
-    {/* DECORATION */}
-
-    <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#D4AF37]/10 blur-3xl pointer-events-none" />
-
-    <div className="relative z-10 p-6 sm:p-8 md:p-10 lg:p-12">
-
-      {/* HEADER */}
-
-      <div className="max-w-2xl mb-8">
-
-        <p className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-[0.22em] mb-3">
-          Track Your Request
-        </p>
-
-        <h3 className="text-3xl md:text-4xl font-serif font-bold text-white">
-          Check Cultural Program Status
-        </h3>
-
-        <p className="text-sm md:text-base text-[#D8C3BD] leading-relaxed mt-3">
-          Enter your Booking ID or registered mobile number to
-          check the latest status of your Cultural Seva request.
-        </p>
-
-      </div>
-
-
-      {/* SEARCH FORM */}
-
-      <form
-        onSubmit={handleCheckCulturalStatus}
-        className="
-          bg-white/10
-          backdrop-blur-md
-          border
-          border-white/10
-          rounded-2xl
-          p-4
-          md:p-5
-        "
-      >
-
-        <div className="flex flex-col sm:flex-row gap-3">
-
-          <input
-            type="text"
-            value={statusSearch}
-            onChange={(e) => {
-              setStatusSearch(e.target.value);
-              setStatusError("");
-              setStatusSearched(false);
-              setStatusResults([]);
-            }}
-            placeholder="Booking ID or Mobile Number"
-            className="
-              flex-1
-              min-w-0
-              bg-white
-              text-[#2a0b06]
-              border
-              border-white
-              rounded-xl
-              px-5
-              py-4
-              outline-none
-              focus:ring-2
-              focus:ring-[#D4AF37]
-            "
-          />
-
-          <button
-            type="submit"
-            disabled={isCheckingStatus}
-            className="
-              sm:w-auto
-              bg-gradient-to-r
-              from-[#D4AF37]
-              to-[#b5952f]
-              text-white
-              px-7
-              py-4
-              rounded-xl
-              font-bold
-              whitespace-nowrap
-              hover:shadow-lg
-              disabled:opacity-60
-              disabled:cursor-not-allowed
-              transition
-            "
-          >
-            {isCheckingStatus
-              ? "Checking..."
-              : "Check Status"}
-          </button>
-        </div>
-      </form>
-                {/* ERROR */}
-                {statusError && (
-                  <div className="mt-5 bg-red-500/10 border border-red-400/30 rounded-2xl p-4">
-
-                    <p className="text-sm font-medium text-red-200">
-                      {statusError}
-                    </p>
-
-                  </div>
-
-                )}
-
-
-                {/* NO RESULTS */}
-
-                {statusSearched &&
-                  !isCheckingStatus &&
-                  statusResults.length === 0 && (
-
-                    <div className="mt-6 bg-white/10 border border-white/10 rounded-2xl p-6 text-center">
-
-                      <p className="font-bold text-white">
-                        No Cultural Seva request found.
-                      </p>
-
-                      <p className="text-sm text-[#D8C3BD] mt-2">
-                        Please verify the Booking ID or registered mobile number.
-                      </p>
-
-                    </div>
-
-                )}
-
-
-                {/* RESULTS */}
-
-                {statusResults.length > 0 && (
-
-                  <div className="mt-8 space-y-5">
-
-                    {statusResults.map((booking) => {
-
-                      const status =
-                        booking.status?.toLowerCase() || "pending";
-
-                      const isApproved = status === "approved";
-
-                      const isRejected = status === "rejected";
-
-                      return (
-
-                        <div
-                          key={booking.id}
-                          className="
-                            bg-[#FCF8F2]
-                            rounded-2xl
-                            md:rounded-3xl
-                            p-5
-                            md:p-7
-                            shadow-xl
-                          "
-                        >
-
-                          {/* RESULT HEADER */}
-
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-[#E8DCC4]">
-
-                            <div>
-
-                              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                                Booking ID
-                              </p>
-
-                              <p className="font-black text-[#2a0b06] mt-1 break-all">
-                                {booking.bookingId}
-                              </p>
-
-                            </div>
-
-
-                            <span
-                              className={`
-                                self-start
-                                px-4
-                                py-2
-                                rounded-full
-                                text-xs
-                                font-black
-                                uppercase
-                                tracking-wider
-
-                                ${
-                                  isApproved
-
-                                    ? "bg-green-100 text-green-700"
-
-                                    : isRejected
-
-                                      ? "bg-red-100 text-red-700"
-
-                                      : "bg-orange-100 text-orange-700"
-                                }
-                              `}
-                            >
-
-                              {isApproved
-                                ? "Approved"
-                                : isRejected
-                                  ? "Rejected"
-                                  : "Pending Approval"}
-
-                            </span>
-
-                          </div>
-
-
-                          {/* COMMON BOOKING DETAILS */}
-
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 py-6">
-
-                            <div>
-
-                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                Devotee
-                              </p>
-
-                              <p className="font-bold text-[#2a0b06] mt-1">
-                                {booking.name}
-                              </p>
-
-                            </div>
-
-
-                            <div>
-
-                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                Requested Date
-                              </p>
-
-                              <p className="font-bold text-[#2a0b06] mt-1">
-                                {booking.date}
-                              </p>
-
-                            </div>
-
-
-                            <div>
-
-                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                Participation
-                              </p>
-
-                              <p className="font-bold capitalize text-[#2a0b06] mt-1">
-                                {booking.participationType || "Solo"}
-                              </p>
-
-                            </div>
-
-
-                            <div>
-
-                              <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                Participants
-                              </p>
-
-                              <p className="font-bold text-[#2a0b06] mt-1">
-                                {booking.participantCount || 1}
-                              </p>
-
-                            </div>
-
-                          </div>
-
-
-                          {/* PENDING STATUS */}
-
-                          {!isApproved && !isRejected && (
-
-                            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
-
-                              <p className="font-bold text-orange-800">
-                                Your request is awaiting Admin approval.
-                              </p>
-
-                              <p className="text-sm text-orange-700/80 mt-2 leading-relaxed">
-                                The requested date is not confirmed yet.
-                                The administration will allocate the program time
-                                and duration before approving your request.
-                              </p>
-
-                            </div>
-
-                          )}
-
-
-                          {/* APPROVED STATUS */}
-
-                          {isApproved && (
-
-                            <div>
-
-                              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 md:p-6">
-
-                                <div className="flex items-center justify-between gap-4 mb-5">
-
-                                  <div>
-
-                                    <p className="text-[9px] uppercase tracking-wider font-bold text-green-600">
-                                      Confirmed Program Slot
-                                    </p>
-
-                                    <p className="text-xl md:text-2xl font-serif font-bold text-green-900 mt-1">
-
-                                      {formatCulturalTime(
-                                        booking.startTime
-                                      )}
-
-                                      {" — "}
-
-                                      {formatCulturalTime(
-                                        booking.endTime
-                                      )}
-
-                                    </p>
-
-                                  </div>
-
-                                </div>
-
-
-                                <div className="grid sm:grid-cols-2 gap-4">
-
-                                  <div className="bg-white rounded-xl p-4 border border-green-100">
-
-                                    <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                      Duration
-                                    </p>
-
-                                    <p className="font-black text-[#2a0b06] mt-1">
-                                      {getDurationLabel(
-                                        booking.durationMinutes
-                                      )}
-                                    </p>
-
-                                  </div>
-
-
-                                  <div className="bg-white rounded-xl p-4 border border-green-100">
-
-                                    <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                      Approved On
-                                    </p>
-
-                                    <p className="font-black text-[#2a0b06] mt-1">
-                                      {formatCulturalTimestamp(
-                                        booking.approvedAt
-                                      )}
-                                    </p>
-
-                                  </div>
-
-                                </div>
-
-                              </div>
-
-                            </div>
-
-                          )}
-
-
-                          {/* REJECTED STATUS */}
-
-                          {isRejected && (
-
-                            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 md:p-6">
-
-                              <p className="text-[9px] uppercase tracking-wider font-bold text-red-600">
-                                Request Status
-                              </p>
-
-                              <p className="text-xl font-serif font-bold text-red-900 mt-1">
-                                Cultural Seva Request Rejected
-                              </p>
-
-
-                              <div className="mt-5 bg-white rounded-xl p-4 border border-red-100">
-
-                                <p className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-                                  Reason for Rejection
-                                </p>
-
-                                <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
-                                  {booking.rejectionReason ||
-                                    "No rejection reason was provided."}
-                                </p>
-
-                              </div>
-
-
-                              <p className="text-xs text-red-700 mt-4">
-                                Rejected on:{" "}
-                                <span className="font-bold">
-                                  {formatCulturalTimestamp(
-                                    booking.rejectedAt
-                                  )}
-                                </span>
-                              </p>
-
-                            </div>
-
-                          )}
-
-                        </div>
-
-                      );
-
-                    })}
-
-                  </div>
-
-                )}
-
-              </div>
-
-            </div>
-
-          </div>
-        </section>
+          formatCulturalTime={formatCulturalTime}
+          formatCulturalTimestamp={formatCulturalTimestamp}
+          getDurationLabel={getDurationLabel}
+        />
         {/* --- 4. LATEST UPDATES (Carousel Top + Expanded Reader Bottom) --- */}
         <section id="updates" className="scroll-mt-32">
           
