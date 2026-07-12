@@ -1,281 +1,326 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { 
-  CalendarDays, 
-  MapPin, 
-  Download, 
-  Phone, 
-  QrCode, 
-  Sparkles, 
-  BookOpen, 
-  Music, 
-  Flame, 
-  Flower2, 
-  Sun,
+import React, { useState } from "react";
+import {
+  Calendar,
   Users,
+  Phone,
+  X,
+  User,
+  Sparkles,
+  Flame,
+  MapPin,
+  HandHeart,
   ChevronRight,
-  ArrowRight
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
-// --- Framer Motion Variants ---
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-};
+export default function ChaturmasyaPortal() {
+  const [activeMonth, setActiveMonth] = useState("July");
+  const [activeTab, setActiveTab] = useState("schedule"); // schedule | seva
+  const [isOpen, setIsOpen] = useState(false);
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
-};
-
-export default function InvitationSection() {
-  // --- Data Arrays ---
-  const highlights = [
-    { id: 1, title: "Pravachanas", icon: BookOpen, desc: "Daily spiritual discourses" },
-    { id: 2, title: "Daily Poojas", icon: Flame, desc: "Sacred rituals & archana" },
-    { id: 3, title: "Annadana", icon: Flower2, desc: "Maha prasada distribution" },
-    { id: 4, title: "Bhajans", icon: Music, desc: "Evening devotional singing" },
+  const events = [
+    { d: "28", m: "Jul", time: "6:30 PM", title: "Arrival of Ubhaya Swamiji", month: "July" },
+    { d: "29", m: "Jul", time: "10:00 AM", title: "Guru Poornima & Vyasa Pooja", month: "July", star: true },
+    { d: "21", m: "Aug", time: "All Day", title: "Kunkumarchane by Matruvarga", month: "August" },
+    { d: "31", m: "Aug", time: "All Day", title: "Sankastahara Chaturthi Udyapane", month: "August" },
+    { d: "06", m: "Sep", time: "All Day", title: "Pushparchane", month: "September" },
+    { d: "08", m: "Sep", time: "All Day", title: "Durga Deepa Namaskara", month: "September" },
+    { d: "20", m: "Sep", time: "All Day", title: "Mangala Chandika Homa", month: "September" },
+    { d: "26", m: "Sep", time: "8:00 AM", title: "Seemollanghana", month: "September", star: true },
   ];
 
-  const specialEvents = [
-    { id: 1, date: "July 29, 2026", title: "Vyasa Pooja & Sankalpa", desc: "The grand inauguration and holy vow of Chaturmasya.", isImportant: true },
-    { id: 2, date: "August 15, 2026", title: "Sri Krishna Janmashtami", desc: "Midnight pooja, arghya pradana, and special bhajans.", isImportant: false },
-    { id: 3, date: "September 6, 2026", title: "Ganesh Chaturthi", desc: "Special homa and pooja dedicated to Lord Ganesha.", isImportant: false },
-    { id: 4, date: "October 12, 2026", title: "Seemollanghana", desc: "The concluding ceremony and Swamiji's departure.", isImportant: true },
+  const sevas = [
+    { name: "Chaturmasya Samrakshana", price: "1,00,000" },
+    { name: "Udayastamana Seve", price: "50,000" },
+    { name: "Pada Pooja + Sampoorna", price: "25,000" },
+    { name: "Pada Pooja + Maha Annadana", price: "10,000" },
+    { name: "Sankastahara Udyapane", price: "9,000" },
+    { name: "Pada Pooja + Annadana", price: "5,000" },
+    { name: "Durga Deepa Namaskara", price: "3,000" },
+    { name: "Pada Pooja", price: "1,000" },
   ];
 
-  const sevaList = [
-    { id: 1, name: "Sarva Seva", price: "₹10,000", desc: "Includes all major poojas and one day Annadana sponsor." },
-    { id: 2, name: "Maha Annadana", price: "₹5,000", desc: "Sponsor the afternoon meals for devotees." },
-    { id: 3, name: "Phala Panchamruta", price: "₹2,500", desc: "Sacred bathing of the deity with five nectars." },
-    { id: 4, name: "Laksha Tulasi Archana", price: "₹1,000", desc: "Offering of sacred Tulasi leaves with Sahasranama." },
+  const mainCommittee = [
+    { name: "Shri Mohan Shet M K", role: "Honorary President" },
+    { name: "Shri Arun Kumar M S", role: "President" },
+    { name: "Shri Manjunatha V Varnekar", role: "Working President" },
+    { name: "Shri Suryakantha N Raikar", role: "Chief Secretary" },
+    { name: "Shri Raghavendra R", role: "Treasurer" },
+    { name: "Shri Chandrashekhara Shet K S", role: "Swagatha Samithi" },
   ];
 
-  const dailyPrograms = [
-    { id: 1, phase: "Morning", time: "06:00 AM - 09:00 AM", activities: ["Suprabhata", "Nirmalya Visarjane", "Panchamruta Abhisheka"] },
-    { id: 2, phase: "Afternoon", time: "11:30 AM - 01:30 PM", activities: ["Mahapooja", "Pravachana", "Teertha Prasada (Annadana)"] },
-    { id: 3, phase: "Evening", time: "05:00 PM - 07:00 PM", activities: ["Veda Parayana", "Cultural Programs", "Special Discourses"] },
-    { id: 4, phase: "Night", time: "07:30 PM - 09:00 PM", activities: ["Sandhya Vandana", "Maha Mangalarati", "Ashtavadana Seva"] },
+  const subCommittees = [
+    { title: "Alankara Samithi", coord: "Shri Prashantha M Shet", phone: "+91 9900797631" },
+    { title: "Cultural Desk", coord: "Shri CA Shashikanth", phone: "+91 9448519501" },
+    { title: "Seva Desk (Women)", coord: "Smt. Mamatha Arun", phone: "+91 9739493673" },
   ];
 
-  const committee = [
-    { id: 1, name: "Shri Mohan Shet M K", role: "Honarary President" },
-    { id: 2, name: "Shri Arun Kumar M S", role: "President" },
-    { id: 3, name: "Shri Manjunatha V Varnekar", role: "Working President" },
-    { id: 4, name: "Shri Suryakantha N Raikar", role: "Chief Secretary" },
-    { id: 4, name: "Shri Raghavendra R", role: "Treasurer" },
-
-  ];
-
-  const contacts = [
-    { id: 1, name: "Swagatha Samithi", role: "Shri Chandrashekhara Shet K S", phone: "+91 9448724275" },
-    { id: 2, name: "Seva Desk for Womens", role: "Smt. Mamatha Arun Kumar & Smt. Mamatha Rajkumar", phone: "+91 9739493673, 9731159009" },
-    { id: 3, name: "Alankara Samithi", role: "Shri Prashantha M Shet ", phone: "+91 9900797631" },
-    { id: 4, name: "Cultural Desk", role: "Shri C A Shashikanth Rajkumar Shet ", phone: "+91 9448519501" },
-  ];
+  const filtered = events.filter((e) => e.month === activeMonth);
 
   return (
-    <section id="invitation" className="max-w-7xl mx-auto px-6 py-24 space-y-32">
-      
-      {/* --- SECTION HEADER --- */}
-      <div className="text-center max-w-3xl mx-auto">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-          <h2 className="text-4xl md:text-5xl font-bold text-[#2a0b06] font-serif mb-4">Chaturmasya 2026 Invitation</h2>
-          <p className="text-gray-600 font-medium text-lg leading-relaxed">
-            Participate in the sacred Chaturmasya celebrations and experience four months of devotion, seva, pravachanas, and spiritual transformation.
-          </p>
-        </motion.div>
-      </div>
-
-      {/* --- INVITATION OVERVIEW CARD --- */}
-      <motion.div 
-        initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-        className="relative bg-white rounded-[3rem] p-10 md:p-16 shadow-2xl shadow-[#722013]/10 border border-[#E8DCC4] overflow-hidden text-center max-w-4xl mx-auto"
-      >
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-2 bg-gradient-to-r from-[#D4AF37] via-[#722013] to-[#D4AF37]"></div>
-        <div className="absolute -top-12 -left-12 opacity-5"><Sun className="w-64 h-64" /></div>
-        <div className="absolute -bottom-12 -right-12 opacity-5"><Sun className="w-64 h-64" /></div>
-
-        <div className="relative z-10 flex flex-col items-center">
-          <Flower2 className="w-10 h-10 text-[#D4AF37] mb-6" />
-          <p className="text-sm font-bold text-[#722013] uppercase tracking-[0.3em] mb-4">With the divine blessings of Jnaneshwari</p>
-          <h3 className="text-4xl md:text-5xl font-serif font-bold text-[#2a0b06] mb-6 leading-tight">
-            Sri Karki Mutt<br/>Chaturmasya Vrata
-          </h3>
-          
-          <div className="flex items-center gap-4 my-6 opacity-70">
-            <div className="w-16 h-[1px] bg-[#722013]"></div>
-            <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-            <div className="w-16 h-[1px] bg-[#722013]"></div>
-          </div>
-
-          <h4 className="text-2xl font-serif text-[#722013] font-bold mb-8">
-            Ubhaya Swamiji's
-          </h4>
-
-          <div className="grid sm:grid-cols-2 gap-8 w-full max-w-2xl bg-[#FAF6F0] p-8 rounded-3xl border border-[#E8DCC4]/50">
-            <div className="flex flex-col items-center gap-2">
-              <CalendarDays className="w-6 h-6 text-[#D4AF37]" />
-              <p className="font-bold text-gray-900">July 29 - Sep 26, 2026</p>
-              <p className="text-xs text-gray-500 uppercase tracking-widest">Shravana to Ashwayuja</p>
+    <section className="bg-[#FBF7EF] py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* COMPACT HEADER STRIP */}
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#722013] text-white grid place-items-center">
+              <Sparkles size={18} />
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <MapPin className="w-6 h-6 text-[#D4AF37]" />
-              <p className="font-bold text-gray-900">Sri Karki Mutt Premises</p>
-              <p className="text-xs text-gray-500 uppercase tracking-widest">Sagara, Karnataka</p>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#722013]">Chaturmasya 2026</p>
+              <h1 className="text-lg sm:text-xl font-serif text-[#2a0b06] truncate">Sacred 60-Day Sojourn</h1>
             </div>
           </div>
-        </div>
-      </motion.div>      
-      {/* --- SPECIAL EVENTS TIMELINE --- */}
-      <div className="space-y-12">
-        <div className="text-center border-b border-[#E8DCC4] pb-6">
-          <h3 className="text-3xl font-bold text-[#2a0b06] font-serif mb-2">Special Events</h3>
-          <p className="text-gray-600 font-medium">Key milestones during the Chaturmasya period.</p>
-        </div>
-        
-        <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {specialEvents.map((event) => (
-            <motion.div key={event.id} variants={fadeUp} className={`relative bg-white p-6 rounded-[2rem] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${event.isImportant ? 'border border-[#D4AF37] ring-1 ring-[#D4AF37]/30' : 'border border-[#E8DCC4]/50'}`}>
-              {event.isImportant && (
-                <div className="absolute -top-3 left-6 bg-[#D4AF37] text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                  Grand Event
-                </div>
-              )}
-              <span className="text-xs font-bold text-[#722013] uppercase tracking-widest block mb-2 mt-2">{event.date}</span>
-              <h4 className="text-xl font-bold font-serif text-[#2a0b06] mb-3">{event.title}</h4>
-              <p className="text-sm text-gray-600 font-medium leading-relaxed">{event.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* --- DAILY IMPORTANT PROGRAMS --- */}
-      {/* <div className="space-y-12">
-        <div className="text-center border-b border-[#E8DCC4] pb-6">
-          <h3 className="text-3xl font-bold text-[#2a0b06] font-serif mb-2">Daily Schedule</h3>
-          <p className="text-gray-600 font-medium">The routine followed every day during the vow.</p>
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 bg-[#2a0b06] text-white text-sm px-4 py-2 rounded-full hover:bg-[#4a1810] transition shrink-0"
+          >
+            <Users size={14} /> Committee
+          </button>
         </div>
 
-        <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dailyPrograms.map((prog) => (
-            <motion.div key={prog.id} variants={fadeUp} className="bg-[#FAF6F0] rounded-[2rem] p-6 border border-[#E8DCC4] shadow-sm">
-              <div className="flex justify-between items-center mb-4 pb-4 border-b border-[#E8DCC4]">
-                <h4 className="text-lg font-bold font-serif text-[#722013]">{prog.phase}</h4>
-                <span className="text-[10px] font-bold bg-white text-[#D4AF37] px-2 py-1 rounded border border-[#E8DCC4] uppercase tracking-wider">{prog.time.split('-')[0].trim()}</span>
+        {/* HERO — Start / End / Weekly compact strip */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 mb-4">
+          <div className="bg-gradient-to-br from-[#2a0b06] to-[#4a1810] text-white rounded-2xl p-4 flex items-center gap-3">
+            <div className="text-center shrink-0">
+              <p className="text-2xl sm:text-3xl font-serif leading-none">29</p>
+              <p className="text-[9px] uppercase tracking-widest text-amber-300 mt-1">Jul</p>
+            </div>
+            <div className="min-w-0 border-l border-white/15 pl-3">
+              <p className="text-[9px] uppercase tracking-widest text-amber-400">Start</p>
+              <p className="text-sm font-semibold truncate">Vyasa Pooja</p>
+              <p className="text-[10px] text-white/60">10:00 AM</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E8DCC4] rounded-2xl p-4 flex items-center gap-3">
+            <div className="text-center shrink-0">
+              <p className="text-2xl sm:text-3xl font-serif leading-none text-[#2a0b06]">26</p>
+              <p className="text-[9px] uppercase tracking-widest text-[#722013] mt-1">Sep</p>
+            </div>
+            <div className="min-w-0 border-l border-[#E8DCC4] pl-3">
+              <p className="text-[9px] uppercase tracking-widest text-[#722013]">End</p>
+              <p className="text-sm font-semibold text-[#2a0b06] truncate">Seemollanghana</p>
+              <p className="text-[10px] text-stone-500">8:00 AM</p>
+            </div>
+          </div>
+
+          <div className="col-span-2 lg:col-span-1 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-amber-500 text-white grid place-items-center">
+              <Flame size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] uppercase tracking-widest text-amber-700">Every Monday</p>
+              <p className="text-sm font-semibold text-[#2a0b06] truncate">Rudrabhisheka</p>
+              <p className="text-[10px] text-stone-500">Morning · Contact office</p>
+            </div>
+          </div>
+        </div>
+
+        {/* MAIN CARD — Tabbed to eliminate scrolling */}
+        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex items-center justify-between border-b border-stone-100 px-3 sm:px-5">
+            <div className="flex">
+              {[
+                { id: "schedule", label: "Schedule", icon: Calendar },
+                { id: "seva", label: "Seva", icon: HandHeart },
+              ].map((t) => {
+                const Icon = t.icon;
+                const active = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm font-semibold border-b-2 transition ${
+                      active
+                        ? "border-[#722013] text-[#722013]"
+                        : "border-transparent text-stone-400 hover:text-stone-600"
+                    }`}
+                  >
+                    <Icon size={15} /> {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            {activeTab === "schedule" && (
+              <div className="hidden sm:flex gap-1 bg-stone-100 p-1 rounded-full">
+                {["July", "August", "September"].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setActiveMonth(m)}
+                    className={`px-3 py-1 text-xs font-semibold rounded-full transition ${
+                      activeMonth === m ? "bg-white text-[#722013] shadow-sm" : "text-stone-500"
+                    }`}
+                  >
+                    {m.slice(0, 3)}
+                  </button>
+                ))}
               </div>
-              <ul className="space-y-3">
-                {prog.activities.map((act, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm font-medium text-gray-700">
-                    <ChevronRight className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" /> {act}
+            )}
+            <a
+              href="tel:+919448724275"
+              className="hidden md:flex items-center gap-1.5 text-xs font-bold text-[#722013]"
+            >
+              <Phone size={12} /> 94487 24275
+            </a>
+          </div>
+
+          {/* Mobile month pills */}
+          {activeTab === "schedule" && (
+            <div className="flex sm:hidden gap-1 p-2 border-b border-stone-100 overflow-x-auto">
+              {["July", "August", "September"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setActiveMonth(m)}
+                  className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full transition ${
+                    activeMonth === m ? "bg-[#722013] text-white" : "bg-stone-100 text-stone-500"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="p-3 sm:p-5">
+            {activeTab === "schedule" ? (
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {filtered.map((e, i) => (
+                  <li
+                    key={i}
+                    className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2.5 border transition ${
+                      e.star
+                        ? "bg-[#FAF6F0] border-[#E8DCC4]"
+                        : "bg-white border-stone-100 hover:border-stone-200"
+                    }`}
+                  >
+                    <div
+                      className={`w-11 h-11 rounded-lg grid place-items-center shrink-0 ${
+                        e.star ? "bg-[#722013] text-white" : "bg-stone-50 text-[#2a0b06]"
+                      }`}
+                    >
+                      <div className="text-center leading-none">
+                        <p className="text-base font-bold">{e.d}</p>
+                        <p className="text-[8px] uppercase tracking-widest mt-0.5 opacity-70">{e.m}</p>
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#2a0b06] truncate">{e.title}</p>
+                      <p className="text-[11px] text-stone-500">{e.time}</p>
+                    </div>
+                    {e.star && (
+                      <Sparkles size={14} className="text-amber-500 shrink-0" />
+                    )}
                   </li>
                 ))}
               </ul>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div> */}
+            ) : (
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {sevas.map((s, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 bg-white border border-stone-100 hover:border-[#E8DCC4] hover:bg-[#FAF6F0]/50 transition"
+                  >
+                    <span className="text-sm text-[#2a0b06] truncate">{s.name}</span>
+                    <span className="text-sm font-bold text-[#722013] shrink-0">₹{s.price}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-      {/* --- SEVA PRICE LIST --- */}
-      {/* <div className="space-y-12 bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-[#E8DCC4]/50">
-        <div className="text-center mb-8">
-          <h3 className="text-3xl font-bold text-[#2a0b06] font-serif mb-2">Seva Offerings</h3>
-          <p className="text-gray-600 font-medium">Contribute to the divine cause and seek blessings.</p>
-        </div>
-
-        <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sevaList.map((seva) => (
-            <motion.div key={seva.id} variants={fadeUp} className="bg-[#FCF8F2] p-6 rounded-3xl border border-[#E8DCC4]/60 hover:border-[#D4AF37] hover:shadow-lg hover:shadow-[#D4AF37]/10 transition-all duration-300 flex flex-col group">
-              <h4 className="text-lg font-bold font-serif text-[#2a0b06] mb-1 group-hover:text-[#722013] transition-colors">{seva.name}</h4>
-              <p className="text-2xl font-bold text-[#D4AF37] mb-4">{seva.price}</p>
-              <p className="text-xs text-gray-600 font-medium leading-relaxed flex-grow mb-6">{seva.desc}</p>
-              <Link to="/book-seva" className="w-full text-center bg-white border border-[#E8DCC4] text-[#722013] py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-[#722013] hover:text-white hover:border-[#722013] transition-all">
-                Book Seva
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div> */}
-
-      {/* --- ORGANIZING COMMITTEE & CONTACTS --- */}
-      <div className="grid lg:grid-cols-12 gap-12">
-        {/* Committee */}
-        <div className="lg:col-span-7 space-y-8">
-          <h3 className="text-2xl font-bold text-[#2a0b06] font-serif border-b border-[#E8DCC4] pb-4">Organizing Committee</h3>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {committee.map((member) => (
-              <div key={member.id} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-[#E8DCC4]/50 shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-[#FAF6F0] flex items-center justify-center text-[#D4AF37] border border-[#E8DCC4]">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <h5 className="font-bold text-gray-900 text-sm">{member.name}</h5>
-                  <p className="text-[10px] text-[#722013] font-bold uppercase tracking-widest">{member.role}</p>
-                </div>
-              </div>
-            ))}
+          {/* Footer bar */}
+          <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-stone-50 border-t border-stone-100 text-xs">
+            <span className="text-stone-500 flex items-center gap-1.5 min-w-0">
+              <MapPin size={12} className="text-[#722013] shrink-0" />
+              <span className="truncate">Contact office for bookings & timings</span>
+            </span>
+            <a
+              href="tel:+919448724275"
+              className="flex items-center gap-1.5 text-[#722013] font-bold shrink-0 md:hidden"
+            >
+              <Phone size={12} /> Call
+            </a>
           </div>
         </div>
 
-        {/* Contacts */}
-        <div className="lg:col-span-5 space-y-8">
-          <h3 className="text-2xl font-bold text-[#2a0b06] font-serif border-b border-[#E8DCC4] pb-4">Important Contacts</h3>
-          <div className="space-y-4">
-            {contacts.map((contact) => (
-              <div key={contact.id} className="flex items-center justify-between bg-white p-4 rounded-2xl border border-[#E8DCC4]/50 shadow-sm hover:shadow-md transition-shadow">
+        {/* COMMITTEE MODAL */}
+        {isOpen && (
+          <div
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl"
+            >
+              <div className="sticky top-0 bg-white flex justify-between items-center px-5 py-4 border-b border-stone-100">
                 <div>
-                  <h5 className="font-bold text-gray-900 text-sm">{contact.name}</h5>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{contact.role}</p>
-                  <p className="text-sm font-medium text-[#722013]">{contact.phone}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#722013]">Chaturmasya 2026</p>
+                  <h2 className="text-lg font-serif font-bold text-[#2a0b06]">Organizing Committee</h2>
                 </div>
-                <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} className="w-10 h-10 rounded-full bg-[#FAF6F0] text-[#722013] hover:bg-[#722013] hover:text-[#D4AF37] flex items-center justify-center transition-colors border border-[#E8DCC4]">
-                  <Phone className="w-4 h-4" />
-                </a>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* --- QR CODES --- */}
-      {/* <div className="flex flex-col sm:flex-row justify-center gap-6 md:gap-12 pt-8">
-        {[
-          { title: "Official Website", desc: "Scan to visit portal", id: "web" },
-          { title: "Donation Portal", desc: "Scan for Seva contributions", id: "donate" }
-        ].map((qr) => (
-          <div key={qr.id} className="bg-white p-6 rounded-3xl border border-[#E8DCC4]/50 shadow-sm flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-            <div className="w-32 h-32 bg-[#FAF6F0] rounded-2xl flex items-center justify-center mb-4 border border-[#E8DCC4]">
-              <QrCode className="w-12 h-12 text-[#D4AF37]" />
+              <div className="p-5 space-y-6">
+                <div>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#722013] mb-3">
+                    Core Members
+                  </h3>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {mainCommittee.map((m, i) => (
+                      <div
+                        key={i}
+                        className="p-3 bg-[#FAF6F0] rounded-xl border border-[#E8DCC4]/60"
+                      >
+                        <p className="font-bold text-xs text-[#2a0b06] truncate">{m.name}</p>
+                        <p className="text-[10px] text-stone-500 mt-0.5">{m.role}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#722013] mb-3">
+                    Sub-Committees
+                  </h3>
+                  <div className="space-y-1.5">
+                    {subCommittees.map((s, i) => (
+                      <div
+                        key={i}
+                        className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-3 md:items-center gap-2 p-3 bg-white border border-stone-100 rounded-xl hover:border-amber-300 transition"
+                      >
+                        <div className="font-semibold text-sm text-[#2a0b06]">{s.title}</div>
+                        <div className="hidden md:flex text-xs text-stone-600 items-center gap-1.5 min-w-0">
+                          <User size={12} className="text-amber-600 shrink-0" />
+                          <span className="truncate">{s.coord}</span>
+                        </div>
+                        <a
+                          href={`tel:${s.phone}`}
+                          className="flex items-center gap-1.5 text-xs text-[#722013] font-bold justify-end"
+                        >
+                          <Phone size={12} /> <span className="hidden sm:inline">{s.phone}</span>
+                          <span className="sm:hidden">Call</span>
+                        </a>
+                        <p className="md:hidden col-span-2 text-[11px] text-stone-500 flex items-center gap-1.5">
+                          <User size={11} className="text-amber-600" /> {s.coord}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <h5 className="font-bold text-[#2a0b06] font-serif">{qr.title}</h5>
-            <p className="text-xs text-gray-500 font-medium">{qr.desc}</p>
           </div>
-        ))}
-      </div> */}
-
-      {/* --- DOWNLOAD INVITATION CTA --- */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-        className="bg-gradient-to-br from-[#2a0b06] to-[#4a150c] rounded-[3rem] p-10 md:p-16 text-center relative overflow-hidden shadow-2xl"
-      >
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay"></div>
-        <div className="relative z-10">
-          <BookOpen className="w-12 h-12 text-[#D4AF37] mx-auto mb-6" />
-          <h3 className="text-3xl md:text-5xl font-bold font-serif text-[#FAF6F0] mb-4">Download Official Invitation</h3>
-          <p className="text-[#D8C3BD] font-medium mb-10 max-w-xl mx-auto">
-            Read the complete Chaturmasya 2026 invitation booklet containing detailed schedules, sankalpa information, and messages from the Swamiji.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="bg-gradient-to-r from-[#D4AF37] to-[#b5952f] text-white px-8 py-4 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-105 transition-all duration-300 flex justify-center items-center gap-2">
-              <Download className="w-5 h-5" /> Kannada PDF
-            </button>
-            <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-bold text-sm hover:scale-105 transition-all duration-300 flex justify-center items-center gap-2">
-              <Download className="w-5 h-5 text-[#D4AF37]" /> English PDF
-            </button>
-          </div>
-        </div>
-      </motion.div>
+        )}
+      </div>
     </section>
   );
 }

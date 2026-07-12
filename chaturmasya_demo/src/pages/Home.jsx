@@ -34,6 +34,8 @@ import InvitationSection from "./InvitationSection";
 import CBookingUser from "./CulturalProgram";
 import CulturalStatusTracker from "./CulturalStatusTracker";
 import Footer from "./Footer";
+import LiveDarshanSection from "./LiveDarshan";
+import Schedule from "./Schedule"; 
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -617,10 +619,10 @@ useEffect(() => {
               <Sun className="w-5 h-5" />
             </div>
             <div className="leading-none">
-              <h1 className="text-xl font-bold text-[#2a0b06] font-serif tracking-wide">Karki Mutt</h1>
-              <p className="text-[9px] text-[#722013] font-bold uppercase tracking-[0.2em] mt-1">Chaturmasya 2026</p>
+              <h1 className="text-xl font-bold text-[#2a0b06] font-serif tracking-wide">Daivajna Brahmana Samaja<sup className="text-[8px] mx-0.5">®</sup>, Sagara</h1>
+              <p className="text-[9px] text-[#722013] font-bold uppercase tracking-[0.2em] mt-1">Chaturmasya Vratotsava</p>
             </div>
-          </div>
+          </div> 
           
           {/* Expanded Desktop Nav (Hidden when scrolled OR on mobile) */}
           <div className={`items-center gap-8 pointer-events-auto ${isScrolled ? 'hidden' : 'hidden lg:flex'}`}>
@@ -705,14 +707,6 @@ useEffect(() => {
               variants={staggerContainer}
               className="lg:col-span-5 order-2 lg:order-1"
             >
-              {/* Credit line — top left of title */}
-              <motion.div variants={fadeUp} className="mb-5 flex items-center gap-3">
-                <span className="w-8 h-[1px] bg-[#D4AF37]" />
-                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-[#722013]">
-                  Daivajna Brahman Samaja<sup className="text-[8px] mx-0.5">®</sup> Sagara
-                </p>
-              </motion.div>
-
               {/* Live tag */}
               <motion.div
                 variants={fadeUp}
@@ -764,26 +758,6 @@ useEffect(() => {
                   </p>
                   <p className="text-[9px] font-bold text-stone-900 uppercase tracking-widest mt-3">— Pujya Sri Swamiji</p>
               </motion.p>
-
-              {/* CTAs */}
-              {/* <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-8">
-                <a
-                  href="#live-darshan"
-                  className="group inline-flex items-center gap-2 bg-[#2a0b06] text-white px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:bg-[#722013] transition-all shadow-xl shadow-[#722013]/20"
-                >
-                  <PlayCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Watch Live Darshana
-                </a>
-                <Link
-                  to="/explore"
-                  className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#E8DCC4] text-[#722013] px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-[0.15em] hover:border-[#722013] hover:bg-white transition-all"
-                >
-                  Explore Programs
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </motion.div> */}
-
-              {/* Ornamental footer meta */}
               <motion.div
                 variants={fadeUp}
                 className="mt-10 pt-6 border-t border-[#E8DCC4] grid grid-cols-3 gap-4 max-w-md"
@@ -878,7 +852,52 @@ useEffect(() => {
 
           </div>
         </motion.div>
+        {/* ==================== JNANESHWARI SHLOKA ==================== */}
+<motion.div
+  initial={{ opacity: 0, y: 12 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.9, delay: 0.5 }}
+  className="max-w-[620px] mx-auto mb-6 px-4"
+>
+  <div className="text-center">
 
+    {/* Small ornamental divider */}
+    <div className="flex items-center justify-center gap-3 mb-3">
+      <span className="w-10 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]" />
+
+      <span className="text-[#D4AF37] text-sm">
+        ॐ
+      </span>
+
+      <span className="w-10 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]" />
+    </div>
+
+    {/* Title */}
+    <p className="text-sm sm:text-base font-serif font-bold tracking-normal text-[#722013] mb-3">
+      श्री ज्ञानेश्वरी श्लोकम्
+    </p>
+    {/* Shloka */}
+    <p className="
+      font-serif
+      text-[#722013]
+      text-base
+      sm:text-lg
+      md:text-xl
+      leading-[1.9]
+      font-medium
+      max-w-[580px]
+      mx-auto
+    ">
+      ॐ ज्ञानिनां मुक्तिदात्रिया ज्ञानदा साधकस्य सा ।
+      <br className="hidden sm:block" />
+      ज्ञानेश्वरी च नः पातु योगिध्येया सरस्वती ॥
+    </p>
+
+  </div>
+</motion.div>
+
+{/* ==================== EXISTING IMAGE ==================== */}
+<div className="relative"></div>
         {/* ==================== EXISTING IMAGE ==================== */}
         <div className="relative">
               {/* Editorial frame with folio marks */}
@@ -987,176 +1006,8 @@ useEffect(() => {
       <InvitationSection />
 
       <main className="max-w-7xl mx-auto px-6 space-y-40 mb-32">
-
-        {/* --- 1. LIVE PRAVACHANA (Immersive Dark Section) --- */}
-        <section id="live-darshan" className="scroll-mt-32">
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-[#1A0B08] rounded-[3rem] overflow-hidden shadow-2xl relative border border-[#3A1B14]"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#722013]/10 to-transparent"></div>
-            <div className="grid lg:grid-cols-12 relative z-10 p-8 md:p-12 gap-12 items-center">
-              
-              <div className="lg:col-span-5 text-white space-y-6">
-                <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                  Live Broadcast
-                </div>
-                <h2 className="text-4xl md:text-5xl font-bold font-serif leading-tight text-[#FAF6F0]">Daily Pravachana <br/>Darshana</h2>
-                <p className="text-[#D8C3BD] text-base leading-relaxed font-light">
-                  Join Pujya Sri Swamiji's discourse directly from the mutt premises. Experience the divine vibrations and spiritual teachings from wherever you are.
-                </p>
-                <div className="flex items-center gap-6 pt-4">
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold text-[#D4AF37]">1,204</span>
-                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Devotees Watching</span>
-                  </div>
-                  <div className="h-10 w-[1px] bg-white/10"></div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold text-[#D4AF37]">Vedanta</span>
-                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Today's Topic</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-7 relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#D4AF37] to-[#722013] rounded-3xl blur opacity-20"></div>
-                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-2xl relative border border-white/10">
-                  <iframe 
-                    className="w-full h-full"
-                    src="https://www.youtube.com/embed/DeI-ZPx3u8M?si=76F2OWrPTalYT5Wz&amp;start=25" 
-                    title="YouTube Live Stream" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </section>
         {/* --- 2. DAILY SCHEDULE (Calendar & Live Highlight) --- */}
-        <section id="schedule" className="max-w-7xl mx-auto scroll-mt-32">
-          
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 border-b border-[#E8DCC4] pb-6">
-            <div>
-              <h2 className="text-4xl font-bold text-[#2a0b06] font-serif mb-3">Today's Rituals</h2>
-              <p className="text-gray-600 font-medium">Sacred timings observed in IST (Indian Standard Time)</p>
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-            
-            {/* Left Column: Vertical Timeline */}
-            <div className="lg:col-span-7 relative">
-              {/* Subtle connecting line */}
-              <div className="absolute top-8 bottom-8 left-[31px] w-[2px] bg-gradient-to-b from-transparent via-[#E8DCC4] to-transparent"></div>
-
-              <div className="space-y-4 relative z-10">
-                {dailySchedule.map((item, idx) => (
-                  <motion.div 
-                    key={item.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                    className={`relative flex items-center p-4 rounded-[2rem] transition-all duration-500 ${
-                      item.status === 'ongoing' 
-                        ? 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E8DCC4]/60 scale-[1.02]' 
-                        : 'hover:bg-white/40 border border-transparent'
-                    }`}
-                  >
-                    {/* Time Icon / Node */}
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shrink-0 z-10 transition-colors duration-500 shadow-sm ${
-                      item.status === 'ongoing' 
-                        ? 'bg-gradient-to-br from-[#722013] to-[#4a150c] text-[#D4AF37] shadow-lg shadow-[#722013]/20' 
-                        : item.status === 'past'
-                          ? 'bg-[#E8DCC4]/30 text-gray-400 border border-[#E8DCC4]'
-                          : 'bg-[#FAF6F0] text-[#722013] border border-[#E8DCC4]'
-                    }`}>
-                      {item.status === 'ongoing' ? (
-                        <div className="relative">
-                           <Clock className="w-6 h-6" />
-                           <span className="absolute top-0 right-0 w-2 h-2 bg-[#E86A33] rounded-full animate-ping"></span>
-                        </div>
-                      ) : (
-                        <Clock className="w-6 h-6 opacity-70" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="ml-6 flex-grow">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className={`text-[11px] font-bold tracking-widest uppercase ${item.status === 'ongoing' ? 'text-[#E86A33]' : 'text-gray-500'}`}>
-                          {item.timePre} {item.timePost}
-                        </p>
-                        {item.status === 'past' && <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Completed</span>}
-                      </div>
-                      <h4 className={`text-xl font-serif font-bold transition-colors ${
-                        item.status === 'past' ? 'text-gray-400 line-through decoration-gray-300/50' : 'text-[#2a0b06]'
-                      }`}>
-                        {item.title}
-                      </h4>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column: Sticky "Happening Now" Card */}
-            <div className="lg:col-span-5 lg:sticky lg:top-32">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="bg-gradient-to-br from-[#2a0b06] to-[#4a150c] rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative overflow-hidden border border-[#722013]/50 text-white"
-              >
-                {/* Decorative Background Pattern */}
-                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transform translate-x-8 -translate-y-8">
-                  <Sun className="w-64 h-64" />
-                </div>
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay pointer-events-none"></div>
-
-                <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-10">
-                    <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                      {ongoingEvent.status === 'ongoing' ? 'Happening Now' : 'Up Next'}
-                    </div>
-                    <div className="bg-black/20 backdrop-blur-md border border-white/10 px-4 py-2 rounded-xl text-center">
-                      <p className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider mb-0.5">Time</p>
-                      <p className="text-sm font-bold">{ongoingEvent.timePre} {ongoingEvent.timePost}</p>
-                    </div>
-                  </div>
-
-                  <h3 className="text-3xl md:text-4xl font-serif font-bold text-[#FAF6F0] mb-4 leading-tight">
-                    {ongoingEvent.title}
-                  </h3>
-
-                  <p className="text-[#D8C3BD] text-sm leading-relaxed mb-10 font-medium">
-                    {ongoingEvent.status === 'ongoing' 
-                      ? "Devotees are currently participating in this sacred ritual. May the divine presence bring peace and spiritual awakening to all." 
-                      : "The next sacred activity will commence shortly. Devotees are requested to prepare for participation."}
-                  </p>
-
-                  <div className="space-y-4">
-                    <a href="#live-darshan" className="w-full bg-gradient-to-r from-[#D4AF37] to-[#b5952f] text-white py-4 rounded-2xl font-bold text-sm shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-all duration-300 flex justify-center items-center gap-2 group">
-                      <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" /> 
-                      {ongoingEvent.status === 'ongoing' ? 'Join Live Stream' : 'Watch Live Darshan'}
-                    </a>
-                    
-                    <Link to="/book-seva" className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white py-4 rounded-2xl font-bold text-sm transition-all duration-300 flex justify-center items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#D4AF37]" /> Book Seva for Tomorrow
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-          </div>
-        </section>
+        <Schedule/>
         <CBookingUser
           culturalDates={culturalDates}
           getRemainingSlots={getRemainingSlots}
