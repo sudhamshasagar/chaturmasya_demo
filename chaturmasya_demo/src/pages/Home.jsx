@@ -30,6 +30,7 @@ import {
   ChevronRight,
   Menu
 } from "lucide-react";
+import Hero from "./Hero";
 import InvitationSection from "./InvitationSection";
 import CBookingUser from "./CulturalProgram";
 import CulturalStatusTracker from "./CulturalStatusTracker";
@@ -52,14 +53,9 @@ const staggerContainer = {
 };
 
 const Home = () => {
-  // --- 1. Data Models (Preserved exactly as requested) ---
-  // --- Blog & Updates State ---
-  // --- Blog, Filters & Carousel State ---
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [activeFilter, setActiveFilter] = useState({ type: 'all', value: 'all' });
-  
   const carouselRef = useRef(null);
-
   const blogs = [
     {
       id: 1,
@@ -129,16 +125,6 @@ const Home = () => {
     { id: 4, timePre: "12:30", timePost: "PM", title: "Mahamangalarati & Teertha Prasada", status: "ongoing" },
     { id: 5, timePre: "05:00", timePost: "PM", title: "Veda Parayana", status: "future" },
     { id: 6, timePre: "07:00", timePost: "PM", title: "Bhajane & Sandhya Vandana", status: "future" },
-  ];
-
-  const heroSlides = [
-    {
-      id: 1,
-      tag: "A SACRED VOW. A TIMELESS TRANSFORMATION.",
-      title: "41st\n Chaturmasya Vratothsava - 2026\nDeepen Sadhana.\nDiscover Yourself.",
-      desc: "Welcome to the official digital portal. Participate in daily rituals, book sevas, and seek blessings from anywhere in the world.",
-      img: "/hero.jpeg"
-    },
   ];
   const [isMenuOpen, setIsMenuOpen] = useState(false);
  // --- Cultural Booking Form State ---
@@ -400,13 +386,6 @@ if (category === "Others" && !finalCategory) {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev === heroSlides.length - 1 ? 0 : prev + 1));
-    }, 8000);
-    return () => clearInterval(timer);
-  }, [heroSlides.length]);
-
-  useEffect(() => {
   if (!isScrolled) setIsMenuOpen(false);
 }, [isScrolled]);
 
@@ -584,11 +563,9 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#FCF8F2] font-sans text-gray-900 selection:bg-[#722013] selection:text-[#FCF8F2] overflow-x-hidden">
-      
       {/* Decorative Background Elements (Temple Geometry) */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] mix-blend-multiply"></div>
       <div className="fixed top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#f8e5cc] to-transparent opacity-40 blur-3xl -z-10"></div>
-
       {/* --- TOP ADMIN BAR --- */}
       <div id="top" className="bg-[#FAF6F0] text-[#722013] py-2 px-6 text-[10px] tracking-[0.2em] uppercase font-bold flex justify-between items-center z-50 relative border-b border-[#E8DCC4]">
         <span className="flex items-center gap-2 opacity-80">
@@ -600,10 +577,8 @@ useEffect(() => {
           Admin Portal
         </Link>
       </div>
-
       {/* --- PREMIUM FLOATING HEADER --- */}
       <header className={`fixed left-1/2 -translate-x-1/2 w-[100%]  z-50 transition-all duration-500 ${isScrolled ? 'top-6' : 'top-10'}`}>
-        
         {/* Main Navbar Container */}
         <div className={`relative flex justify-between items-center px-6 py-4 transition-all duration-500 z-20 ${
           isScrolled && !isMenuOpen 
@@ -619,8 +594,8 @@ useEffect(() => {
               <Sun className="w-5 h-5" />
             </div>
             <div className="leading-none">
-              <h1 className="text-xl font-bold text-[#2a0b06] font-serif tracking-wide">Daivajna Brahmana Samaja<sup className="text-[8px] mx-0.5">®</sup>, Sagara</h1>
-              <p className="text-[9px] text-[#722013] font-bold uppercase tracking-[0.2em] mt-1">Chaturmasya Vratotsava</p>
+              <h1 className="text-md font-bold text-[#2a0b06] font-serif tracking-wide">Daivajna Brahmana Samaja<sup className="text-[8px] mx-0.5">®</sup>, Sagara</h1>
+              <p className="text-[7px] text-[#722013] font-bold uppercase tracking-[0.2em] mt-1">Chaturmasya Vratotsava</p>
             </div>
           </div> 
           
@@ -692,287 +667,7 @@ useEffect(() => {
       </header>
 
       {/* --- CINEMATIC HERO SECTION --- */}
-      <section className="relative w-full pt-20 pb-6 md:pt-28 md:pb-24 z-10 overflow-hidden flex items-centre">
-        {/* Soft ambient wash */}
-        <div className="absolute top-16 -left-32 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/10 blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute bottom-0 right-0 w-[420px] h-[420px] rounded-full bg-[#722013]/10 blur-[100px] pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">  
-
-            {/* ==================== LEFT: TEXT ==================== */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={staggerContainer}
-              className="lg:col-span-5 order-2 lg:order-1"
-            >
-              {/* Live tag */}
-              <motion.div
-                variants={fadeUp}
-                className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#E8DCC4] px-3.5 py-1.5 rounded-full shadow-sm mb-6"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E86A33]" />
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#722013] tracking-[0.2em] uppercase">
-                  Commencing 29 July 2026
-                </span>
-              </motion.div>
-
-              {/* Ordinal + main title */}
-              <motion.div variants={fadeUp} className="mb-6">
-                <p className="font-serif italic text-[#c2410c] text-3xl sm:text-4xl mb-1 leading-none">
-                  <span className="tabular-nums font-black not-italic text-[#2a0b06]">41</span>
-                  <sup className="text-lg font-bold not-italic text-[#722013] ml-0.5">st</sup>
-                </p>
-                <h1 className="font-serif font-bold text-[#2a0b06] leading-[0.95] tracking-tight text-4xl sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
-                  Chaturmasya
-                  <span className="block italic font-light text-[#722013]">
-                    Vratothsava
-                  </span>
-                  <span className="block text-[#2a0b06] tabular-nums">
-                    — 2026
-                  </span>
-                </h1>
-              </motion.div>
-
-              {/* Sanskrit invocation */}
-              <motion.div variants={fadeUp} className="mb-6 pl-4 border-l-2 border-[#D4AF37]">
-                <p className="font-serif italic text-[#722013] text-base sm:text-lg leading-snug">
-                  Jai Jnaneshwari
-                </p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-[0.22em] font-bold mt-1">
-                  The Sacred Months
-                </p>
-              </motion.div>
-
-              {/* Description */}
-              <motion.p
-                variants={fadeUp}
-                className="text-[15px] sm:text-base text-gray-600 max-w-md leading-relaxed"
-              >
-                <p className="text-xs font-serif italic text-[#722013] leading-relaxed">
-                    May the sacred vow of Chaturmasya bring inner light to every devotee.
-                  </p>
-                  <p className="text-[9px] font-bold text-stone-900 uppercase tracking-widest mt-3">— Pujya Sri Swamiji</p>
-              </motion.p>
-              <motion.div
-                variants={fadeUp}
-                className="mt-10 pt-6 border-t border-[#E8DCC4] grid grid-cols-3 gap-4 max-w-md"
-              >
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Duration</p>
-                  <p className="font-serif font-bold text-sm text-[#2a0b06]">60 Days</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400 mb-1">Venue</p>
-                  <p className="font-serif font-bold text-sm text-[#2a0b06]">Sagara</p>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* ==================== RIGHT: IMAGE ==================== */}
-            {/* ==================== RIGHT: COUNTDOWN + IMAGE ==================== */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        className="lg:col-span-7 order-1 lg:order-2 relative"
-      >
-        {/* ==================== COUNTDOWN ==================== */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="max-w-[620px] mx-auto mb-4"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl border border-[#E8DCC4] rounded-2xl px-4 sm:px-6 py-4 shadow-lg shadow-[#722013]/5">
-
-            {/* Label */}
-            <div className="shrink-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-[#E86A33] opacity-60 animate-ping" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#E86A33]" />
-                </span>
-
-                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#722013]">
-                  Chaturmasya Begins In
-                </p>
-              </div>
-
-              <p className="font-serif text-xs text-gray-500">
-                29 July 2026
-              </p>
-            </div>
-
-            {/* Countdown Numbers */}
-            {!timeLeft.hasStarted ? (
-              <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
-
-                {[
-                  { value: timeLeft.days, label: "Days" },
-                  { value: timeLeft.hours, label: "Hrs" },
-                  { value: timeLeft.minutes, label: "Mins" },
-                  { value: timeLeft.seconds, label: "Secs" },
-                ].map((item, index) => (
-                  <React.Fragment key={item.label}>
-
-                    <div className="min-w-[48px] sm:min-w-[58px] text-center">
-                      <p className="font-serif font-bold text-xl sm:text-2xl text-[#2a0b06] tabular-nums leading-none">
-                        {String(item.value).padStart(2, "0")}
-                      </p>
-
-                      <p className="mt-1.5 text-[8px] sm:text-[9px] uppercase tracking-[0.16em] font-bold text-gray-400">
-                        {item.label}
-                      </p>
-                    </div>
-
-                    {index < 3 && (
-                      <span className="font-serif text-lg text-[#D4AF37] -mt-4">
-                        :
-                      </span>
-                    )}
-
-                  </React.Fragment>
-                ))}
-
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 bg-[#722013]/5 border border-[#722013]/10 px-4 py-2 rounded-xl">
-                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-
-                <p className="font-serif font-bold text-sm text-[#722013]">
-                  Chaturmasya Vratothsava Has Commenced
-                </p>
-              </div>
-            )}
-
-          </div>
-        </motion.div>
-        {/* ==================== JNANESHWARI SHLOKA ==================== */}
-<motion.div
-  initial={{ opacity: 0, y: 12 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.9, delay: 0.5 }}
-  className="max-w-[620px] mx-auto mb-6 px-4"
->
-  <div className="text-center">
-
-    {/* Small ornamental divider */}
-    <div className="flex items-center justify-center gap-3 mb-3">
-      <span className="w-10 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]" />
-
-      <span className="text-[#D4AF37] text-sm">
-        ॐ
-      </span>
-
-      <span className="w-10 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]" />
-    </div>
-
-    {/* Title */}
-    <p className="text-sm sm:text-base font-serif font-bold tracking-normal text-[#722013] mb-3">
-      श्री ज्ञानेश्वरी श्लोकम्
-    </p>
-    {/* Shloka */}
-    <p className="
-      font-serif
-      text-[#722013]
-      text-base
-      sm:text-lg
-      md:text-xl
-      leading-[1.9]
-      font-medium
-      max-w-[580px]
-      mx-auto
-    ">
-      ॐ ज्ञानिनां मुक्तिदात्रिया ज्ञानदा साधकस्य सा ।
-      <br className="hidden sm:block" />
-      ज्ञानेश्वरी च नः पातु योगिध्येया सरस्वती ॥
-    </p>
-
-  </div>
-</motion.div>
-
-{/* ==================== EXISTING IMAGE ==================== */}
-<div className="relative"></div>
-        {/* ==================== EXISTING IMAGE ==================== */}
-        <div className="relative">
-              {/* Editorial frame with folio marks */}
-              <div className="relative">
-
-                {/* Corner folio marks (top-left) */}
-                <div className="hidden md:block absolute -top-4 -left-4 z-20">
-                  <div className="w-8 h-8 border-l-2 border-t-2 border-[#D4AF37]" />
-                </div>
-                <div className="hidden md:block absolute -bottom-4 -right-4 z-20">
-                  <div className="w-8 h-8 border-r-2 border-b-2 border-[#D4AF37]" />
-                </div>
-
-                {/* Main image container — taller & richer */}
-                <div
-                    className="
-                      relative
-                      w-full
-                      max-w-[620px]
-                      mx-auto
-                      h-[420px]
-                      sm:h-[500px]
-                      md:h-[560px]
-                      lg:h-[min(68vh,620px)]
-                      xl:h-[min(72vh,660px)]
-                      rounded-[2rem]
-                      lg:rounded-[2.5rem]
-                      overflow-hidden
-                      shadow-2xl
-                      shadow-[#722013]/20
-                    "
-                  >
-                  <AnimatePresence mode="wait">
-                    <motion.img
-                      key={currentSlide}
-                      initial={{ opacity: 0, scale: 1.08 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 1.5 }}
-                      src={heroSlides[currentSlide].img}
-                      alt="Chaturmasya Vratothsava"
-                      className="w-full h-full object-cover"
-                    />
-                  </AnimatePresence>
-
-                  {/* Layered gradients for depth */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#2a0b06]/70 via-transparent to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#722013]/20" />
-                  {/* Bottom overlay — sacred quote & meta */}
-                  <div className="absolute inset-x-5 bottom-5 md:inset-x-8 md:bottom-8">
-                    <div className="bg-black/30 backdrop-blur-xl border border-white/15 rounded-2xl p-4 md:p-5">
-                      <div className="flex items-start gap-3">
-                        <span className="font-serif text-4xl text-[#D4AF37] leading-none mt-1">"</span>
-                        <div className="min-w-0">
-                          <p className="font-serif italic text-white text-sm md:text-base leading-snug">
-                            Peace is not the absence of trouble, but the presence of divinity.
-                          </p>
-                          <div className="flex items-center gap-2 mt-3">
-                            <span className="w-6 h-[1px] bg-[#D4AF37]" />
-                            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">
-                              Śloka of the Day
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
+      <Hero/>
 
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
       <section className="max-w-7xl mx-auto px-6 relative z-20 -mt-15 mb-32">
