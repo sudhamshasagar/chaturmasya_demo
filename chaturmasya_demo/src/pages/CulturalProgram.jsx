@@ -43,6 +43,15 @@ const parseLocalDate = (value) => {
   return new Date(year, month - 1, day);
 };
 
+const getMaxSlotsForDate = (dateId) => {
+  const date = parseLocalDate(dateId);
+
+  if (!date) return 3;
+
+  // JavaScript: Sunday = 0, Monday = 1
+  return date.getDay() === 1 ? 2 : 3;
+};
+
 const getMonthLabel = (year, month) =>
   new Date(year, month, 1).toLocaleDateString("en-IN", {
     month: "long",

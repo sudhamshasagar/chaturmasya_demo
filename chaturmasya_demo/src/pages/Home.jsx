@@ -8,7 +8,9 @@ import {
   query,
   where,
   getDocs,
-  serverTimestamp
+  serverTimestamp,doc,
+  setDoc,
+  increment
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -30,6 +32,7 @@ import {
   ChevronRight,
   Menu
 } from "lucide-react";
+
 import Hero from "./Hero";
 import InvitationSection from "./InvitationSection";
 import CBookingUser from "./CulturalProgram";
@@ -37,6 +40,7 @@ import CulturalStatusTracker from "./CulturalStatusTracker";
 import Footer from "./Footer";
 import LiveDarshanSection from "./LiveDarshan";
 import Schedule from "./Schedule"; 
+import BlogSection from "./Blogs";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -146,6 +150,7 @@ const Home = () => {
   const [bookingType, setBookingType] = useState("solo");
   const [groupCount, setGroupCount] = useState(2);
   const [isSubmittingCultural, setIsSubmittingCultural] = useState(false);
+  const [visitorCount, setVisitorCount] = useState(0);
   // ------------------------------------------------------------
   // Generate every booking date from July 29 to September 26
   // ------------------------------------------------------------
@@ -230,6 +235,37 @@ const Home = () => {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+  const visitorRef = doc(db, "websiteStats", "visitors");
+
+  // Listen for live visitor count updates
+  const unsubscribe = onSnapshot(visitorRef, (snapshot) => {
+    if (snapshot.exists()) {
+      setVisitorCount(snapshot.data().count || 0);
+    }
+  });
+
+  // Count every page load as one visit
+  const countVisit = async () => {
+    try {
+      await setDoc(
+        visitorRef,
+        {
+          count: increment(1),
+          lastVisitedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error("Unable to update visitor count:", error);
+    }
+  };
+
+  countVisit();
+
+  return () => unsubscribe();
+}, []);
 
   // ------------------------------------------------------------
   // Availability helpers
@@ -572,6 +608,10 @@ useEffect(() => {
           {/* <span className="w-1.5 h-1.5 bg-[#E86A33] rounded-full"></span>  */}
            Jai Jnaneshwari
         </span>
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          <span>{visitorCount.toLocaleString("en-IN")} Website Visits</span>
+        </div>
         <Link to="/admin" className="flex items-center gap-2 hover:text-[#E86A33] transition-colors">
           <Users className="w-3.5 h-3.5" />
           Admin Portal
@@ -748,179 +788,7 @@ useEffect(() => {
           getDurationLabel={getDurationLabel}
         />
         {/* --- 4. LATEST UPDATES (Carousel Top + Expanded Reader Bottom) --- */}
-        <section id="updates" className="scroll-mt-32">
-          
-          {/* Header & Elegant Filter Bar */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-6 border-b border-[#E8DCC4] pb-6">
-            <div>
-              <h2 className="text-4xl font-bold text-[#2a0b06] font-serif mb-3">Mutt Chronicles</h2>
-              <p className="text-gray-600 font-medium">Browse the sacred journals by day, week, or month.</p>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-[#E8DCC4]/50">
-              <div className="pl-3 pr-2 py-2 text-[#D4AF37]">
-                <Filter className="w-4 h-4" />
-              </div>
-              
-              <button 
-                onClick={() => handleFilterChange('all', 'all')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${activeFilter.type === 'all' ? 'bg-[#722013] text-white' : 'text-gray-500 hover:bg-[#FAF6F0]'}`}
-              >
-                All
-              </button>
-
-              <select 
-                onChange={(e) => handleFilterChange('month', e.target.value)}
-                value={activeFilter.type === 'month' ? activeFilter.value : ""}
-                className={`appearance-none outline-none px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors border-r border-[#E8DCC4] ${activeFilter.type === 'month' ? 'bg-[#FAF6F0] text-[#722013]' : 'text-gray-500 bg-transparent hover:bg-gray-50'}`}
-              >
-                <option value="">Month</option>
-                <option value="July">July</option>
-                <option value="August">August</option>
-                <option value="September">September</option>
-                <option value="October">October</option>
-              </select>
-
-              <select 
-                onChange={(e) => handleFilterChange('week', e.target.value)}
-                value={activeFilter.type === 'week' ? activeFilter.value : ""}
-                className={`appearance-none outline-none px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors border-r border-[#E8DCC4] ${activeFilter.type === 'week' ? 'bg-[#FAF6F0] text-[#722013]' : 'text-gray-500 bg-transparent hover:bg-gray-50'}`}
-              >
-                <option value="">Week</option>
-                {[...Array(9)].map((_, i) => (
-                  <option key={i} value={i + 1}>Week {i + 1}</option>
-                ))}
-              </select>
-
-              <select 
-                onChange={(e) => handleFilterChange('day', e.target.value)}
-                value={activeFilter.type === 'day' ? activeFilter.value : ""}
-                className={`appearance-none outline-none px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${activeFilter.type === 'day' ? 'bg-[#FAF6F0] text-[#722013]' : 'text-gray-500 bg-transparent hover:bg-gray-50'}`}
-              >
-                <option value="">Specific Day</option>
-                {[...Array(60)].map((_, i) => (
-                  <option key={i} value={i + 1}>Day {i + 1}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Top Section: Horizontal Carousel */}
-          <div className="relative mb-12 group">
-            {/* Carousel Navigation Buttons */}
-            <button 
-              onClick={() => scrollCarousel('left')}
-              className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-md border border-[#E8DCC4] shadow-lg text-[#722013] p-3 rounded-full opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[#FAF6F0] transition-all duration-300 hidden md:flex"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => scrollCarousel('right')}
-              className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-md border border-[#E8DCC4] shadow-lg text-[#722013] p-3 rounded-full opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[#FAF6F0] transition-all duration-300 hidden md:flex"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Scrollable Container */}
-            <div 
-              ref={carouselRef}
-              className="flex align-center gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-6 pt-2 px-2"
-            >
-              {filteredBlogs.length === 0 ? (
-                <div className="w-full py-12 text-center text-gray-400 font-medium bg-white rounded-3xl border border-dashed border-[#E8DCC4]">
-                  No chronicles found for this filter.
-                </div>
-              ) : (
-                filteredBlogs.map((blog) => {
-                  const isSelected = displayBlog?.id === blog.id;
-                  return (
-                    <button
-                      key={blog.id}
-                      onClick={() => setSelectedBlog(blog)}
-                      className={`min-w-[300px] w-[300px] md:min-w-[340px] md:w-[340px] text-left shrink-0 snap-start rounded-[2rem] p-4 transition-all duration-300 flex flex-col bg-white border ${
-                        isSelected 
-                          ? 'border-[#D4AF37] shadow-lg shadow-[#D4AF37]/10 ring-1 ring-[#D4AF37] scale-[1.02]' 
-                          : 'border-[#E8DCC4]/50 hover:border-[#722013]/30 hover:shadow-xl hover:shadow-[#722013]/5'
-                      }`}
-                    >
-                      <div className="w-full h-40 rounded-2xl overflow-hidden mb-4 relative">
-                        <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-bold text-[#722013] uppercase tracking-widest shadow-sm">
-                          Day {blog.day}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mb-2">
-                        <span className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest">
-                          {blog.date}
-                        </span>
-                      </div>
-                      <h4 className={`text-lg font-bold font-serif line-clamp-1 mb-2 ${isSelected ? 'text-[#722013]' : 'text-[#2a0b06]'}`}>
-                        {blog.title}
-                      </h4>
-                      <p className="text-gray-500 text-xs line-clamp-2 font-medium leading-relaxed">
-                        {blog.description}
-                      </p>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Section: Expanded Reader */}
-          <AnimatePresence mode="wait">
-            {displayBlog && (
-              <motion.div
-                key={displayBlog.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className=" mx-auto bg-white rounded-[1rem] p-8 md:p-12 shadow-2xl shadow-[#722013]/5 border border-[#E8DCC4]/60 relative overflow-hidden"
-              >
-                {/* Background flourish */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#FAF6F0] to-transparent rounded-bl-full -z-10 opacity-50"></div>
-
-                {/* Article Header */}
-                <div className="text-center mb-10">
-                  <div className="flex justify-center items-center gap-3 mb-6">
-                    <span className="bg-[#FAF6F0] border border-[#E8DCC4] px-4 py-1.5 rounded-full text-[10px] font-bold text-[#722013] uppercase tracking-widest shadow-sm">
-                      {displayBlog.date} • Day {displayBlog.day}
-                    </span>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                      {displayBlog.readTime}
-                    </span>
-                  </div>
-                  <h3 className="text-3xl md:text-5xl font-bold font-serif text-[#2a0b06] leading-tight max-w-2xl mx-auto">
-                    {displayBlog.title}
-                  </h3>
-                </div>
-
-                {/* Expanded Hero Image */}
-                <div className="w-full h-[300px] md:h-[450px] rounded-[2rem] overflow-hidden mb-12 shadow-sm">
-                  <img src={displayBlog.image} alt={displayBlog.title} className="w-full h-full object-cover" />
-                </div>
-
-                {/* Content Body */}
-                <div className="prose prose-lg font-sans text-gray-600 leading-loose space-y-6 mx-auto">
-                  {displayBlog.content.split('\n\n').map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
-
-                {/* Elegant Footer */}
-                <div className="border-t border-[#E8DCC4] pt-8 mt-12 flex justify-center items-center gap-3">
-                  <div className="w-12 h-[1px] bg-[#D4AF37]"></div>
-                  <Sun className="w-5 h-5 text-[#D4AF37]" />
-                  <p className="text-sm font-serif italic text-[#722013] font-bold tracking-wider">Jai Jnaneshwari</p>
-                  <div className="w-12 h-[1px] bg-[#D4AF37]"></div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-        </section>
-
+        <BlogSection/>
       </main>
 
       {/* --- PREMIUM FOOTER --- */}
