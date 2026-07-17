@@ -34,3 +34,12 @@ html::-webkit-scrollbar {
     display: none;
   }
 }
+
+#updates .hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#updates .hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
