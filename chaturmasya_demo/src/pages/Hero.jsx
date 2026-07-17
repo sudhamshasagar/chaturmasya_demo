@@ -123,45 +123,6 @@ export default function ChaturmasyaHero() {
             variants={staggerContainer}
             className="order-2 lg:order-1"
           >
-            <motion.div
-              variants={fadeUp}
-              className="
-                inline-flex items-center gap-2
-                bg-white/70
-                backdrop-blur-md
-                border border-[#E8DCC4]
-                px-3.5 py-1.5
-                rounded-full
-                shadow-sm
-                mb-4
-              "
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="
-                  animate-ping
-                  absolute inline-flex
-                  h-full w-full
-                  rounded-full
-                  bg-[#E86A33]
-                  opacity-75
-                " />
-                <span className="
-                  relative inline-flex
-                  rounded-full
-                  h-2 w-2
-                  bg-[#E86A33]
-                " />
-              </span>
-              <span className="
-                text-[9px]
-                font-bold
-                text-[#722013]
-                tracking-[0.22em]
-                uppercase
-              ">
-                Commencing 29 July 2026
-              </span>
-            </motion.div>
             {/* TITLE */}
             <motion.div
               variants={fadeUp}
@@ -830,28 +791,19 @@ export default function ChaturmasyaHero() {
                     transition={{
                       duration: 1.1
                     }}
-
                     src={heroImages[current].src}
-
                     alt={`Chaturmasya Vratothsava ${current + 1}`}
-
                     className="
                       absolute
                       inset-0
-
                       w-full
                       h-full
-
                       object-cover
                     "
                   />
 
                 </AnimatePresence>
-
-
-
                 {/* Gradient */}
-
                 <div className="
                   absolute
                   inset-0

@@ -1,48 +1,141 @@
 import { FaInstagram, FaYoutube, FaFacebook } from "react-icons/fa";
-import { Sun, ChevronRight, Phone, Mail, MapPin } from "lucide-react";
+import { Sun, ChevronRight, Phone, Mail, MapPin, Heart } from "lucide-react";
+import {
+  doc,
+  onSnapshot,
+  setDoc,
+  increment,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
+import { useEffect, useState } from "react";
 
 export default function Footer() {
-  return (
-    <footer className="bg-gradient-to-b from-[#3a0f08] to-[#1a0402] text-white mt-32 rounded-t-[3rem] relative overflow-hidden">
-      {/* Decorative Silhouette */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl opacity-5 pointer-events-none">
-        <svg viewBox="0 0 1000 300" fill="currentColor"><path d="M500 0L600 100H400L500 0Z M300 300L400 150H200L300 300Z M700 300L800 150H600L700 300Z"/></svg>
-      </div>
+  const [visitorCount, setVisitorCount] = useState(null);
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-24 grid md:grid-cols-12 gap-12 relative z-10">
-        
-        {/* Brand Section */}
-        <div className="md:col-span-5">
-          <div className="flex items-center gap-3 mb-6">
-            <Sun className="w-8 h-8 text-[#D4AF37]" />
-            <h2 className="text-3xl font-bold font-serif text-[#FAF6F0] tracking-wide">Karki Mutt</h2>
+  useEffect(() => {
+    const visitorRef = doc(db, "siteStats", "visitors");
+
+    const registerVisit = async () => {
+      try {
+        await setDoc(
+          visitorRef,
+          {
+            totalVisits: increment(1),
+            lastVisitAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (error) {
+        console.error("Error registering website visit:", error);
+      }
+    };
+
+    registerVisit();
+
+    const unsubscribe = onSnapshot(
+      visitorRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setVisitorCount(snapshot.data().totalVisits || 0);
+        }
+      },
+      (error) => {
+        console.error("Error loading visitor count:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const quickLinks = [
+    { name: "Home", href: "/" },
+    { name: "Book Seva", href: "/seva" },
+    { name: "Live Darshana", href: "/live" },
+    { name: "Daily Schedule", href: "/schedule" },
+  ];
+
+  const socials = [
+    {
+      Icon: FaInstagram,
+      href: "https://instagram.com/chaturmasyasagara2026",
+      label: "Instagram",
+    },
+    {
+      Icon: FaYoutube,
+      href: "https://youtube.com/@chaturmasyasagara2026?si=le6GD49Uu9Cpw2FT",
+      label: "YouTube",
+    },
+    {
+      Icon: FaFacebook,
+      href: "https://facebook.com/chaturmasyasagara2026",
+      label: "Facebook",
+    },
+  ];
+
+  return (
+    <footer className="relative overflow-hidden bg-gradient-to-b from-[#3a1a0a] via-[#2a1208] to-[#1a0a04] text-white">
+      {/* Decorative top border */}
+      <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
+
+      {/* Decorative sun watermark */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#D4AF37]/10 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#D4AF37]/5 blur-3xl"
+      />
+
+      {/* Main grid */}
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-8 lg:py-20">
+        {/* Brand */}
+        <div className="lg:col-span-1">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
+              <Sun className="h-5 w-5 text-[#D4AF37]" />
+            </div>
+            <h2 className="font-serif text-2xl tracking-wide text-[#F5E6C8]">
+              Karki Mutt
+            </h2>
           </div>
-          <p className="text-[#D8C3BD] text-sm leading-relaxed max-w-sm mb-8 font-light">
-            The official digital platform connecting devotees worldwide to the sacred traditions, rituals, and teachings during the holy Chaturmasya period.
+
+          <p className="mt-5 text-sm leading-relaxed text-white/70">
+            The official digital platform connecting devotees worldwide to the
+            sacred traditions, rituals, and teachings during the holy
+            Chaturmasya period.
           </p>
-          
-          {/* Social Links */}
-          <div className="flex gap-4">
-            <a href="https://www.instagram.com/chaturmasya_sagara" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-[#D4AF37] hover:border-[#D4AF37] transition-all duration-300">
-              <FaInstagram className="text-white text-lg" />
-            </a>
-            <a href="https://youtube.com/@chaturmasyasagara2026?si=le6GD49Uu9Cpw2FT" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-[#D4AF37] hover:border-[#D4AF37] transition-all duration-300">
-              <FaYoutube className="text-white text-lg" />
-            </a>
-            <a href="https://www.facebook.com/profile.php?id=61590712144590&mibextid=rS40aB7S9Ucbxw6v" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-[#D4AF37] hover:border-[#D4AF37] transition-all duration-300">
-              <FaFacebook className="text-white text-lg" />
-            </a>
+
+          <div className="mt-6 flex items-center gap-3">
+            {socials.map(({ Icon, href, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={label}
+                className="grid h-10 w-10 place-items-center rounded-full border border-white/15 text-white/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#2a1208]"
+              >
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
           </div>
         </div>
 
-        {/* Links */}
-        <div className="md:col-span-3">
-          <h3 className="text-[11px] font-bold mb-6 uppercase tracking-[0.2em] text-[#D4AF37]">Quick Links</h3>
-          <ul className="space-y-4 text-sm text-[#D8C3BD] font-medium">
-            {['Home', 'Book Seva', 'Live Darshana', 'Daily Schedule'].map(link => (
-              <li key={link}>
-                <a href={`#${link.toLowerCase().replace(' ', '-')}`} className="hover:text-white flex items-center gap-2 group transition-colors">
-                  <ChevronRight className="w-3 h-3 text-[#722013] group-hover:text-[#D4AF37] transition-colors" /> {link}
+        {/* Quick Links */}
+        <div>
+          <h3 className="font-serif text-lg text-[#F5E6C8]">Quick Links</h3>
+          <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
+          <ul className="mt-5 space-y-3">
+            {quickLinks.map((link) => (
+              <li key={link.name}>
+                <a
+                  href={link.href}
+                  className="group inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-[#D4AF37]"
+                >
+                  <ChevronRight className="h-3.5 w-3.5 text-[#D4AF37] transition-transform group-hover:translate-x-0.5" />
+                  {link.name}
                 </a>
               </li>
             ))}
@@ -50,45 +143,106 @@ export default function Footer() {
         </div>
 
         {/* Contact */}
-        <div className="md:col-span-4">
-            <h3 className="text-[11px] font-bold mb-6 uppercase tracking-[0.2em] text-[#D4AF37]">Contact us</h3>
-            
-            {/* Map Preview Card */}
-            <a 
-                href="https://maps.app.goo.gl/zxphQvwBucSDnCmG8" 
-                target="_blank" 
-                rel="noreferrer"
-                className="block mb-6 group relative overflow-hidden rounded-xl border border-white/10 hover:border-[#D4AF37] transition-all duration-300"
-            >
-                <div className="h-32 bg-slate-800 flex items-center justify-center relative">
-                {/* Replace this div with an <img> tag if you have a screenshot */}
-                <MapPin className="w-8 h-8 text-[#D4AF37] opacity-50" />
-                <span className="absolute bottom-2 right-2 text-[10px] bg-black/50 px-2 py-1 rounded text-white uppercase tracking-widest">View Map</span>
-                </div>
-            </a>
+        <div>
+          <h3 className="font-serif text-lg text-[#F5E6C8]">Contact Us</h3>
+          <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
+          <ul className="mt-5 space-y-4 text-sm text-white/75">
+            <li className="flex items-start gap-3">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AF37]" />
+              <span className="min-w-0">
+                Karki Mutt, Udupi District,
+                <br />
+                Karnataka, India
+              </span>
+            </li>
+            <li className="flex items-center gap-3">
+              <Phone className="h-4 w-4 shrink-0 text-[#D4AF37]" />
+              <a
+                href="tel:+919448519501"
+                className="hover:text-[#D4AF37] transition-colors"
+              >
+                +91 94485 19501
+              </a>
+            </li>
+            <li className="flex items-center gap-3">
+              <Mail className="h-4 w-4 shrink-0 text-[#D4AF37]" />
+              <a
+                href="mailto:info@chaturmasya.org"
+                className="truncate hover:text-[#D4AF37] transition-colors"
+              >
+                info@chaturmasya.org
+              </a>
+            </li>
+          </ul>
+        </div>
 
-            {/* Contact Details */}
-            <ul className="space-y-5 text-sm text-[#D8C3BD]">
-                <li className="flex items-start gap-4">
-                <Phone className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                <a href="tel:+919448519501" className="hover:text-white transition-colors">+91 94485 19501</a>
-                </li>
-                <li className="flex items-start gap-4">
-                <Mail className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                <span>info@chaturmasya.org</span>
-                </li>
-            </ul>
+        {/* Map */}
+        <div>
+          <h3 className="font-serif text-lg text-[#F5E6C8]">Visit</h3>
+          <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
+          <a
+            href="https://maps.google.com/?q=Karki+Mutt+Udupi"
+            target="_blank"
+            rel="noreferrer"
+            className="group mt-5 block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-[#D4AF37]/50"
+          >
+            <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-[#4a2410] to-[#2a1208]">
+              <iframe
+                title="Karki Mutt Location"
+                src="https://www.google.com/maps?q=Udupi,Karnataka&output=embed"
+                className="h-full w-full opacity-80 transition-opacity group-hover:opacity-100"
+                loading="lazy"
+              />
             </div>
-        </div>    
-      {/* Bottom Bar */}
-      <div className="border-t border-white/10 bg-black/40 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between text-xs text-[#D8C3BD]">
-          <p>© 2026 Karki Mutt. All rights reserved.</p>
-          <p className="font-serif italic text-[#D4AF37] text-sm my-4 md:my-0 tracking-wide">Sarveh Bhavantu Sukhinaha</p>
-          <div className="flex items-center gap-2">
-            <span>Crafted by</span>
-            <a href="https://elv8.works" target="_blank" rel="noreferrer" className="text-white font-bold hover:text-[#D4AF37] transition">elv8.works</a>
-          </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-xs uppercase tracking-wider text-white/70">
+                Open in Maps
+              </span>
+              <ChevronRight className="h-4 w-4 text-[#D4AF37] transition-transform group-hover:translate-x-1" />
+            </div>
+          </a>
+        </div>
+      </div>
+
+      {/* Sanskrit blessing */}
+      <div className="relative border-t border-white/10">
+        <div className="mx-auto max-w-7xl px-6 py-6 text-center sm:px-8">
+          <p className="font-serif text-base italic text-[#D4AF37] sm:text-lg">
+            ॥ सर्वे भवन्तु सुखिनः ॥
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-[0.3em] text-white/50">
+            Sarveh Bhavantu Sukhinaha
+          </p>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="relative border-t border-white/10 bg-black/30">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 px-6 py-5 text-center text-xs text-white/60 sm:px-8 md:grid-cols-3 md:text-left">
+          <p className="min-w-0">
+            © 2026 Karki Mutt. All rights reserved.
+          </p>
+
+          {visitorCount !== null && (
+            <p className="md:text-center">
+              Website Visits{" "}
+              <span className="ml-1 rounded-full bg-[#D4AF37]/15 px-2 py-0.5 font-semibold text-[#D4AF37]">
+                {visitorCount.toLocaleString("en-IN")}
+              </span>
+            </p>
+          )}
+
+          <p className="inline-flex items-center justify-center gap-1.5 md:justify-end">
+            Crafted with <Heart className="h-3 w-3 fill-[#D4AF37] text-[#D4AF37]" /> by
+            <a
+              href="https://elv8.works"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-[#D4AF37] hover:underline"
+            >
+              elv8.works
+            </a>
+          </p>
         </div>
       </div>
     </footer>

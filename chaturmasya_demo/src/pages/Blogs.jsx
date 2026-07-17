@@ -215,7 +215,7 @@ const ShareMenu = ({ blog, onClose }) => {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -6, scale: 0.98 }}
       transition={{ duration: 0.15 }}
-      className="absolute right-0 top-full mt-2 w-64 bg-white border border-[#E8DCC4] rounded-2xl shadow-xl p-2 z-30"
+      className="absolute right-0 top-full mt-2 z-[9999] w-64 bg-white border border-[#E8DCC4] rounded-2xl shadow-xl p-2 pointer-events-auto"
     >
       <button
         type="button"
@@ -628,7 +628,7 @@ const BlogReader = ({ blog, onClose, activePhase }) => {
       className="fixed inset-0 z-[60] bg-[#fdfcf8] flex flex-col"
     >
       {/* TOP BAR */}
-      <div className="flex items-center justify-between gap-3 bg-white/95 backdrop-blur border-b border-[#E8DCC4] px-4 sm:px-6 py-3 shrink-0">
+      <div className="relative z-[100] flex items-center justify-between gap-3 bg-white/95 backdrop-blur border-b border-[#E8DCC4] px-4 sm:px-6 py-3 shrink-0 overflow-visible">
         <div className="flex items-center gap-2 min-w-0">
           <BookOpen className="w-4 h-4 text-[#D4AF37] shrink-0" />
           <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#722013] truncate">
@@ -705,7 +705,7 @@ const BlogReader = ({ blog, onClose, activePhase }) => {
           )}
 
           {/* Share */}
-          <div className="relative">
+          <div className="relative z-[110]">
             <button
               type="button"
               onClick={() => setShowShare((s) => !s)}

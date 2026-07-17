@@ -608,10 +608,6 @@ useEffect(() => {
           {/* <span className="w-1.5 h-1.5 bg-[#E86A33] rounded-full"></span>  */}
            Jai Jnaneshwari
         </span>
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          <span>{visitorCount.toLocaleString("en-IN")} Website Visits</span>
-        </div>
         <Link to="/admin" className="flex items-center gap-2 hover:text-[#E86A33] transition-colors">
           <Users className="w-3.5 h-3.5" />
           Admin Portal

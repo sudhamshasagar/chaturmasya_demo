@@ -11,6 +11,15 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 const MAX_BOOKINGS_PER_DAY = 3;
+const getMaxBookingsForDate = (dateString) => {
+  if (!dateString) return MAX_BOOKINGS_PER_DAY;
+
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  // Monday = maximum 2 slots
+  return date.getDay() === 1 ? 2 : 3;
+};
 const DURATION_OPTIONS = [
   { label: "30 Min", value: 30 },
   { label: "45 Min", value: 45 },
@@ -200,11 +209,10 @@ const CulturalRequests = () => {
         )
           throw new Error("REQUEST_ALREADY_PROCESSED");
         let approvedCount = 0;
-        let maxSlots = MAX_BOOKINGS_PER_DAY;
+        const maxSlots = getMaxBookingsForDate(approvalRequest.date);
         if (availabilitySnapshot.exists()) {
           const a = availabilitySnapshot.data();
           approvedCount = Number(a.approvedCount) || 0;
-          maxSlots = Number(a.maxSlots) || MAX_BOOKINGS_PER_DAY;
         }
         if (approvedCount >= maxSlots) throw new Error("DATE_FULL");
         transaction.set(

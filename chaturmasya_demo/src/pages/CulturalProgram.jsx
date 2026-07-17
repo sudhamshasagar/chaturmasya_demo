@@ -277,7 +277,7 @@ const CBookingUser = ({
 
           <span className="text-[#D4AF37]">•</span>
 
-          <span>Maximum 3 approved programs per day</span>
+          <span>Maximum 3 approved programs per day • 2 on Mondays</span>
         </div>
       </div>
 
@@ -467,7 +467,13 @@ const CBookingUser = ({
                 ))}
 
                 {currentMonthDates.map((date) => {
-                  const remainingSlots = getRemainingSlots(date.id);
+                  const normalRemainingSlots = getRemainingSlots(date.id);
+                  const maxSlotsForDate = getMaxSlotsForDate(date.id);
+
+                  const remainingSlots = Math.min(
+                    normalRemainingSlots,
+                    maxSlotsForDate
+                  );
 
                   const isFullyBooked = remainingSlots <= 0;
 
@@ -602,7 +608,10 @@ const CBookingUser = ({
                   <div className="sm:text-right">
                     <div className="flex sm:justify-end items-baseline gap-2">
                       <span className="text-3xl font-black text-[#D4AF37]">
-                        {selectedDateRemainingSlots}
+                        {Math.min(
+                          selectedDateRemainingSlots,
+                          getMaxSlotsForDate(selectedDateId)
+                        )}
                       </span>
 
                       <span className="text-xs uppercase tracking-wider font-bold text-white/60">
