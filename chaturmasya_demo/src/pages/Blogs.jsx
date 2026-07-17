@@ -935,6 +935,39 @@ const BlogSection = () => {
     );
     return () => unsub();
   }, []);
+  // Open a specific blog when visiting a shared URL
+// Example: #blog-DsUIE2pwSbeucfRUt7Ab
+useEffect(() => {
+  if (blogs.length === 0) return;
+
+  const openBlogFromUrl = () => {
+    const hash = window.location.hash;
+
+    if (!hash.startsWith("#blog-")) return;
+
+    const blogId = hash.replace("#blog-", "");
+
+    const matchedBlog = blogs.find(
+      (blog) => blog.id === blogId
+    );
+
+    if (matchedBlog) {
+      if (matchedBlog.phase) {
+        setActivePhase(matchedBlog.phase);
+      }
+
+      setOpenBlog(matchedBlog);
+    }
+  };
+
+  openBlogFromUrl();
+
+  window.addEventListener("hashchange", openBlogFromUrl);
+
+  return () => {
+    window.removeEventListener("hashchange", openBlogFromUrl);
+  };
+}, [blogs]);
 
   const phaseBlogs = useMemo(
     () => blogs.filter((b) => b.phase === activePhase),
@@ -990,13 +1023,32 @@ const BlogSection = () => {
     setOpenBlog(null);
   };
 
-  const handleOpen = (blog) => setOpenBlog(blog);
-  const handleClose = () => {
-    setOpenBlog(null);
-    setTimeout(() => {
-      commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
-  };
+  const handleOpen = (blog) => {
+  setOpenBlog(blog);
+
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname}#blog-${blog.id}`
+  );
+};
+ const handleClose = () => {
+  setOpenBlog(null);
+
+  // Remove #blog-ID from URL
+  window.history.replaceState(
+    null,
+    "",
+    window.location.pathname
+  );
+
+  setTimeout(() => {
+    commentsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 150);
+};
 
   return (
     <section id="updates" className="scroll-mt-32 px-4 sm:px-6 lg:px-8 py-16 bg-[#fdfcf8]">

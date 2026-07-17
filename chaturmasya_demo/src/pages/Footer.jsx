@@ -14,10 +14,15 @@ export default function Footer() {
   const [visitorCount, setVisitorCount] = useState(null);
 
   useEffect(() => {
-    const visitorRef = doc(db, "siteStats", "visitors");
+  const visitorRef = doc(db, "siteStats", "visitors");
+  const VISITOR_KEY = "chaturmasya_visitor_counted";
 
-    const registerVisit = async () => {
-      try {
+  const registerUniqueVisitor = async () => {
+    try {
+      const alreadyCounted = localStorage.getItem(VISITOR_KEY);
+
+      // Count this browser only once
+      if (!alreadyCounted) {
         await setDoc(
           visitorRef,
           {
@@ -26,27 +31,33 @@ export default function Footer() {
           },
           { merge: true }
         );
-      } catch (error) {
-        console.error("Error registering website visit:", error);
+
+        localStorage.setItem(VISITOR_KEY, "true");
       }
-    };
+    } catch (error) {
+      console.error("Error registering website visitor:", error);
+    }
+  };
 
-    registerVisit();
+  registerUniqueVisitor();
 
-    const unsubscribe = onSnapshot(
-      visitorRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          setVisitorCount(snapshot.data().totalVisits || 0);
-        }
-      },
-      (error) => {
-        console.error("Error loading visitor count:", error);
+  // Keep the displayed total updated
+  const unsubscribe = onSnapshot(
+    visitorRef,
+    (snapshot) => {
+      if (snapshot.exists()) {
+        setVisitorCount(snapshot.data().totalVisits || 0);
+      } else {
+        setVisitorCount(0);
       }
-    );
+    },
+    (error) => {
+      console.error("Error loading visitor count:", error);
+    }
+  );
 
-    return () => unsubscribe();
-  }, []);
+  return () => unsubscribe();
+}, []);
 
   const quickLinks = [
     { name: "Home", href: "/" },
@@ -150,9 +161,9 @@ export default function Footer() {
             <li className="flex items-start gap-3">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AF37]" />
               <span className="min-w-0">
-                Karki Mutt, Udupi District,
+                Daivajna Brahmana Sabha Bhavana
                 <br />
-                Karnataka, India
+                Sagara, Karnataka
               </span>
             </li>
             <li className="flex items-center gap-3">
@@ -170,7 +181,7 @@ export default function Footer() {
                 href="mailto:info@chaturmasya.org"
                 className="truncate hover:text-[#D4AF37] transition-colors"
               >
-                info@chaturmasya.org
+                chaturmasyasagara@gmail.com
               </a>
             </li>
           </ul>
@@ -186,12 +197,15 @@ export default function Footer() {
             rel="noreferrer"
             className="group mt-5 block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-[#D4AF37]/50"
           >
-            <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-[#4a2410] to-[#2a1208]">
+            <div className="h-32 relative">
               <iframe
-                title="Karki Mutt Location"
-                src="https://www.google.com/maps?q=Udupi,Karnataka&output=embed"
-                className="h-full w-full opacity-80 transition-opacity group-hover:opacity-100"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3868.6564901614256!2d75.02673107433876!3d14.156281787801893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bbb8b003b45f2c9%3A0xa4853c01c6c4484b!2sDaivajna%20Brahmana%20Sabha%20Bhavana%2C%20Sagar!5e0!3m2!1sen!2sin!4v1784288886532!5m2!1sen!2sin"
+                className="w-full h-full"
+                style={{ border: 0 }}
+                allowFullScreen
                 loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                title="Daivajna Brahmana Sabha Bhavana, Sagar"
               />
             </div>
             <div className="flex items-center justify-between px-4 py-3">
