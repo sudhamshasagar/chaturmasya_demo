@@ -1,17 +1,48 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+  serverTimestamp,
+  query,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
+import {
+  CalendarDays,
+  Clock,
+  Plus,
+  UploadCloud,
+  Download,
+  Trash2,
+  Edit3,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  FileText,
+} from "lucide-react";
 
-const Schedule = () => {
+const ScheduleManager = () => {
   const fileInputRef = useRef(null);
 
   // UI States
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
   // Data States
+  const [schedules, setSchedules] = useState([]);
   const [previewSchedules, setPreviewSchedules] = useState([]);
   const [formData, setFormData] = useState({
     date: null,
@@ -20,28 +51,37 @@ const Schedule = () => {
     description: "",
   });
 
-  // Mock initial published data
-  const [schedules, setSchedules] = useState([
-    {
-      id: 1,
-      date: new Date("2026-06-06T00:00:00"),
-      time: "06:00 AM",
-      title: "Suprabhata & Nirmalya",
-      description: "Morning awakening seva and nirmalya visarjana.",
-    },
-    {
-      id: 2,
-      date: new Date("2026-06-06T00:00:00"),
-      time: "10:00 AM",
-      title: "Pravachana",
-      description: "Spiritual discourse by Pujya Sri Swamiji.",
-    },
-  ]);
+  // ============ FIREBASE LISTENER ============
+  useEffect(() => {
+    const q = query(collection(db, "schedules"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => {
+          const docData = d.data();
+          return {
+            id: d.id,
+            ...docData,
+            // Convert stored ISO string back to Date object for the DatePicker
+            date: docData.date ? new Date(docData.date) : null,
+          };
+        });
+        setSchedules(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching schedules: ", error);
+        setLoading(false);
+      }
+    );
 
-  // Generate time slots (05:00 AM to 09:00 PM)
+    return () => unsubscribe();
+  }, []);
+
+  // ============ TIME SLOTS ============
   const generateTimeSlots = () => {
     const slots = [];
-    for (let i = 5; i <= 21; i++) {
+    for (let i = 4; i <= 22; i++) {
       const hour12 = i > 12 ? i - 12 : i === 0 ? 12 : i;
       const ampm = i >= 12 ? "PM" : "AM";
       const h = hour12.toString().padStart(2, "0");
@@ -52,7 +92,17 @@ const Schedule = () => {
   };
   const timeSlots = generateTimeSlots();
 
-  // --- SINGLE ITEM FORM LOGIC ---
+  const timeToMinutes = (t) => {
+    if (!t) return 0;
+    const [time, modifier] = t.split(" ");
+    if (!time || !modifier) return 0;
+    let [hours, minutes] = time.split(":").map(Number);
+    if (hours === 12) hours = 0;
+    if (modifier === "PM") hours += 12;
+    return hours * 60 + minutes;
+  };
+
+  // ============ SINGLE ITEM FORM LOGIC ============
   const resetForm = () => {
     setFormData({ date: null, time: "", title: "", description: "" });
     setEditingId(null);
@@ -72,30 +122,50 @@ const Schedule = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this schedule item?")) {
-      setSchedules(schedules.filter((s) => s.id !== id));
+      try {
+        await deleteDoc(doc(db, "schedules", id));
+      } catch (error) {
+        console.error("Error deleting schedule:", error);
+        alert("Failed to delete item.");
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.date || !formData.time || !formData.title) {
+    if (!formData.date || !formData.time || !formData.title.trim()) {
       alert("Please fill in the date, time, and title.");
       return;
     }
 
-    if (editingId) {
-      setSchedules(
-        schedules.map((s) => (s.id === editingId ? { ...s, ...formData } : s))
-      );
-    } else {
-      setSchedules([...schedules, { id: Date.now(), ...formData }]);
+    setProcessing(true);
+    try {
+      const payload = {
+        date: formData.date.toISOString(),
+        time: formData.time,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        updatedAt: serverTimestamp(),
+      };
+
+      if (editingId) {
+        await updateDoc(doc(db, "schedules", editingId), payload);
+      } else {
+        payload.createdAt = serverTimestamp();
+        await addDoc(collection(db, "schedules"), payload);
+      }
+      resetForm();
+    } catch (error) {
+      console.error("Error saving schedule:", error);
+      alert("Failed to save schedule item.");
+    } finally {
+      setProcessing(false);
     }
-    resetForm();
   };
 
-  // --- BULK IMPORT LOGIC ---
+  // ============ BULK IMPORT LOGIC ============
   const toggleImportView = () => {
     setIsFormOpen(false);
     setPreviewSchedules([]);
@@ -104,10 +174,10 @@ const Schedule = () => {
 
   const downloadTemplate = () => {
     const headers = "Date (YYYY-MM-DD),Time (HH:MM AM/PM),Title,Description\n";
-    const sampleRow1 = "2026-06-08,09:00 AM,Sri Rama Pooja,Daily morning rituals\n";
-    const sampleRow2 = '2026-06-08,10:30 AM,Special Pravachana,"Enclose descriptions with commas in quotes"';
+    const sampleRow1 = "2026-07-29,06:00 AM,Suprabhata & Nirmalya,Morning awakening seva\n";
+    const sampleRow2 = '2026-07-29,10:30 AM,Pravachana,"Spiritual discourse by Pujya Sri Swamiji"';
     const csvContent = headers + sampleRow1 + sampleRow2;
-    
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -117,7 +187,6 @@ const Schedule = () => {
     document.body.removeChild(link);
   };
 
-  // Basic CSV Parser that handles quotes around descriptions
   const parseCSVRow = (str) => {
     const result = [];
     let cur = "";
@@ -145,7 +214,6 @@ const Schedule = () => {
       const rows = text.split("\n");
       const parsed = [];
 
-      // Skip header (i=1)
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i].trim();
         if (!row) continue;
@@ -153,11 +221,16 @@ const Schedule = () => {
         const cols = parseCSVRow(row);
         if (cols.length >= 3) {
           const [dateStr, time, title, description] = cols;
-          const dateObj = new Date(dateStr);
           
+          // Construct date properly avoiding timezone shifts
+          const [year, month, day] = dateStr.split("-").map(Number);
+          if (!year || !month || !day) continue;
+          
+          const dateObj = new Date(year, month - 1, day);
+
           if (!isNaN(dateObj) && time && title) {
             parsed.push({
-              id: `prev-${Date.now()}-${i}`, // Temporary ID for preview
+              id: `prev-${Date.now()}-${i}`,
               date: dateObj,
               time: time,
               title: title,
@@ -166,7 +239,7 @@ const Schedule = () => {
           }
         }
       }
-      
+
       if (parsed.length > 0) {
         setPreviewSchedules(parsed);
       } else {
@@ -174,296 +247,348 @@ const Schedule = () => {
       }
     };
     reader.readAsText(file);
-    e.target.value = null; // Reset input
+    e.target.value = null;
   };
 
-  const confirmImport = () => {
-    // Generate permanent IDs for the preview items
-    const newItems = previewSchedules.map(item => ({
-      ...item,
-      id: Date.now() + Math.random(),
-    }));
-    
-    setSchedules([...schedules, ...newItems]);
-    setPreviewSchedules([]);
-    setIsImportOpen(false);
-    alert(`${newItems.length} schedule items imported successfully!`);
+  const confirmImport = async () => {
+    if (previewSchedules.length === 0) return;
+    setProcessing(true);
+
+    try {
+      const batch = writeBatch(db);
+      previewSchedules.forEach((item) => {
+        const ref = doc(collection(db, "schedules"));
+        batch.set(ref, {
+          date: item.date.toISOString(),
+          time: item.time,
+          title: item.title,
+          description: item.description,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      });
+
+      await batch.commit();
+      setPreviewSchedules([]);
+      setIsImportOpen(false);
+      alert(`${previewSchedules.length} items imported successfully!`);
+    } catch (error) {
+      console.error("Bulk import failed:", error);
+      alert("Failed to import schedules.");
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  // --- GROUPING LOGIC FOR PUBLISHED SCHEDULES ---
-  const groupedSchedules = schedules.reduce((acc, curr) => {
-    if (!curr.date) return acc;
-    const dateStr = curr.date.toLocaleDateString("en-US", {
-      weekday: "long", month: "long", day: "numeric", year: "numeric",
+  // ============ GROUPING & SORTING ============
+  const groupedSchedules = useMemo(() => {
+    const groups = schedules.reduce((acc, curr) => {
+      if (!curr.date) return acc;
+      // Normalizing date string for grouping
+      const dateStr = curr.date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+      if (!acc[dateStr]) acc[dateStr] = { dateObj: curr.date, items: [] };
+      acc[dateStr].items.push(curr);
+      return acc;
+    }, {});
+
+    // Sort items within each group by time
+    Object.keys(groups).forEach((key) => {
+      groups[key].items.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
     });
-    if (!acc[dateStr]) acc[dateStr] = [];
-    acc[dateStr].push(curr);
-    return acc;
-  }, {});
 
-  const sortedDates = Object.keys(groupedSchedules).sort(
-    (a, b) => new Date(a) - new Date(b)
-  );
+    // Sort groups by date
+    return Object.entries(groups).sort((a, b) => a[1].dateObj - b[1].dateObj);
+  }, [schedules]);
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in font-sans">
-      
-      {/* Breadcrumb */}
-      <nav className="flex text-stone-500 text-sm font-bold uppercase tracking-wider mb-6">
-        <Link to="/admin" className="hover:text-orange-700 transition">Admin</Link>
-        <span className="mx-2">/</span>
-        <span className="text-stone-900">Daily Schedule</span>
-      </nav>
-
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 border-b-2 border-stone-800 pb-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-serif font-black text-stone-900 uppercase tracking-tight">
-            Schedule Manager
-          </h1>
-          <p className="text-stone-500 font-serif italic mt-1 text-lg">
-            Plan, import, and publish the daily itinerary.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={toggleImportView}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-all ${
-              isImportOpen ? "bg-stone-200 text-stone-700" : "bg-white border-2 border-stone-200 text-stone-700 hover:border-orange-600 hover:text-orange-600"
-            }`}
-          >
-            <span>📁</span> Bulk Import
-          </button>
-          
-          <button
-            onClick={() => { resetForm(); setIsFormOpen(!isFormOpen); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-all ${
-              isFormOpen ? "bg-stone-200 text-stone-700" : "bg-orange-600 text-white hover:bg-orange-700"
-            }`}
-          >
-            {isFormOpen ? <><span>✕</span> Close Editor</> : <><span>➕</span> Add Single Item</>}
-          </button>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-10 h-10 text-[#722013] animate-spin mb-4" />
+          <p className="text-xs font-bold uppercase tracking-widest text-[#722013]">Loading Schedule...</p>
         </div>
       </div>
+    );
+  }
 
-      {/* --- BULK IMPORT SECTION --- */}
-      {isImportOpen && (
-        <div className="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden mb-10 animate-fade-in">
-          <div className="bg-stone-900 px-6 py-4 border-b border-stone-800 flex justify-between items-center">
-            <h2 className="text-lg font-serif font-bold text-white uppercase tracking-wider">
-              Import Schedule via CSV
-            </h2>
-            <button onClick={downloadTemplate} className="text-xs font-bold bg-stone-700 hover:bg-stone-600 text-white px-3 py-1.5 rounded transition">
-              Download Template
+  return (
+    <div className="min-h-screen bg-[#FDFBF7] pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* ============ HEADER ============ */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 border-b border-[#E8DCC4] pb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Link to="/admin" className="p-2 rounded-full bg-white border border-[#E8DCC4] text-[#722013] hover:bg-[#FAF6F0] transition shadow-sm">
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Admin Control</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-serif font-bold text-[#2a0b06] mb-2">Schedule Manager</h1>
+            <p className="text-sm text-gray-500 max-w-lg">Plan, import, and publish the daily itinerary for Chaturmasya.</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={toggleImportView}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition shadow-sm border ${
+                isImportOpen ? "bg-[#FAF6F0] text-[#722013] border-[#722013]" : "bg-white border-[#E8DCC4] text-[#2a0b06] hover:bg-[#FAF6F0]"
+              }`}
+            >
+              <UploadCloud className="w-4 h-4" /> Import CSV
+            </button>
+            <button
+              onClick={() => { resetForm(); setIsFormOpen(!isFormOpen); }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition shadow-sm border ${
+                isFormOpen ? "bg-white border-[#E8DCC4] text-gray-600" : "bg-[#2a0b06] text-white border-[#2a0b06] hover:bg-[#722013] hover:border-[#722013]"
+              }`}
+            >
+              {isFormOpen ? <><X className="w-4 h-4" /> Close Editor</> : <><Plus className="w-4 h-4" /> Add Item</>}
             </button>
           </div>
+        </div>
 
-          <div className="p-6 md:p-8">
-            {previewSchedules.length === 0 ? (
-              // Upload State
-              <div className="border-2 border-dashed border-stone-300 bg-stone-50 rounded-2xl p-10 text-center hover:bg-orange-50 hover:border-orange-400 transition-colors cursor-pointer" onClick={() => fileInputRef.current.click()}>
-                <span className="text-4xl block mb-3">📄</span>
-                <h3 className="text-lg font-bold text-stone-900 mb-1">Click to browse or drag CSV here</h3>
-                <p className="text-stone-500 text-sm">Please ensure the file matches the downloaded template format.</p>
-                <input 
-                  type="file" 
-                  accept=".csv" 
-                  ref={fileInputRef}
-                  onChange={handleFileUpload} 
-                  className="hidden" 
-                />
-              </div>
-            ) : (
-              // Preview State
-              <div className="space-y-6 animate-fade-in">
-                <div className="flex justify-between items-end border-b border-stone-200 pb-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-stone-900">Preview Import Data</h3>
-                    <p className="text-sm text-stone-500">Found {previewSchedules.length} valid items.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setPreviewSchedules([])} className="px-4 py-2 text-sm font-bold text-stone-600 hover:bg-stone-100 rounded-lg transition">
-                      Discard
-                    </button>
-                    <button onClick={confirmImport} className="px-5 py-2 text-sm font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition">
-                      Confirm & Publish
-                    </button>
-                  </div>
+        {/* ============ BULK IMPORT SECTION ============ */}
+        <AnimatePresence>
+          {isImportOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -20 }}
+              className="mb-10 overflow-hidden"
+            >
+              <div className="bg-white rounded-2xl shadow-sm border border-[#E8DCC4] overflow-hidden">
+                <div className="bg-[#FAF6F0] px-6 py-4 border-b border-[#E8DCC4] flex justify-between items-center">
+                  <h2 className="text-lg font-serif font-bold text-[#2a0b06]">Import Schedule via CSV</h2>
+                  <button onClick={downloadTemplate} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#722013] hover:bg-white border border-[#E8DCC4] bg-[#FDFBF7] px-3 py-1.5 rounded-lg transition shadow-sm">
+                    <Download className="w-3.5 h-3.5" /> Template
+                  </button>
                 </div>
 
-                <div className="max-h-96 overflow-y-auto border border-stone-200 rounded-xl">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-stone-100 sticky top-0 border-b border-stone-200">
-                      <tr>
-                        <th className="p-3 font-bold text-stone-600 uppercase tracking-wide">Date</th>
-                        <th className="p-3 font-bold text-stone-600 uppercase tracking-wide">Time</th>
-                        <th className="p-3 font-bold text-stone-600 uppercase tracking-wide">Title</th>
-                        <th className="p-3 font-bold text-stone-600 uppercase tracking-wide">Description</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-                      {previewSchedules.map((item) => (
-                        <tr key={item.id} className="hover:bg-stone-50">
-                          <td className="p-3 whitespace-nowrap">{item.date.toLocaleDateString()}</td>
-                          <td className="p-3 whitespace-nowrap font-medium text-orange-700">{item.time}</td>
-                          <td className="p-3 font-bold text-stone-900">{item.title}</td>
-                          <td className="p-3 text-stone-500 truncate max-w-xs" title={item.description}>{item.description}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="p-6 md:p-8">
+                  {previewSchedules.length === 0 ? (
+                    <div 
+                      onClick={() => fileInputRef.current.click()}
+                      className="border-2 border-dashed border-[#D4AF37]/40 bg-[#FAF6F0]/50 rounded-2xl p-10 text-center hover:bg-[#FAF6F0] hover:border-[#D4AF37] transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-10 h-10 text-[#D4AF37] mx-auto mb-3" />
+                      <h3 className="text-sm font-bold text-[#2a0b06] mb-1">Click to browse or drag CSV here</h3>
+                      <p className="text-xs text-gray-500">Ensure the file matches the template format exactly.</p>
+                      <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E8DCC4] pb-4">
+                        <div>
+                          <h3 className="font-serif text-xl font-bold text-[#2a0b06]">Preview Import</h3>
+                          <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Found {previewSchedules.length} valid items
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => setPreviewSchedules([])} className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-100 rounded-lg transition">
+                            Discard
+                          </button>
+                          <button onClick={confirmImport} disabled={processing} className="px-5 py-2 text-xs font-bold uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-lg shadow-sm transition flex items-center gap-2">
+                            {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm & Publish"}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="max-h-[400px] overflow-y-auto border border-[#E8DCC4] rounded-xl hide-scrollbar relative">
+                        <table className="w-full text-left text-sm min-w-[600px]">
+                          <thead className="bg-[#FAF6F0] sticky top-0 border-b border-[#E8DCC4] shadow-sm z-10">
+                            <tr>
+                              <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Date</th>
+                              <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Time</th>
+                              <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Title</th>
+                              <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#E8DCC4]">
+                            {previewSchedules.map((item) => (
+                              <tr key={item.id} className="hover:bg-[#FCF8F2]">
+                                <td className="p-4 whitespace-nowrap font-bold text-[#2a0b06]">{item.date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                                <td className="p-4 whitespace-nowrap font-bold text-[#722013]">{item.time}</td>
+                                <td className="p-4 font-bold text-[#2a0b06]">{item.title}</td>
+                                <td className="p-4 text-gray-500 truncate max-w-[250px]" title={item.description}>{item.description}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* --- SINGLE ITEM EDITOR --- */}
-      {isFormOpen && (
-        <div className="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden mb-10 animate-fade-in">
-          <div className="bg-stone-900 px-6 py-4 border-b border-stone-800">
-            <h2 className="text-lg font-serif font-bold text-white uppercase tracking-wider">
-              {editingId ? "Edit Schedule Item" : "New Schedule Item"}
-            </h2>
-          </div>
+        {/* ============ SINGLE ITEM FORM ============ */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -20 }}
+              className="mb-10 overflow-hidden"
+            >
+              <div className="bg-white rounded-2xl shadow-sm border border-[#E8DCC4]">
+                <div className="bg-[#FAF6F0] px-6 py-4 border-b border-[#E8DCC4]">
+                  <h2 className="text-lg font-serif font-bold text-[#2a0b06]">
+                    {editingId ? "Edit Schedule Item" : "New Schedule Item"}
+                  </h2>
+                </div>
 
-          <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2 uppercase tracking-wide">Event Date</label>
-                <DatePicker
-                  selected={formData.date}
-                  onChange={(date) => setFormData({ ...formData, date })}
-                  dateFormat="dd MMM yyyy"
-                  placeholderText="Select a date"
-                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl p-3.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
-                />
+                <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                        <CalendarDays className="w-3.5 h-3.5 text-[#D4AF37]" /> Event Date *
+                      </label>
+                      <DatePicker
+                        selected={formData.date}
+                        onChange={(date) => setFormData({ ...formData, date })}
+                        dateFormat="dd MMM yyyy"
+                        placeholderText="Select date"
+                        className="w-full bg-[#FCF8F2] border border-[#E8DCC4] text-[#2a0b06] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[#722013] transition"
+                        wrapperClassName="w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                        <Clock className="w-3.5 h-3.5 text-[#D4AF37]" /> Event Time *
+                      </label>
+                      <select
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="w-full bg-[#FCF8F2] border border-[#E8DCC4] text-[#2a0b06] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[#722013] transition cursor-pointer"
+                      >
+                        <option value="" disabled>Select Time Slot</option>
+                        {timeSlots.map((slot, idx) => (
+                          <option key={idx} value={slot}>{slot}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Event Title *</label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="e.g., Mahamangalarati & Teertha Prasada"
+                        className="w-full bg-[#FCF8F2] border border-[#E8DCC4] text-[#2a0b06] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[#722013] transition"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Description (Optional)</label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Brief details about the event..."
+                        rows="3"
+                        className="w-full bg-[#FCF8F2] border border-[#E8DCC4] text-[#2a0b06] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#722013] transition resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-6 border-t border-[#E8DCC4]">
+                    <button type="button" onClick={resetForm} className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition">
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={processing} className="bg-[#2a0b06] hover:bg-[#722013] disabled:bg-gray-300 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-md transition flex items-center gap-2">
+                      {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : editingId ? "Save Changes" : "Publish to Schedule"}
+                    </button>
+                  </div>
+                </form>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2 uppercase tracking-wide">Event Time</label>
-                <select
-                  value={formData.time}
-                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl p-3.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all appearance-none"
-                >
-                  <option value="" disabled>Select Time Slot</option>
-                  {timeSlots.map((slot, idx) => (
-                    <option key={idx} value={slot}>{slot}</option>
-                  ))}
-                </select>
-              </div>
+        {/* ============ PUBLISHED SCHEDULES ============ */}
+        <div className="space-y-12">
+          {groupedSchedules.length > 0 ? (
+            groupedSchedules.map(([dateString, group]) => (
+              <div key={dateString} className="relative pl-4 md:pl-8">
+                {/* Timeline vertical line */}
+                <div className="absolute left-0 top-2 bottom-0 w-px bg-gradient-to-b from-[#D4AF37] via-[#E8DCC4] to-transparent" />
+                
+                {/* Date Header */}
+                <div className="relative flex items-center gap-4 mb-6">
+                  <div className="absolute -left-[21px] md:-left-[37px] w-3 h-3 rounded-full bg-[#D4AF37] ring-4 ring-[#FDFBF7]" />
+                  <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#2a0b06] tracking-tight bg-white border border-[#E8DCC4] px-5 py-2 rounded-full shadow-sm">
+                    {dateString}
+                  </h2>
+                </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-stone-700 mb-2 uppercase tracking-wide">Event Title</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Mahamangalarati & Teertha Prasada"
-                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl p-3.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all font-serif text-lg"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-stone-700 mb-2 uppercase tracking-wide">Description (Optional)</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Provide brief details about this specific schedule item..."
-                  rows="3"
-                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl p-3.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-6 border-t border-stone-100">
-              <button type="button" onClick={resetForm} className="px-6 py-2.5 rounded-xl font-bold text-stone-600 hover:bg-stone-100 transition-colors">
-                Cancel
-              </button>
-              <button type="submit" className="bg-stone-900 hover:bg-stone-800 text-white px-8 py-2.5 rounded-xl font-bold shadow-md transition-colors">
-                {editingId ? "Save Changes" : "Publish to Schedule"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* --- PUBLISHED SCHEDULES LIST --- */}
-      <div className="space-y-10 mt-6">
-        {sortedDates.length > 0 ? (
-          sortedDates.map((dateGroup) => (
-            <div key={dateGroup} className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
-              
-              {/* Date Header */}
-              <div className="bg-stone-100/50 px-6 py-4 border-b border-stone-200 flex items-center gap-3">
-                <span className="text-2xl">📅</span>
-                <h2 className="text-xl font-serif font-black text-stone-900 tracking-tight">
-                  {dateGroup}
-                </h2>
-              </div>
-
-              {/* Schedule Items for the Day */}
-              <div className="divide-y divide-stone-100">
-                {groupedSchedules[dateGroup]
-                  .sort((a, b) => a.time.localeCompare(b.time))
-                  .map((item) => (
-                    <div key={item.id} className="p-6 flex flex-col md:flex-row gap-6 hover:bg-orange-50/30 transition-colors group">
+                {/* Schedule Cards */}
+                <div className="space-y-4">
+                  {group.items.map((item) => (
+                    <div key={item.id} className="group bg-white border border-[#E8DCC4] rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-start gap-4 md:gap-6 relative overflow-hidden">
+                      {/* Left color bar */}
+                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#722013] opacity-0 group-hover:opacity-100 transition-opacity" />
                       
-                      {/* Time Marker */}
-                      <div className="md:w-40 flex-shrink-0">
-                        <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg font-bold text-sm tracking-wide border border-orange-200 shadow-sm">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      {/* Time Pill */}
+                      <div className="shrink-0">
+                        <div className="inline-flex items-center justify-center gap-1.5 bg-[#FAF6F0] border border-[#E8DCC4] text-[#722013] px-3.5 py-1.5 rounded-lg font-bold text-xs uppercase tracking-widest">
+                          <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
                           {item.time}
                         </div>
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-stone-900 mb-1">{item.title}</h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold text-[#2a0b06] mb-1 leading-snug">{item.title}</h3>
                         {item.description && (
-                          <p className="text-stone-600 text-sm leading-relaxed max-w-2xl">
+                          <p className="text-sm text-gray-500 leading-relaxed font-serif italic max-w-2xl">
                             {item.description}
                           </p>
                         )}
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2 self-start md:opacity-0 md:group-hover:opacity-100 transition-opacity mt-4 md:mt-0">
+                      <div className="flex gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity mt-2 md:mt-0">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="bg-white border border-stone-200 text-stone-600 hover:text-stone-900 hover:border-stone-400 font-bold p-2 rounded-lg transition-colors shadow-sm"
+                          className="bg-white border border-[#E8DCC4] text-gray-500 hover:text-[#D4AF37] hover:border-[#D4AF37] p-2 rounded-lg transition shadow-sm"
                           title="Edit"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                          <Edit3 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="bg-white border border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 font-bold p-2 rounded-lg transition-colors shadow-sm"
+                          className="bg-white border border-[#E8DCC4] text-gray-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 p-2 rounded-lg transition shadow-sm"
                           title="Delete"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-
                     </div>
                   ))}
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-2xl border border-[#E8DCC4] shadow-sm flex flex-col items-center justify-center p-12 text-center">
+              <CalendarDays className="w-12 h-12 text-gray-300 mb-4" />
+              <h3 className="text-xl font-serif font-bold text-[#2a0b06]">No Schedule Items</h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-md">Add items manually or use bulk import to build the itinerary.</p>
             </div>
-          ))
-        ) : (
-          <div className="bg-white p-12 rounded-2xl border border-stone-200 text-center shadow-sm">
-            <div className="text-4xl mb-3">📅</div>
-            <h3 className="text-lg font-bold text-stone-900">No schedule items published</h3>
-            <p className="text-stone-500 text-sm mt-1">Add items manually or use bulk import to build your itinerary.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-
     </div>
   );
 };
 
-export default Schedule;
+export default ScheduleManager;

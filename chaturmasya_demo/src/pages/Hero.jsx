@@ -104,7 +104,7 @@ export default function ChaturmasyaHero() {
   }, [next, prev]);
 
   return (
-    <section className="desktop-scale relative w-full pt-20 lg:pt-30 pb-10 md:pb-24 overflow-hidden z-10">
+    <section className="desktop-scale relative w-full pt-20 lg:pt-40 pb-15 md:pb-24 lg:pb-15 overflow-hidden z-10">
       {/* Ambient washes */}
       <div className="absolute top-10 -left-40 w-[560px] h-[560px] rounded-full bg-[#D4AF37]/15 blur-[130px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 -right-32 w-[460px] h-[460px] rounded-full bg-[#722013]/15 blur-[110px] pointer-events-none -z-10" />
@@ -483,46 +483,13 @@ export default function ChaturmasyaHero() {
               ">
                 The Sacred Months
               </p>
-
-            </motion.div>
-            {/* Blessing */}
-            <motion.div
-              variants={fadeUp}
-              className="max-w-md"
-            >
-
-              <p className="
-                text-xs
-                font-serif
-                italic
-                text-[#722013]
-                leading-relaxed
-              ">
-                May the sacred vow of Chaturmasya bring inner light
-                to every devotee.
-              </p>
-
-
-              <p className="
-                text-[8px]
-                font-bold
-                text-stone-900
-                uppercase
-                tracking-[0.22em]
-                mt-2
-              ">
-                — Pujya Sri Swamiji
-              </p>
-
             </motion.div>
             {/* Meta */}
-
             <motion.div
               variants={fadeUp}
               className="
                 mt-6
                 pt-4
-
                 border-t
                 border-[#E8DCC4]
 

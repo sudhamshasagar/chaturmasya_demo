@@ -10,6 +10,22 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import {
+  Search,
+  Download,
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ArrowLeft,
+  AlertCircle,
+  X,
+  Users,
+  User,
+  Building2,
+  UserCircle,
+} from "lucide-react";
 
 const MAX_BOOKINGS_PER_DAY = 3;
 
@@ -26,63 +42,62 @@ const DURATION_OPTIONS = [
   { label: "1 Hour", value: 60 },
 ];
 
+const PROGRAM_CATEGORIES = [
+  "Harikatha",
+  "Bhajan",
+  "Vocal Music",
+  "Instrumental",
+  "Classical Dance",
+  "Spiritual Discourse",
+  "Group Chanting",
+  "Others",
+];
+
 const STATUS_META = {
   pending: {
-    label: "Awaiting",
-    dot: "bg-amber-500",
-    chip: "bg-amber-50 text-amber-800 border-amber-200",
-    ring: "ring-amber-200",
+    label: "Pending",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
+    icon: Clock,
   },
   approved: {
     label: "Allocated",
-    dot: "bg-emerald-600",
-    chip: "bg-emerald-50 text-emerald-800 border-emerald-200",
-    ring: "ring-emerald-200",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+    icon: CheckCircle,
   },
   rejected: {
     label: "Declined",
-    dot: "bg-rose-600",
-    chip: "bg-rose-50 text-rose-800 border-rose-200",
-    ring: "ring-rose-200",
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-200",
+    icon: XCircle,
   },
 };
 
 const CulturalRequests = () => {
-  const [requests, setRequests] = useState([]);
-  const [approvedRequests, setApprovedRequests] = useState([]);
   const [allRequests, setAllRequests] = useState([]);
+  const [approvedRequests, setApprovedRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+
+  // Modals State
   const [approvalRequest, setApprovalRequest] = useState(null);
   const [selectedDuration, setSelectedDuration] = useState("");
   const [selectedStartTime, setSelectedStartTime] = useState("");
+
   const [rejectionRequest, setRejectionRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
+
+  const [editingRequest, setEditingRequest] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
   const [activeTab, setActiveTab] = useState("pending");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ============ PENDING LISTENER ============
-  useEffect(() => {
-    const pendingQuery = query(
-      collection(db, "culturalRequests"),
-      where("status", "in", ["pending", "Pending"])
-    );
-    const unsubscribe = onSnapshot(
-      pendingQuery,
-      (snapshot) => {
-        const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setRequests(data);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Failed to load pending requests:", error);
-        setLoading(false);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  // ============ ALL LISTENER ============
+  // ============ ALL REQUESTS LISTENER ============
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "culturalRequests"),
@@ -91,11 +106,15 @@ const CulturalRequests = () => {
         data.sort((a, b) => {
           const aT = a.createdAt?.toMillis?.() || 0;
           const bT = b.createdAt?.toMillis?.() || 0;
-          return bT - aT;
+          return bT - aT; // Descending
         });
         setAllRequests(data);
+        setLoading(false);
       },
-      (error) => console.error("Failed to load all requests:", error)
+      (error) => {
+        console.error("Failed to load requests:", error);
+        setLoading(false);
+      }
     );
     return () => unsubscribe();
   }, []);
@@ -155,10 +174,12 @@ const CulturalRequests = () => {
       .filter((r) => r.date === date)
       .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
-  const hasTimeConflict = (date, newStart, newEnd) => {
+  const hasTimeConflictExcluding = (date, newStart, newEnd, excludeId = null) => {
     const ns = timeToMinutes(newStart);
     const ne = timeToMinutes(newEnd);
-    return getApprovedProgramsForDate(date).some((b) => {
+    return approvedRequests.some((b) => {
+      if (excludeId && b.id === excludeId) return false;
+      if (b.date !== date) return false;
       if (!b.startTime || !b.endTime) return false;
       const es = timeToMinutes(b.startTime);
       const ee = timeToMinutes(b.endTime);
@@ -166,41 +187,29 @@ const CulturalRequests = () => {
     });
   };
 
-  // ============ MODAL HANDLERS ============
-  const openApprovalModal = (r) => {
-    setApprovalRequest(r);
+  // ============ OPEN APPROVAL MODAL ============
+  const openApprovalModal = (req) => {
+    setApprovalRequest(req);
     setSelectedDuration("");
     setSelectedStartTime("");
   };
-  const closeApprovalModal = () => {
-    if (processingId) return;
-    setApprovalRequest(null);
-    setSelectedDuration("");
-    setSelectedStartTime("");
-  };
-  const openRejectionModal = (r) => {
-    setRejectionRequest(r);
-    setRejectionReason("");
-  };
-  const closeRejectionModal = () => {
-    if (processingId) return;
-    setRejectionRequest(null);
+
+  // ============ OPEN REJECTION MODAL ============
+  const openRejectionModal = (req) => {
+    setRejectionRequest(req);
     setRejectionReason("");
   };
 
-  // ============ APPROVE ============
+  // ============ APPROVE (Quick Action) ============
   const handleApprove = async () => {
-    if (!approvalRequest?.id || !approvalRequest?.date) {
-      alert("Invalid Cultural Seva request.");
-      return;
-    }
-    if (!selectedDuration) return alert("Please select the program duration.");
-    if (!selectedStartTime) return alert("Please select the program start time.");
+    if (!approvalRequest?.id || !approvalRequest?.date) return;
+    if (!selectedDuration) return alert("Please select the duration.");
+    if (!selectedStartTime) return alert("Please select the start time.");
 
     const durationMinutes = Number(selectedDuration);
     const endTime = calculateEndTime(selectedStartTime, durationMinutes);
 
-    if (hasTimeConflict(approvalRequest.date, selectedStartTime, endTime)) {
+    if (hasTimeConflictExcluding(approvalRequest.date, selectedStartTime, endTime, approvalRequest.id)) {
       alert("The selected time overlaps with another approved program.");
       return;
     }
@@ -209,27 +218,20 @@ const CulturalRequests = () => {
     try {
       await runTransaction(db, async (transaction) => {
         const requestRef = doc(db, "culturalRequests", approvalRequest.id);
-        const availabilityRef = doc(
-          db,
-          "culturalAvailability",
-          approvalRequest.date
-        );
+        const availabilityRef = doc(db, "culturalAvailability", approvalRequest.date);
         const requestSnapshot = await transaction.get(requestRef);
         const availabilitySnapshot = await transaction.get(availabilityRef);
 
         if (!requestSnapshot.exists()) throw new Error("REQUEST_NOT_FOUND");
         const latestRequest = requestSnapshot.data();
-        if (
-          latestRequest.status !== "pending" &&
-          latestRequest.status !== "Pending"
-        )
+        if (latestRequest.status !== "pending" && latestRequest.status !== "Pending") {
           throw new Error("REQUEST_ALREADY_PROCESSED");
+        }
 
         let approvedCount = 0;
         const maxSlots = getMaxBookingsForDate(approvalRequest.date);
         if (availabilitySnapshot.exists()) {
-          const a = availabilitySnapshot.data();
-          approvedCount = Number(a.approvedCount) || 0;
+          approvedCount = Number(availabilitySnapshot.data().approvedCount) || 0;
         }
         if (approvedCount >= maxSlots) throw new Error("DATE_FULL");
 
@@ -252,33 +254,24 @@ const CulturalRequests = () => {
           rejectionReason: null,
         });
       });
-      alert(
-        `Booking approved.\n\nDate: ${approvalRequest.date}\nTime: ${formatTime(
-          selectedStartTime
-        )} — ${formatTime(endTime)}\nDuration: ${
-          durationMinutes === 60 ? "1 Hour" : `${durationMinutes} Minutes`
-        }`
-      );
-      closeApprovalModal();
+      setApprovalRequest(null);
+      setSelectedDuration("");
+      setSelectedStartTime("");
     } catch (error) {
-      console.error("Approval failed:", error);
-      if (error.message === "DATE_FULL")
-        alert("This date already has 3 approved programs.");
-      else if (error.message === "REQUEST_ALREADY_PROCESSED")
-        alert("This request has already been processed.");
+      console.error(error);
+      if (error.message === "DATE_FULL") alert("This date already has maximum approved programs.");
+      else if (error.message === "REQUEST_ALREADY_PROCESSED") alert("Request already processed.");
       else alert("Failed to approve request.");
     } finally {
       setProcessingId(null);
     }
   };
 
-  // ============ REJECT ============
+  // ============ REJECT (Quick Action) ============
   const handleReject = async () => {
     if (!rejectionRequest?.id) return;
     const reason = rejectionReason.trim();
-    if (!reason) return alert("Please provide a rejection reason.");
-    if (reason.length < 5)
-      return alert("Please provide a meaningful rejection reason.");
+    if (reason.length < 5) return alert("Please provide a meaningful reason.");
 
     setProcessingId(rejectionRequest.id);
     try {
@@ -286,76 +279,208 @@ const CulturalRequests = () => {
         const requestRef = doc(db, "culturalRequests", rejectionRequest.id);
         const requestSnapshot = await transaction.get(requestRef);
         if (!requestSnapshot.exists()) throw new Error("REQUEST_NOT_FOUND");
-        const latestStatus = requestSnapshot.data().status;
-        if (latestStatus !== "pending" && latestStatus !== "Pending")
-          throw new Error("REQUEST_ALREADY_PROCESSED");
+        
+        const latestStatus = requestSnapshot.data().status?.toLowerCase();
+        if (latestStatus !== "pending") throw new Error("REQUEST_ALREADY_PROCESSED");
+        
         transaction.update(requestRef, {
           status: "rejected",
           rejectionReason: reason,
           rejectedAt: serverTimestamp(),
         });
       });
-      alert("Request rejected.");
-      closeRejectionModal();
+      setRejectionRequest(null);
+      setRejectionReason("");
     } catch (error) {
-      console.error("Rejection failed:", error);
-      if (error.message === "REQUEST_ALREADY_PROCESSED")
-        alert("This request has already been processed.");
-      else alert("Failed to reject request.");
+      console.error(error);
+      alert("Failed to reject request.");
     } finally {
       setProcessingId(null);
     }
   };
 
+  // ============ EDIT (Full Update) ============
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingRequest) return;
+
+    setProcessingId(editingRequest.id);
+
+    try {
+      const originalReq = allRequests.find((r) => r.id === editingRequest.id);
+      if (!originalReq) throw new Error("Original request not found.");
+
+      const oldStatus = originalReq.status?.toLowerCase();
+      const newStatus = editingRequest.status?.toLowerCase();
+      const oldDate = originalReq.date;
+      const newDate = editingRequest.date;
+
+      let finalEndTime = null;
+
+      if (newStatus === "approved") {
+        if (!editingRequest.startTime || !editingRequest.durationMinutes) {
+          throw new Error("MISSING_ALLOCATION");
+        }
+        finalEndTime = calculateEndTime(editingRequest.startTime, editingRequest.durationMinutes);
+        const conflict = hasTimeConflictExcluding(newDate, editingRequest.startTime, finalEndTime, editingRequest.id);
+        if (conflict) throw new Error("TIME_CONFLICT");
+      }
+
+      await runTransaction(db, async (transaction) => {
+        const reqRef = doc(db, "culturalRequests", editingRequest.id);
+
+        const shouldRemoveOldSlot = oldStatus === "approved" && (newStatus !== "approved" || oldDate !== newDate);
+        const shouldAddNewSlot = newStatus === "approved" && (oldStatus !== "approved" || oldDate !== newDate);
+
+        const oldAvailRef = shouldRemoveOldSlot ? doc(db, "culturalAvailability", oldDate) : null;
+        const newAvailRef = shouldAddNewSlot ? doc(db, "culturalAvailability", newDate) : null;
+
+        const oldAvailSnap = oldAvailRef ? await transaction.get(oldAvailRef) : null;
+        const newAvailSnap = newAvailRef ? await transaction.get(newAvailRef) : null;
+
+        if (shouldAddNewSlot) {
+          const currentCount = newAvailSnap?.exists() ? Number(newAvailSnap.data().approvedCount || 0) : 0;
+          const maxSlots = getMaxBookingsForDate(newDate);
+          if (currentCount >= maxSlots) throw new Error("NEW_DATE_FULL");
+        }
+
+        if (shouldRemoveOldSlot && oldAvailRef) {
+          if (oldAvailSnap?.exists()) {
+            const oldCount = Number(oldAvailSnap.data().approvedCount || 0);
+            transaction.update(oldAvailRef, {
+              approvedCount: Math.max(0, oldCount - 1),
+              updatedAt: serverTimestamp(),
+            });
+          }
+        }
+
+        if (shouldAddNewSlot && newAvailRef) {
+          const currentCount = newAvailSnap?.exists() ? Number(newAvailSnap.data().approvedCount || 0) : 0;
+          const maxSlots = getMaxBookingsForDate(newDate);
+          transaction.set(
+            newAvailRef,
+            {
+              date: newDate,
+              approvedCount: currentCount + 1,
+              maxSlots,
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+
+        transaction.update(reqRef, {
+          name: editingRequest.name || "",
+          contact: editingRequest.contact || "",
+          date: newDate || "",
+          category: editingRequest.category || "",
+          otherCategory: editingRequest.category === "Others" ? editingRequest.otherCategory || "" : null,
+          participationType: editingRequest.participationType || "solo",
+          groupName: editingRequest.participationType === "group" ? editingRequest.groupName || "" : null,
+          managerName: editingRequest.participationType === "group" ? editingRequest.managerName || "" : null,
+          participantCount: editingRequest.participationType === "group" ? Number(editingRequest.participantCount || 2) : 1,
+          status: newStatus || "pending",
+          startTime: newStatus === "approved" ? editingRequest.startTime || "" : null,
+          durationMinutes: newStatus === "approved" ? Number(editingRequest.durationMinutes || 0) : null,
+          endTime: newStatus === "approved" ? finalEndTime || "" : null,
+          rejectionReason: newStatus === "rejected" ? editingRequest.rejectionReason || "" : null,
+          updatedAt: serverTimestamp(),
+        });
+      });
+
+      setEditingRequest(null);
+    } catch (error) {
+      console.error(error);
+      if (error.message === "NEW_DATE_FULL") alert("The selected date is already full.");
+      else if (error.message === "TIME_CONFLICT") alert("Time overlaps with an existing program on this date.");
+      else if (error.message === "MISSING_ALLOCATION") alert("Approved programs require Start Time and Duration.");
+      else alert("Failed to update request.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // ============ DELETE ============
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return;
+    setProcessingId(deleteConfirmId);
+    try {
+      const req = allRequests.find((r) => r.id === deleteConfirmId);
+      if (req) {
+        await runTransaction(db, async (transaction) => {
+          const reqRef = doc(db, "culturalRequests", req.id);
+          if (req.status?.toLowerCase() === "approved") {
+            const availRef = doc(db, "culturalAvailability", req.date);
+            const snap = await transaction.get(availRef);
+            if (snap.exists()) {
+              const c = Math.max(0, (snap.data().approvedCount || 1) - 1);
+              transaction.update(availRef, { approvedCount: c });
+            }
+          }
+          transaction.delete(reqRef);
+        });
+      }
+      setDeleteConfirmId(null);
+    } catch (error) {
+      console.error("Failed to delete", error);
+      alert("Failed to delete request.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // ============ EXPORT ============
+  const escapeCSV = (val) => `"${String(val || "").replace(/"/g, '""')}"`;
   const handleExportCSV = () => {
-    const headers = ["ID", "Name", "Date", "Status", "Contact"];
+    const headers = [
+      "Booking ID",
+      "Devotee Name",
+      "Contact",
+      "Date",
+      "Category",
+      "Participation Type",
+      "Group Name",
+      "Manager Name",
+      "Participants Count",
+      "Status",
+      "Start Time",
+      "End Time",
+      "Duration (Mins)",
+      "Rejection Reason",
+      "Created At"
+    ];
+    
     const rows = allRequests.map((r) => [
-      r.bookingId ?? r.id,
-      r.name,
-      r.date,
-      r.status,
-      r.contact,
+      escapeCSV(r.bookingId || r.id),
+      escapeCSV(r.name),
+      escapeCSV(r.contact),
+      escapeCSV(r.date),
+      escapeCSV(r.category === "Others" ? r.otherCategory : r.category),
+      escapeCSV(r.participationType || "solo"),
+      escapeCSV(r.groupName || "N/A"),
+      escapeCSV(r.managerName || "N/A"),
+      escapeCSV(r.participantCount || 1),
+      escapeCSV(r.status || "pending"),
+      escapeCSV(r.startTime || "N/A"),
+      escapeCSV(r.endTime || "N/A"),
+      escapeCSV(r.durationMinutes || "N/A"),
+      escapeCSV(r.rejectionReason || "N/A"),
+      escapeCSV(r.createdAt?.toDate ? r.createdAt.toDate().toLocaleString() : ""),
     ]);
-    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
-      "\n"
-    );
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Cultural_Requests_${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
+    link.download = `Cultural_Ledger_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
   };
 
-  // ============ LOADING ============
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center px-6">
-        <div className="text-center">
-          <div className="w-14 h-14 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin mx-auto mb-6" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500">
-            Loading
-          </p>
-          <p className="font-serif italic text-stone-700 mt-1">
-            Fetching Cultural Seva requests
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ============ DERIVED LISTS ============
-  const pendingList = allRequests.filter(
-    (r) => r.status?.toLowerCase() === "pending"
-  );
-  const approvedList = allRequests.filter(
-    (r) => r.status?.toLowerCase() === "approved"
-  );
-  const rejectedList = allRequests.filter(
-    (r) => r.status?.toLowerCase() === "rejected"
-  );
+  // ============ DERIVED LISTS & SEARCH ============
+  const pendingList = allRequests.filter((r) => r.status?.toLowerCase() === "pending");
+  const approvedList = allRequests.filter((r) => r.status?.toLowerCase() === "approved");
+  const rejectedList = allRequests.filter((r) => r.status?.toLowerCase() === "rejected");
 
   const baseList =
     activeTab === "pending"
@@ -372,676 +497,614 @@ const CulturalRequests = () => {
         return (
           r.name?.toLowerCase().includes(q) ||
           r.contact?.toLowerCase().includes(q) ||
-          r.date?.toLowerCase().includes(q)
+          r.date?.toLowerCase().includes(q) ||
+          r.groupName?.toLowerCase().includes(q) ||
+          r.bookingId?.toLowerCase().includes(q)
         );
       })
     : baseList;
 
-  const tabs = [
-    { key: "pending", label: "Pending", count: pendingList.length, accent: "amber" },
-    { key: "approved", label: "Approved", count: approvedList.length, accent: "emerald" },
-    { key: "rejected", label: "Rejected", count: rejectedList.length, accent: "rose" },
-    { key: "all", label: "All", count: allRequests.length, accent: "stone" },
-  ];
-
-  const accentClasses = {
-    amber: "bg-amber-500 text-white shadow-lg shadow-amber-200/60",
-    emerald: "bg-emerald-600 text-white shadow-lg shadow-emerald-200/60",
-    rose: "bg-rose-600 text-white shadow-lg shadow-rose-200/60",
-    stone: "bg-stone-900 text-white shadow-lg shadow-stone-300/60",
-  };
+  if (loading) {
+    return (
+      <div className="h-screen w-full bg-[#FDFBF7] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="w-10 h-10 border-4 border-[#E8DCC4] border-t-[#722013] rounded-full animate-spin mb-4" />
+          <p className="text-xs font-bold uppercase tracking-widest text-[#722013]">Loading Ledger...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stone-50 via-stone-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-12">
-        {/* ============ MASTHEAD ============ */}
-        <header className="mb-8 pb-6 sm:pb-8 border-b border-stone-900/10">
-          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 sm:gap-5">
-            <Link
-              to="/admin"
-              className="shrink-0 mt-1 p-2.5 border border-stone-300 hover:border-stone-900 hover:bg-stone-900 hover:text-white rounded-full transition-all"
-              aria-label="Back to admin"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2">
-                Admin · Ledger
-              </p>
-              <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl leading-[1.05] text-stone-900 tracking-tight break-words">
-                Cultural
-                <span className="italic font-light text-stone-700"> Requests</span>
-              </h1>
-              <p className="mt-2 sm:mt-3 font-serif italic text-stone-500 text-xs sm:text-sm lg:text-base max-w-xl">
-                Devotional programme submissions — awaiting review, allocation & blessing.
-              </p>
+    <div className="h-screen w-full flex flex-col bg-[#FDFBF7] overflow-hidden">
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      
+      {/* ============ HEADER (Fixed) ============ */}
+      <div className="shrink-0 px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Link to="/admin" className="p-1.5 rounded-md bg-white border border-[#E8DCC4] text-[#722013] hover:bg-[#FAF6F0] transition">
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Admin Ledger</span>
             </div>
-
-            <div className="hidden sm:flex flex-col items-end gap-1.5 shrink-0">
-              <div className="flex items-baseline gap-2">
-                <span className="font-serif text-3xl lg:text-5xl font-black text-stone-900 tabular-nums">
-                  {String(pendingList.length).padStart(2, "0")}
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
-                  Pending
-                </span>
-              </div>
-              <div className="h-px w-24 bg-stone-900/20" />
-              <p className="text-xs text-stone-500 whitespace-nowrap">
-                {approvedList.length} allocated · {rejectedList.length} declined
-              </p>
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#2a0b06]">Cultural Seva</h1>
           </div>
 
-          {/* Mobile stat row */}
-          <div className="sm:hidden mt-5 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 py-2">
-              <p className="font-serif font-black text-lg text-stone-900 tabular-nums">{pendingList.length}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Pending</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 py-2">
-              <p className="font-serif font-black text-lg text-stone-900 tabular-nums">{approvedList.length}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Allocated</p>
-            </div>
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/60 py-2">
-              <p className="font-serif font-black text-lg text-stone-900 tabular-nums">{rejectedList.length}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-rose-700">Declined</p>
-            </div>
-          </div>
-
-          {/* ACTION BAR */}
-          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
-            <div className="relative min-w-0">
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
+                placeholder="Search requests..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by devotee, contact, or date…"
-                className="w-full min-w-0 bg-white border border-stone-200 rounded-full pl-11 pr-4 py-3 text-sm outline-none focus:border-stone-900 focus:ring-4 focus:ring-stone-900/5 transition"
+                className="w-full bg-white border border-[#E8DCC4] rounded-lg pl-9 pr-4 py-2 text-sm outline-none focus:border-[#722013] transition shadow-sm"
               />
             </div>
             <button
               onClick={handleExportCSV}
-              className="shrink-0 inline-flex items-center justify-center gap-2 bg-stone-900 text-white px-5 sm:px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest hover:bg-stone-700 transition"
+              className="flex items-center gap-1.5 bg-white border border-[#E8DCC4] text-[#2a0b06] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#FAF6F0] transition shadow-sm whitespace-nowrap"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-              </svg>
-              <span className="hidden xs:inline">Export</span>
-              <span className="hidden sm:inline">Ledger</span>
-              <span className="xs:hidden">Export</span>
+              <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export</span>
             </button>
           </div>
-        </header>
+        </div>
+      </div>
 
-        {/* ============ TABS ============ */}
-        <nav className="mb-6 sm:mb-8 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-2 min-w-max">
-            {tabs.map((t) => {
-              const active = activeTab === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setActiveTab(t.key)}
-                  className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
-                    active
-                      ? accentClasses[t.accent]
-                      : "bg-white border border-stone-200 text-stone-600 hover:border-stone-900 hover:text-stone-900"
-                  }`}
-                >
-                  <span>{t.label}</span>
-                  <span
-                    className={`tabular-nums text-[10px] px-2 py-0.5 rounded-full ${
-                      active ? "bg-white/25" : "bg-stone-100 text-stone-700"
-                    }`}
-                  >
-                    {t.count}
-                  </span>
-                </button>
-              );
-            })}
+      {/* ============ TABS & STATS (Fixed) ============ */}
+      <div className="shrink-0 px-4 sm:px-6 lg:px-8 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8DCC4] pb-4">
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar mask-edges">
+            {[
+              { id: "pending", label: "Pending", count: pendingList.length },
+              { id: "approved", label: "Allocated", count: approvedList.length },
+              { id: "rejected", label: "Declined", count: rejectedList.length },
+              { id: "all", label: "All", count: allRequests.length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${
+                  activeTab === tab.id
+                    ? "bg-[#2a0b06] text-white shadow-md"
+                    : "bg-white border border-[#E8DCC4] text-gray-500 hover:text-[#2a0b06]"
+                }`}
+              >
+                {tab.label}
+                <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums ${activeTab === tab.id ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700"}`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
-        </nav>
 
-        {/* ============ EMPTY STATE ============ */}
-        {displayedRequests.length === 0 && (
-          <div className="bg-white border border-stone-200 rounded-3xl p-10 sm:p-16 text-center">
-            <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-stone-100 grid place-items-center">
-              <svg className="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
+          <div className="hidden sm:flex items-center gap-5 shrink-0">
+            <div className="text-center">
+              <p className="text-xl font-black text-[#2a0b06] tabular-nums leading-none">{pendingList.length}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-amber-600 mt-1">Pending</p>
             </div>
-            <p className="font-serif italic text-lg text-stone-700">
-              No {activeTab === "all" ? "" : activeTab} requests to display.
-            </p>
-            <p className="text-sm text-stone-400 mt-1">
-              New submissions will appear here in real time.
-            </p>
+            <div className="w-px h-6 bg-[#E8DCC4]" />
+            <div className="text-center">
+              <p className="text-xl font-black text-[#2a0b06] tabular-nums leading-none">{approvedList.length}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 mt-1">Allocated</p>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* ============ DESKTOP TABLE ============ */}
-        {displayedRequests.length > 0 && (
-          <div className="hidden xl:block bg-white rounded-3xl border border-stone-200/80 shadow-sm shadow-stone-200/40 overflow-hidden">
-            <table className="w-full text-left table-fixed">
-              <colgroup>
-                <col style={{ width: "34%" }} />
-                <col style={{ width: "14%" }} />
-                <col style={{ width: "14%" }} />
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "22%" }} />
-              </colgroup>
-              <thead className="bg-stone-50/80 border-b border-stone-200">
-                <tr className="text-[10px] font-black uppercase tracking-[0.25em] text-stone-500">
-                  <th className="px-6 py-5">Devotee</th>
-                  <th className="px-4 py-5">Date</th>
-                  <th className="px-4 py-5">Status</th>
-                  <th className="px-4 py-5">Allocation</th>
-                  <th className="px-6 py-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {displayedRequests.map((request, idx) => {
-                  const status = request.status?.toLowerCase() || "pending";
-                  const meta = STATUS_META[status] || STATUS_META.pending;
-                  const dateBookings = getApprovedProgramsForDate(request.date);
-                  return (
-                    <tr key={request.id} className="group hover:bg-stone-50/60 transition align-top">
-                      <td className="px-6 py-5">
-                        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                          <div className="shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-orange-100 to-amber-200 grid place-items-center font-serif font-black text-orange-900">
-                            {request.name?.[0]?.toUpperCase() || "?"}
-                          </div>
-                          <div className="min-w-0">
-                            <div
-                              className="font-black text-stone-900 break-words leading-snug"
-                              title={request.name}
-                            >
-                              {request.name}
-                            </div>
-                            <div className="text-xs text-stone-500 break-words leading-snug mt-0.5">
-                              {request.contact}
-                              {request.participationType &&
-                                ` · ${request.participationType}`}
-                            </div>
-                          </div>
-                          <span className="shrink-0 text-[10px] font-black text-stone-300 tabular-nums pt-1">
-                            №{String(idx + 1).padStart(3, "0")}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-5">
-                        <div className="font-serif font-bold text-stone-800 break-words">
-                          {request.date}
-                        </div>
-                      </td>
-                      <td className="px-4 py-5">
-                        <span
-                          className={`inline-flex items-center gap-2 border rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${meta.chip}`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5">
-                        {dateBookings.length > 0 ? (
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex -space-x-1">
-                              {Array.from({ length: MAX_BOOKINGS_PER_DAY }).map(
-                                (_, i) => (
-                                  <span
-                                    key={i}
-                                    className={`w-2 h-2 rounded-full border-2 border-white ${
-                                      i < dateBookings.length
-                                        ? "bg-orange-500"
-                                        : "bg-stone-200"
-                                    }`}
-                                  />
-                                )
-                              )}
-                            </div>
-                            <span className="text-xs font-bold text-stone-600 tabular-nums">
-                              {dateBookings.length}/{MAX_BOOKINGS_PER_DAY}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs italic text-stone-400">None</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        {status === "pending" ? (
-                          <div className="inline-flex gap-2 flex-wrap justify-end">
-                            <button
-                              type="button"
-                              onClick={() => openRejectionModal(request)}
-                              className="px-4 py-2 text-xs font-black uppercase tracking-wider text-rose-700 border border-transparent hover:border-rose-200 hover:bg-rose-50 rounded-full transition"
-                            >
-                              Decline
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openApprovalModal(request)}
-                              className="bg-stone-900 text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider hover:bg-orange-700 transition"
-                            >
-                              Allocate →
-                            </button>
-                          </div>
-                        ) : status === "approved" ? (
-                          <div className="inline-block text-left bg-emerald-50/70 border border-emerald-100 rounded-2xl px-4 py-2.5 max-w-full">
-                            <p className="font-serif font-black text-stone-900 tabular-nums text-sm break-words">
-                              {formatTime(request.startTime)}
-                              <span className="text-stone-400 mx-1">—</span>
-                              {formatTime(request.endTime)}
-                            </p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 mt-0.5">
-                              {request.durationMinutes === 60
-                                ? "1 Hour"
-                                : `${request.durationMinutes} Minutes`}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="inline-block text-left bg-rose-50/70 border border-rose-100 rounded-2xl px-4 py-2.5 max-w-full">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-rose-700">
-                              Reason
-                            </p>
-                            <p className="text-xs text-stone-700 mt-1 line-clamp-2 break-words">
-                              {request.rejectionReason || "No reason provided"}
-                            </p>
-                          </div>
-                        )}
-                      </td>
+      {/* ============ MAIN CONTENT AREA (Scrollable) ============ */}
+      <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8 pb-6 overflow-hidden">
+        
+        {displayedRequests.length === 0 ? (
+          <div className="flex-1 bg-white border border-[#E8DCC4] rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-sm">
+            <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-lg font-serif font-bold text-[#2a0b06]">No requests found</p>
+            <p className="text-sm text-gray-500 mt-1">Adjust search or filters.</p>
+          </div>
+        ) : (
+          <>
+            {/* DESKTOP TABLE VIEW (lg and above) */}
+            <div className="hidden lg:flex flex-1 overflow-hidden bg-white border border-[#E8DCC4] rounded-2xl shadow-sm relative">
+              <div className="w-full h-full overflow-y-auto hide-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead className="bg-[#FAF6F0] sticky top-0 z-10 shadow-sm outline outline-1 outline-[#E8DCC4]">
+                    <tr className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                      <th className="px-6 py-4 border-b border-[#E8DCC4]">Request Info</th>
+                      <th className="px-6 py-4 border-b border-[#E8DCC4]">Program Details</th>
+                      <th className="px-6 py-4 border-b border-[#E8DCC4]">Group Info</th>
+                      <th className="px-6 py-4 border-b border-[#E8DCC4]">Status & Allocation</th>
+                      <th className="px-6 py-4 border-b border-[#E8DCC4] text-right">Actions</th>
                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E8DCC4]">
+                    {displayedRequests.map((req) => {
+                      const s = req.status?.toLowerCase() || "pending";
+                      const meta = STATUS_META[s] || STATUS_META.pending;
+                      const Icon = meta.icon;
+                      const isGroup = req.participationType === "group";
+
+                      return (
+                        <tr key={req.id} className="hover:bg-[#FCF8F2] transition-colors align-top">
+                          {/* 1. Request Info */}
+                          <td className="px-6 py-4">
+                            <div className="flex items-start gap-3">
+                              <div className="w-9 h-9 rounded-full bg-[#722013]/10 text-[#722013] font-serif font-bold flex items-center justify-center shrink-0">
+                                {req.name?.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-sm text-[#2a0b06] truncate">{req.name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{req.contact}</p>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">ID: {req.bookingId || "N/A"}</p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* 2. Program Details */}
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-bold text-[#2a0b06]">{req.date}</p>
+                            <p className="text-xs text-gray-600 mt-0.5 font-medium">
+                              {req.category === "Others" ? req.otherCategory : req.category}
+                            </p>
+                            <span className="inline-block mt-1.5 px-2 py-0.5 bg-gray-100 rounded text-[9px] font-bold uppercase tracking-widest text-gray-600">
+                              {req.participationType || "Solo"}
+                            </span>
+                          </td>
+
+                          {/* 3. Group Info */}
+                          <td className="px-6 py-4">
+                            {isGroup ? (
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-[#2a0b06] truncate">{req.groupName}</p>
+                                <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5 truncate">Mgr: {req.managerName}</p>
+                                <p className="text-[10px] text-gray-500 uppercase tracking-widest">Members: {req.participantCount}</p>
+                              </div>
+                            ) : (
+                              <span className="text-gray-300">-</span>
+                            )}
+                          </td>
+
+                          {/* 4. Status & Allocation */}
+                          <td className="px-6 py-4">
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${meta.bg} ${meta.border} ${meta.text}`}>
+                              <Icon className="w-3.5 h-3.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">{meta.label}</span>
+                            </div>
+                            {s === "approved" && (
+                              <div className="mt-2">
+                                <p className="text-xs font-bold text-[#2a0b06] tabular-nums">
+                                  {formatTime(req.startTime)} - {formatTime(req.endTime)}
+                                </p>
+                                <p className="text-[10px] text-gray-500 mt-0.5">Duration: {req.durationMinutes}m</p>
+                              </div>
+                            )}
+                            {s === "rejected" && (
+                              <p className="text-[10px] text-rose-600 mt-2 line-clamp-2" title={req.rejectionReason}>
+                                Reason: {req.rejectionReason}
+                              </p>
+                            )}
+                          </td>
+
+                          {/* 5. Actions */}
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex flex-col items-end gap-2">
+                              {s === "pending" && (
+                                <div className="flex items-center gap-2 mb-1">
+                                  <button onClick={() => openRejectionModal(req)} className="px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded text-[9px] font-bold uppercase tracking-widest transition">Reject</button>
+                                  <button onClick={() => openApprovalModal(req)} className="px-3 py-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded text-[9px] font-bold uppercase tracking-widest transition">Allocate</button>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setEditingRequest({ ...req })} className="p-1.5 text-gray-400 hover:text-[#D4AF37] hover:bg-[#FAF6F0] rounded transition" title="Edit Request">
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => setDeleteConfirmId(req.id)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition" title="Delete Request">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* MOBILE / TABLET CARDS VIEW (below lg) */}
+            <div className="lg:hidden flex-1 overflow-y-auto hide-scrollbar -mx-4 px-4 pb-20">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {displayedRequests.map((req) => {
+                  const s = req.status?.toLowerCase() || "pending";
+                  const meta = STATUS_META[s] || STATUS_META.pending;
+                  const Icon = meta.icon;
+                  const isGroup = req.participationType === "group";
+
+                  return (
+                    <article key={req.id} className="bg-white rounded-2xl border border-[#E8DCC4] shadow-sm flex flex-col">
+                      <div className="p-4 flex flex-col gap-3 flex-1">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-full bg-[#722013]/10 text-[#722013] font-serif font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              {req.name?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-sm text-[#2a0b06] truncate">{req.name}</h3>
+                              <p className="text-xs text-gray-500 mt-0.5 truncate">{req.contact}</p>
+                              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">ID: {req.bookingId || "N/A"}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => setEditingRequest({ ...req })} className="p-1.5 text-gray-400 hover:text-[#D4AF37] rounded"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => setDeleteConfirmId(req.id)} className="p-1.5 text-gray-400 hover:text-rose-600 rounded"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-gray-100">
+                          <div>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Date & Prog</p>
+                            <p className="text-xs font-bold text-[#2a0b06] mt-1">{req.date}</p>
+                            <p className="text-[10px] text-gray-600 truncate mt-0.5">{req.category === "Others" ? req.otherCategory : req.category}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Type / Group</p>
+                            <p className="text-xs font-bold text-[#2a0b06] mt-1">{isGroup ? req.groupName : "Solo"}</p>
+                            {isGroup && <p className="text-[10px] text-gray-600 truncate mt-0.5">{req.participantCount} pax • Mgr: {req.managerName}</p>}
+                          </div>
+                        </div>
+
+                        <div className="mt-2 bg-[#FAF6F0] rounded-xl p-3 border border-[#E8DCC4]">
+                          <div className="flex justify-between items-center gap-2">
+                            <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest border ${meta.bg} ${meta.border} ${meta.text}`}>
+                              <Icon className="w-3 h-3" /> {meta.label}
+                            </div>
+                            {s === "pending" && (
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => openRejectionModal(req)} className="px-3 py-1.5 bg-white border border-rose-200 text-rose-700 rounded text-[9px] font-bold uppercase tracking-widest">Reject</button>
+                                <button onClick={() => openApprovalModal(req)} className="px-3 py-1.5 bg-emerald-600 text-white rounded text-[9px] font-bold uppercase tracking-widest">Allocate</button>
+                              </div>
+                            )}
+                          </div>
+                          {s === "approved" && (
+                            <div className="mt-2.5">
+                              <p className="text-xs font-bold text-[#2a0b06]">{formatTime(req.startTime)} - {formatTime(req.endTime)}</p>
+                              <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-widest">Duration: {req.durationMinutes} Min</p>
+                            </div>
+                          )}
+                          {s === "rejected" && (
+                            <p className="text-[10px] text-rose-600 mt-2 line-clamp-2">Reason: {req.rejectionReason}</p>
+                          )}
+                        </div>
+                      </div>
+                    </article>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          </>
         )}
+      </div>
 
-        {/* ============ MOBILE / TABLET CARDS ============ */}
-        {displayedRequests.length > 0 && (
-          <div className="xl:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-            {displayedRequests.map((request, idx) => {
-              const status = request.status?.toLowerCase() || "pending";
-              const meta = STATUS_META[status] || STATUS_META.pending;
-              const dateBookings = getApprovedProgramsForDate(request.date);
-              return (
-                <article
-                  key={request.id}
-                  className="bg-white rounded-3xl border border-stone-200 shadow-sm shadow-stone-100 overflow-hidden flex flex-col"
-                >
-                  <div className="p-5 sm:p-6 flex flex-col gap-4 flex-1">
-                    {/* Header row */}
-                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                      <div className="shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-orange-100 to-amber-200 grid place-items-center font-serif font-black text-orange-900">
-                        {request.name?.[0]?.toUpperCase() || "?"}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-black text-stone-300 tabular-nums">
-                          №{String(idx + 1).padStart(3, "0")}
-                        </p>
-                        <h3
-                          className="font-black text-stone-900 break-words leading-snug"
-                          title={request.name}
-                        >
-                          {request.name}
-                        </h3>
-                        <p className="text-xs text-stone-500 break-words leading-snug mt-0.5">
-                          {request.contact}
-                          {request.participationType &&
-                            ` · ${request.participationType}`}
-                        </p>
-                      </div>
-                      <span
-                        className={`shrink-0 inline-flex items-center gap-1.5 border rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${meta.chip}`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-                        {meta.label}
-                      </span>
-                    </div>
+      {/* =========================================================
+          MODALS
+      ========================================================= */}
 
-                    {/* Meta row */}
-                    <div className="grid grid-cols-2 gap-3 pb-4 border-b border-stone-100">
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">
-                          Date
-                        </p>
-                        <p className="font-serif font-bold text-stone-800 text-sm break-words">
-                          {request.date}
-                        </p>
+      {/* 1. APPROVAL MODAL */}
+      {approvalRequest && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-full">
+            <div className="p-5 border-b border-[#E8DCC4] shrink-0">
+              <h3 className="font-serif text-xl font-bold text-[#2a0b06]">Allocate Program</h3>
+              <p className="text-xs text-gray-500 mt-1">{approvalRequest.name} • {approvalRequest.date}</p>
+            </div>
+            <div className="p-5 space-y-4 bg-[#FAF6F0] overflow-y-auto hide-scrollbar flex-1">
+              {/* Existing */}
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">Existing Programs on {approvalRequest.date}</p>
+                {getApprovedProgramsForDate(approvalRequest.date).length === 0 ? (
+                  <p className="text-[10px] italic text-gray-400">No programs allocated yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {getApprovedProgramsForDate(approvalRequest.date).map(p => (
+                      <div key={p.id} className="text-[10px] bg-white border border-[#E8DCC4] p-2 rounded-lg flex justify-between items-center">
+                        <span className="font-bold text-[#2a0b06] truncate mr-2">{p.name}</span>
+                        <span className="tabular-nums text-gray-600 shrink-0">{formatTime(p.startTime)} - {formatTime(p.endTime)}</span>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">
-                          Allocated
-                        </p>
-                        <p className="font-bold text-stone-800 text-sm tabular-nums">
-                          {dateBookings.length}
-                          <span className="text-stone-400">
-                            /{MAX_BOOKINGS_PER_DAY}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action area */}
-                    <div className="mt-auto">
-                      {status === "pending" ? (
-                        <div className="grid grid-cols-2 gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => openRejectionModal(request)}
-                            className="py-3 border border-stone-200 rounded-full font-black text-xs uppercase tracking-wider text-stone-700 hover:border-rose-300 hover:text-rose-700 transition"
-                          >
-                            Decline
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openApprovalModal(request)}
-                            className="py-3 bg-stone-900 text-white rounded-full font-black text-xs uppercase tracking-wider hover:bg-orange-700 transition"
-                          >
-                            Allocate →
-                          </button>
-                        </div>
-                      ) : status === "approved" ? (
-                        <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
-                            Programme Slot
-                          </p>
-                          <p className="font-serif text-lg sm:text-xl font-black text-stone-900 mt-1 tabular-nums break-words">
-                            {formatTime(request.startTime)}
-                            <span className="text-stone-400 mx-1.5">—</span>
-                            {formatTime(request.endTime)}
-                          </p>
-                          <p className="text-xs text-stone-500 mt-1">
-                            {request.durationMinutes === 60
-                              ? "1 Hour"
-                              : `${request.durationMinutes} Minutes`}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="bg-rose-50/70 border border-rose-100 rounded-2xl p-4">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-rose-700">
-                            Rejection Reason
-                          </p>
-                          <p className="text-sm text-stone-700 mt-1 break-words">
-                            {request.rejectionReason || "No reason provided"}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                </article>
-              );
-            })}
+                )}
+              </div>
+              {/* Allocation inputs */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-700 mb-1.5">Duration</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {DURATION_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSelectedDuration(opt.value)}
+                      className={`py-2 rounded-lg text-[10px] font-bold border transition ${
+                        Number(selectedDuration) === opt.value ? "bg-[#2a0b06] text-white border-[#2a0b06]" : "bg-white text-gray-600 border-[#E8DCC4] hover:border-[#D4AF37]"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-700 mb-1.5">Start Time</label>
+                <input
+                  type="time"
+                  value={selectedStartTime}
+                  onChange={(e) => setSelectedStartTime(e.target.value)}
+                  className="w-full bg-white border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]"
+                />
+              </div>
+              {/* Summary */}
+              {selectedDuration && selectedStartTime && (
+                <div className="p-3 bg-white border border-[#E8DCC4] rounded-lg">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-1">Time Slot:</p>
+                  <p className="text-sm font-bold text-[#2a0b06]">{formatTime(selectedStartTime)} - {formatTime(selectedEndTime)}</p>
+                  {hasTimeConflictExcluding(approvalRequest.date, selectedStartTime, selectedEndTime, approvalRequest.id) && (
+                    <p className="text-[10px] text-rose-600 font-bold mt-2 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Overlaps with an existing program.</p>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-[#E8DCC4] flex justify-end gap-3 bg-white shrink-0">
+              <button onClick={() => setApprovalRequest(null)} className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 rounded-lg transition">Cancel</button>
+              <button 
+                onClick={handleApprove}
+                disabled={processingId || !selectedDuration || !selectedStartTime || hasTimeConflictExcluding(approvalRequest.date, selectedStartTime, selectedEndTime, approvalRequest.id)}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest rounded-lg transition"
+              >
+                {processingId === approvalRequest.id ? "Saving..." : "Confirm"}
+              </button>
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ============ APPROVAL MODAL ============ */}
-        {approvalRequest && (
-          <div
-            className="fixed inset-0 z-[9999] bg-stone-900/70 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center"
-            onClick={closeApprovalModal}
-          >
-            <div
-              className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-5 sm:p-8">
-                <div className="mb-6 pb-6 border-b border-stone-100">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-700 mb-3">
-                    Allocate Programme Slot
-                  </p>
-                  <h2 className="font-serif text-2xl sm:text-3xl font-black text-stone-900 leading-tight">
-                    Approve
-                    <span className="italic font-light"> Cultural Seva</span>
-                  </h2>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-stone-500">
-                    <span className="font-bold text-stone-800 break-words min-w-0">
-                      {approvalRequest.name}
-                    </span>
-                    <span className="text-stone-300">·</span>
-                    <span>{approvalRequest.date}</span>
+      {/* 2. REJECTION MODAL */}
+      {rejectionRequest && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 border-b border-[#E8DCC4] bg-rose-50">
+              <h3 className="font-serif text-xl font-bold text-rose-900">Decline Request</h3>
+              <p className="text-xs text-rose-700/80 mt-1">{rejectionRequest.name} • {rejectionRequest.date}</p>
+            </div>
+            <div className="p-5">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-700 mb-1.5">Reason for Declining</label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                className="w-full bg-[#FAF6F0] border border-[#E8DCC4] rounded-lg p-3 text-sm outline-none focus:border-rose-500 resize-none"
+                placeholder="Please provide a reason..."
+              />
+            </div>
+            <div className="p-4 border-t border-[#E8DCC4] flex justify-end gap-3 bg-gray-50">
+              <button onClick={() => setRejectionRequest(null)} className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-100 rounded-lg transition">Cancel</button>
+              <button 
+                onClick={handleReject}
+                disabled={processingId || rejectionReason.trim().length < 5}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest rounded-lg transition"
+              >
+                {processingId === rejectionRequest.id ? "Declining..." : "Decline"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. DELETE CONFIRM MODAL */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-[#2a0b06] mb-2">Delete Request?</h3>
+            <p className="text-xs text-gray-500 mb-6">This action cannot be undone. Approved slots will be freed.</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase tracking-widest rounded-lg transition">Cancel</button>
+              <button onClick={handleDelete} disabled={processingId} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-widest rounded-lg transition">
+                {processingId === deleteConfirmId ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. COMPREHENSIVE EDIT MODAL */}
+      {editingRequest && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 py-8">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl h-full max-h-[85vh] flex flex-col overflow-hidden border border-[#E8DCC4]">
+            
+            {/* Header (Fixed) */}
+            <div className="p-5 border-b border-[#E8DCC4] flex justify-between items-center bg-[#FAF6F0] shrink-0">
+              <div>
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#2a0b06]">Edit Request</h3>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">ID: {editingRequest.bookingId || editingRequest.id}</p>
+              </div>
+              <button onClick={() => setEditingRequest(null)} className="p-1.5 text-gray-400 hover:bg-gray-200 rounded-full transition"><X className="w-5 h-5"/></button>
+            </div>
+            
+            {/* Form Content (Scrollable) */}
+            <div className="flex-1 overflow-y-auto hide-scrollbar p-5 sm:p-6 bg-white">
+              <form id="editForm" onSubmit={handleEditSubmit} className="space-y-6">
+                
+                {/* Section 1: Devotee & Contact */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Devotee Name</label>
+                    <input type="text" required value={editingRequest.name || ""} onChange={e => setEditingRequest({...editingRequest, name: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Contact Number</label>
+                    <input type="tel" required value={editingRequest.contact || ""} onChange={e => setEditingRequest({...editingRequest, contact: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
                   </div>
                 </div>
 
-                {/* Existing programs */}
-                <div className="mb-6">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-stone-500 mb-3">
-                    Existing Programs — This Date
-                  </label>
-                  {getApprovedProgramsForDate(approvalRequest.date).length === 0 ? (
-                    <div className="bg-stone-50 border border-dashed border-stone-200 rounded-2xl p-5 text-center">
-                      <p className="text-sm italic text-stone-500">
-                        No programmes allocated yet.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {getApprovedProgramsForDate(approvalRequest.date).map(
-                        (p) => (
-                          <div
-                            key={p.id}
-                            className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 items-center bg-orange-50/60 border border-orange-100 rounded-2xl p-3"
-                          >
-                            <div className="w-1 h-10 bg-orange-500 rounded-full" />
-                            <div className="min-w-0">
-                              <p className="font-serif font-black text-stone-900 tabular-nums text-sm break-words">
-                                {formatTime(p.startTime)} — {formatTime(p.endTime)}
-                              </p>
-                              <p className="text-xs text-stone-500 break-words">
-                                {p.name}
-                              </p>
-                            </div>
+                {/* Section 2: Program Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Date (YYYY-MM-DD)</label>
+                    <input type="date" required value={editingRequest.date || ""} onChange={e => setEditingRequest({...editingRequest, date: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Category</label>
+                    <select value={editingRequest.category || ""} onChange={e => setEditingRequest({...editingRequest, category: e.target.value, otherCategory: e.target.value === "Others" ? editingRequest.otherCategory : null})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]">
+                      {PROGRAM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {editingRequest.category === "Others" && (
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Specify Other Category</label>
+                    <input type="text" required value={editingRequest.otherCategory || ""} onChange={e => setEditingRequest({...editingRequest, otherCategory: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
+                  </div>
+                )}
+                {/* Date Check Info */}
+                {editingRequest.date && (() => {
+                  const programs = getApprovedProgramsForDate(editingRequest.date).filter((p) => p.id !== editingRequest.id);
+                  const maxSlots = getMaxBookingsForDate(editingRequest.date);
+                  const occupiedSlots = programs.length;
+                  const slotsLeft = Math.max(0, maxSlots - occupiedSlots);
+                  return (
+                    <div className={`rounded-xl border p-4 ${slotsLeft > 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}`}>
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Date Availability</p>
+                          <p className={`mt-0.5 text-xs font-bold ${slotsLeft > 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                            {slotsLeft > 0 ? `${slotsLeft} of ${maxSlots} slots available` : "No slots available"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-[#2a0b06] tabular-nums leading-none">{occupiedSlots}/{maxSlots}</p>
+                          <p className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Allocated</p>
+                        </div>
+                      </div>
+                      {programs.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-black/10">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Already Allocated</p>
+                          <div className="space-y-1.5">
+                            {programs.map((p) => (
+                              <div key={p.id} className="flex justify-between items-center bg-white rounded border border-black/5 px-2 py-1.5">
+                                <p className="text-[10px] font-bold text-[#2a0b06] truncate pr-2">{p.name}</p>
+                                <p className="text-[10px] font-bold text-[#722013] shrink-0 tabular-nums">{formatTime(p.startTime)} - {formatTime(p.endTime)}</p>
+                              </div>
+                            ))}
                           </div>
-                        )
+                        </div>
                       )}
+                    </div>
+                  );
+                })()}
+
+                {/* Section 3: Participation Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Participation Type</label>
+                    <select value={editingRequest.participationType || "solo"} onChange={e => setEditingRequest({...editingRequest, participationType: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]">
+                      <option value="solo">Solo</option>
+                      <option value="group">Group</option>
+                    </select>
+                  </div>
+                  {editingRequest.participationType === "group" && (
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Participant Count</label>
+                      <input type="number" min="2" required value={editingRequest.participantCount || 2} onChange={e => setEditingRequest({...editingRequest, participantCount: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
                     </div>
                   )}
                 </div>
-
-                {/* Duration */}
-                <div className="mb-5">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-stone-500 mb-3">
-                    Programme Duration *
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {DURATION_OPTIONS.map((option) => {
-                      const active = Number(selectedDuration) === option.value;
-                      return (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setSelectedDuration(option.value)}
-                          className={`py-3.5 rounded-2xl border-2 text-sm font-black transition ${
-                            active
-                              ? "bg-stone-900 border-stone-900 text-white shadow-lg shadow-stone-300"
-                              : "bg-white border-stone-200 text-stone-600 hover:border-stone-900"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Start time */}
-                <div className="mb-5">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-stone-500 mb-3">
-                    Start Time *
-                  </label>
-                  <input
-                    type="time"
-                    value={selectedStartTime}
-                    onChange={(e) => setSelectedStartTime(e.target.value)}
-                    className="w-full border-2 border-stone-200 rounded-2xl px-4 py-3.5 text-base font-bold text-stone-900 outline-none focus:border-stone-900 focus:ring-4 focus:ring-stone-900/5 transition"
-                  />
-                </div>
-
-                {/* Summary */}
-                {selectedDuration && selectedStartTime && (
-                  <div
-                    className={`border rounded-2xl p-5 mb-6 ${
-                      hasTimeConflict(
-                        approvalRequest.date,
-                        selectedStartTime,
-                        selectedEndTime
-                      )
-                        ? "bg-rose-50 border-rose-200"
-                        : "bg-emerald-50 border-emerald-200"
-                    }`}
-                  >
-                    <p
-                      className={`text-[10px] font-black uppercase tracking-[0.25em] mb-2 ${
-                        hasTimeConflict(
-                          approvalRequest.date,
-                          selectedStartTime,
-                          selectedEndTime
-                        )
-                          ? "text-rose-700"
-                          : "text-emerald-700"
-                      }`}
-                    >
-                      Allocation Summary
-                    </p>
-                    <p className="font-serif text-xl sm:text-2xl font-black text-stone-900 tabular-nums break-words">
-                      {formatTime(selectedStartTime)}
-                      <span className="text-stone-400 mx-2">—</span>
-                      {formatTime(selectedEndTime)}
-                    </p>
-                    <p className="text-sm text-stone-600 mt-1">
-                      {Number(selectedDuration) === 60
-                        ? "1 Hour"
-                        : `${selectedDuration} Minutes`}
-                    </p>
-                    {hasTimeConflict(
-                      approvalRequest.date,
-                      selectedStartTime,
-                      selectedEndTime
-                    ) && (
-                      <p className="mt-3 pt-3 border-t border-rose-200 text-sm font-bold text-rose-700">
-                        ⚠ Overlaps with an existing programme.
-                      </p>
-                    )}
+                
+                {editingRequest.participationType === "group" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Group Name</label>
+                      <input type="text" required value={editingRequest.groupName || ""} onChange={e => setEditingRequest({...editingRequest, groupName: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Manager Name</label>
+                      <input type="text" required value={editingRequest.managerName || ""} onChange={e => setEditingRequest({...editingRequest, managerName: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013]" />
+                    </div>
                   </div>
                 )}
 
-                {/* Buttons */}
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
-                  <button
-                    type="button"
-                    disabled={Boolean(processingId)}
-                    onClick={closeApprovalModal}
-                    className="px-5 sm:px-6 py-3.5 border border-stone-200 rounded-full font-black text-xs uppercase tracking-wider text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={
-                      Boolean(processingId) ||
-                      !selectedDuration ||
-                      !selectedStartTime ||
-                      hasTimeConflict(
-                        approvalRequest.date,
-                        selectedStartTime,
-                        selectedEndTime
-                      )
-                    }
-                    onClick={handleApprove}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-full font-black text-xs uppercase tracking-wider disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed transition shadow-lg shadow-emerald-200/60 disabled:shadow-none"
-                  >
-                    {processingId ? "Approving…" : "Confirm Approval"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+                <hr className="border-[#E8DCC4]" />
 
-        {/* ============ REJECTION MODAL ============ */}
-        {rejectionRequest && (
-          <div
-            className="fixed inset-0 z-[9999] bg-stone-900/70 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center"
-            onClick={closeRejectionModal}
-          >
-            <div
-              className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-5 sm:p-8">
-                <div className="mb-6 pb-6 border-b border-stone-100">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-700 mb-3">
-                    Decline Request
-                  </p>
-                  <h2 className="font-serif text-2xl sm:text-3xl font-black text-stone-900 leading-tight">
-                    Provide
-                    <span className="italic font-light"> Rejection Reason</span>
-                  </h2>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-stone-500">
-                    <span className="font-bold text-stone-800 break-words min-w-0">
-                      {rejectionRequest.name}
-                    </span>
-                    <span className="text-stone-300">·</span>
-                    <span>{rejectionRequest.date}</span>
+                {/* Section 4: Status & Admin Data */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Booking Status</label>
+                  <select value={editingRequest.status?.toLowerCase() || "pending"} onChange={e => setEditingRequest({...editingRequest, status: e.target.value})} className="w-full border border-[#E8DCC4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#722013] font-bold">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved / Allocated</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                {editingRequest.status?.toLowerCase() === "approved" && (
+                  <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* START TIME */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 mb-1.5">Start Time</label>
+                      <input type="time" required value={editingRequest.startTime || ""} onChange={(e) => setEditingRequest({...editingRequest, startTime: e.target.value})} className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                    </div>
+                    {/* DURATION */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 mb-1.5">Duration</label>
+                      <select required value={editingRequest.durationMinutes || ""} onChange={(e) => setEditingRequest({...editingRequest, durationMinutes: e.target.value})} className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500">
+                        <option value="" disabled>Select...</option>
+                        {DURATION_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+                      </select>
+                    </div>
+                    {/* LIVE TIME AVAILABILITY */}
+                    {editingRequest.startTime && editingRequest.durationMinutes && (() => {
+                        const endTime = calculateEndTime(editingRequest.startTime, editingRequest.durationMinutes);
+                        const hasConflict = hasTimeConflictExcluding(editingRequest.date, editingRequest.startTime, endTime, editingRequest.id);
+                        return (
+                          <div className={`sm:col-span-2 p-3 rounded-lg border ${hasConflict ? "bg-rose-100 border-rose-300" : "bg-white border-emerald-200"}`}>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-0.5">Selected Time Slot</p>
+                            <p className="font-bold text-[#2a0b06] text-sm tabular-nums">{formatTime(editingRequest.startTime)} - {formatTime(endTime)}</p>
+                            {hasConflict ? (
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-rose-700 mt-2 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Overlaps with an existing program.</p>
+                            ) : (
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 mt-2">✓ Slot Available</p>
+                            )}
+                          </div>
+                        );
+                    })()}
                   </div>
-                </div>
+                )}
 
-                <div className="mb-6">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-stone-500 mb-3">
-                    Reason *
-                  </label>
-                  <textarea
-                    rows={5}
-                    maxLength={500}
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="Kindly share the reason for declining this Cultural Seva request…"
-                    className="w-full resize-none border-2 border-stone-200 rounded-2xl px-4 py-3.5 text-sm text-stone-800 outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-100 transition"
-                  />
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-stone-400 italic">
-                      Minimum 5 characters
-                    </p>
-                    <p className="text-xs text-stone-400 tabular-nums">
-                      {rejectionReason.length}/500
-                    </p>
+                {editingRequest.status?.toLowerCase() === "rejected" && (
+                  <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-rose-700 mb-1.5">Rejection Reason</label>
+                    <textarea rows={3} required value={editingRequest.rejectionReason || ""} onChange={e => setEditingRequest({...editingRequest, rejectionReason: e.target.value})} className="w-full border border-rose-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-rose-500 resize-none" />
                   </div>
-                </div>
+                )}
 
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
-                  <button
-                    type="button"
-                    disabled={Boolean(processingId)}
-                    onClick={closeRejectionModal}
-                    className="px-5 sm:px-6 py-3.5 border border-stone-200 rounded-full font-black text-xs uppercase tracking-wider text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={
-                      Boolean(processingId) ||
-                      rejectionReason.trim().length < 5
-                    }
-                    onClick={handleReject}
-                    className="bg-rose-600 hover:bg-rose-700 text-white py-3.5 rounded-full font-black text-xs uppercase tracking-wider disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed transition shadow-lg shadow-rose-200/60 disabled:shadow-none"
-                  >
-                    {processingId ? "Declining…" : "Confirm Rejection"}
-                  </button>
-                </div>
-              </div>
+              </form>
             </div>
+
+            {/* Footer (Fixed) */}
+            <div className="p-4 border-t border-[#E8DCC4] flex justify-end gap-3 bg-[#FAF6F0] shrink-0">
+              <button type="button" onClick={() => setEditingRequest(null)} className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-600 hover:bg-gray-200 rounded-lg transition">Cancel</button>
+              <button type="submit" form="editForm" disabled={processingId} className="px-6 py-2.5 bg-[#2a0b06] hover:bg-[#722013] text-white text-xs font-bold uppercase tracking-widest rounded-lg transition disabled:bg-gray-400">
+                {processingId === editingRequest.id ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
     </div>
   );
 };

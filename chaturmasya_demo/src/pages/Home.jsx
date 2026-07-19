@@ -38,6 +38,7 @@ import InvitationSection from "./InvitationSection";
 import CBookingUser from "./CulturalProgram";
 import CulturalStatusTracker from "./CulturalStatusTracker";
 import Footer from "./Footer";
+import MantrakshataRequest from "./Mantrakshate";
 import LiveDarshanSection from "./LiveDarshan";
 import Schedule from "./Schedule"; 
 import BlogSection from "./Blogs";
@@ -76,7 +77,7 @@ const Home = () => {
   { name: "Home", href: "/" },
   { name: "Book Seva", href: "/book-seva" },
   { name: "Virtual Seva", href: "/virtual-pada-puja" },
-  { name: "Cultural Events", href: "/#cultural" },
+  { name: "Request Mantrakshate", href: "/request-mantrakshata" },
 ];
 
   const dailySchedule = [
@@ -666,37 +667,67 @@ useEffect(() => {
       <Hero/>
 
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
-      <section className="max-w-7xl mx-auto px-6 relative z-20 -mt-15 mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20 -mt-10 md:-mt-30 mb-20 lg:mb-10">
+        {/* Unified Floating Dock Container */}
+        <div className="bg-white/95 backdrop-blur-xl border border-[#E8DCC4] shadow-[0_15px_40px_-15px_rgba(42,11,6,0.1)] rounded-2xl md:rounded-[2rem] p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-2">
           {[
-            { title: "Book Pada Pooja", desc: "Reserve sacred rituals digitally.", icon: Sparkles, link: "/book-seva" },
-            { title: "Virtual Pooja", desc: "Submit details for participation.", icon: BookHeart, link: "/virtual-pada-puja" },
-            { title: "Cultural Events", desc: "View & book mutt activities.", icon: CalendarDays, href: "#cultural" },
-            { title: "Daily Schedule", desc: "Timings for all rituals.", icon: Clock, href: "#schedule" }
-          ].map((item, idx) => (
-            <motion.div 
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-            >
-              {item.link ? (
-                <Link to={item.link} className="group block bg-white rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:shadow-[#722013]/5 border border-[#E8DCC4]/50 transition-all duration-500 h-full relative overflow-hidden">
-                  <CardContent item={item} />
-                </Link>
-              ) : (
-                <a href={item.href} className="group block bg-white rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:shadow-[#722013]/5 border border-[#E8DCC4]/50 transition-all duration-500 h-full relative overflow-hidden">
-                  <CardContent item={item} />
-                </a>
-              )}
-            </motion.div>
-          ))}
+            { title: "Book Pada Pooja", desc: "Reserve sacred rituals", icon: Sparkles, link: "/book-seva" },
+            { title: "Virtual Pooja", desc: "Submit details online", icon: BookHeart, link: "/virtual-pada-puja" },
+            { title: "Cultural Events", desc: "View & book activities", icon: CalendarDays, href: "#cultural" },
+            { title: "Daily Schedule", desc: "Timings for all rituals", icon: Clock, href: "#schedule" }
+          ].map((item, idx) => {
+            
+            const Interior = () => (
+              <div className="group flex items-center gap-4 p-3 md:px-5 md:py-4 rounded-xl md:rounded-2xl hover:bg-[#FAF6F0] transition-colors duration-300 w-full cursor-pointer">
+                {/* Compact Icon Badge */}
+                <div className="w-10 h-10 shrink-0 rounded-full bg-[#722013]/5 border border-[#722013]/10 flex items-center justify-center group-hover:bg-[#722013] group-hover:border-[#722013] transition-colors duration-300">
+                  <item.icon className="w-4 h-4 text-[#722013] group-hover:text-white transition-colors duration-300" />
+                </div>
+
+                {/* Text Content */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-serif font-bold text-[#2a0b06] text-sm md:text-base leading-tight truncate group-hover:text-[#722013] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-[10px] sm:text-xs text-[#5a5046] mt-0.5 truncate">
+                    {item.desc}
+                  </p>
+                </div>
+
+                {/* Action Arrow */}
+                <div className="shrink-0 text-gray-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[#D4AF37] transition-all duration-300">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            );
+
+            return (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+              >
+                {item.link ? (
+                  <Link to={item.link} className="block w-full">
+                    <Interior />
+                  </Link>
+                ) : (
+                  <a href={item.href} className="block w-full">
+                    <Interior />
+                  </a>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       </section>
       <InvitationSection />
 
-      <main className="max-w-7xl mx-auto px-6 space-y-40 mb-32">
+      <main className="max-w-7xl mx-auto px-6 space-y-10 mb-32">
         {/* --- 2. DAILY SCHEDULE (Calendar & Live Highlight) --- */}
         <Schedule/>
         <CBookingUser

@@ -14,50 +14,50 @@ export default function Footer() {
   const [visitorCount, setVisitorCount] = useState(null);
 
   useEffect(() => {
-  const visitorRef = doc(db, "siteStats", "visitors");
-  const VISITOR_KEY = "chaturmasya_visitor_counted";
+    const visitorRef = doc(db, "siteStats", "visitors");
+    const VISITOR_KEY = "chaturmasya_visitor_counted";
 
-  const registerUniqueVisitor = async () => {
-    try {
-      const alreadyCounted = localStorage.getItem(VISITOR_KEY);
+    const registerUniqueVisitor = async () => {
+      try {
+        const alreadyCounted = localStorage.getItem(VISITOR_KEY);
 
-      // Count this browser only once
-      if (!alreadyCounted) {
-        await setDoc(
-          visitorRef,
-          {
-            totalVisits: increment(1),
-            lastVisitAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
+        // Count this browser only once
+        if (!alreadyCounted) {
+          await setDoc(
+            visitorRef,
+            {
+              totalVisits: increment(1),
+              lastVisitAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
 
-        localStorage.setItem(VISITOR_KEY, "true");
+          localStorage.setItem(VISITOR_KEY, "true");
+        }
+      } catch (error) {
+        console.error("Error registering website visitor:", error);
       }
-    } catch (error) {
-      console.error("Error registering website visitor:", error);
-    }
-  };
+    };
 
-  registerUniqueVisitor();
+    registerUniqueVisitor();
 
-  // Keep the displayed total updated
-  const unsubscribe = onSnapshot(
-    visitorRef,
-    (snapshot) => {
-      if (snapshot.exists()) {
-        setVisitorCount(snapshot.data().totalVisits || 0);
-      } else {
-        setVisitorCount(0);
+    // Keep the displayed total updated
+    const unsubscribe = onSnapshot(
+      visitorRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setVisitorCount(snapshot.data().totalVisits || 0);
+        } else {
+          setVisitorCount(0);
+        }
+      },
+      (error) => {
+        console.error("Error loading visitor count:", error);
       }
-    },
-    (error) => {
-      console.error("Error loading visitor count:", error);
-    }
-  );
+    );
 
-  return () => unsubscribe();
-}, []);
+    return () => unsubscribe();
+  }, []);
 
   const quickLinks = [
     { name: "Home", href: "/" },
@@ -85,170 +85,172 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-b from-[#3a1a0a] via-[#2a1208] to-[#1a0a04] text-white">
-      {/* Decorative top border */}
-      <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
+    <footer className="relative bg-[#110603] text-[#E8DCC4] overflow-hidden pt-16 pb-8 border-t-4 border-[#D4AF37]">
+      {/* Decorative Glows */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#E86A33]/5 rounded-full blur-[150px] pointer-events-none" />
 
-      {/* Decorative sun watermark */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#D4AF37]/10 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#D4AF37]/5 blur-3xl"
-      />
-
-      {/* Main grid */}
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-8 lg:py-20">
-        {/* Brand */}
-        <div className="lg:col-span-1">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
-              <Sun className="h-5 w-5 text-[#D4AF37]" />
-            </div>
-            <h2 className="font-serif text-2xl tracking-wide text-[#F5E6C8]">
-              Karki Mutt
-            </h2>
-          </div>
-
-          <p className="mt-5 text-sm leading-relaxed text-white/70">
-            The official digital platform connecting devotees worldwide to the
-            sacred traditions, rituals, and teachings during the holy
-            Chaturmasya period.
-          </p>
-
-          <div className="mt-6 flex items-center gap-3">
-            {socials.map(({ Icon, href, label }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={label}
-                className="grid h-10 w-10 place-items-center rounded-full border border-white/15 text-white/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#2a1208]"
-              >
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <h3 className="font-serif text-lg text-[#F5E6C8]">Quick Links</h3>
-          <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
-          <ul className="mt-5 space-y-3">
-            {quickLinks.map((link) => (
-              <li key={link.name}>
-                <a
-                  href={link.href}
-                  className="group inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-[#D4AF37]"
-                >
-                  <ChevronRight className="h-3.5 w-3.5 text-[#D4AF37] transition-transform group-hover:translate-x-0.5" />
-                  {link.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Contact */}
-        <div>
-          <h3 className="font-serif text-lg text-[#F5E6C8]">Contact Us</h3>
-          <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
-          <ul className="mt-5 space-y-4 text-sm text-white/75">
-            <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AF37]" />
-              <span className="min-w-0">
-                Daivajna Brahmana Sabha Bhavana
-                <br />
-                Sagara, Karnataka
-              </span>
-            </li>
-            <li className="flex items-center gap-3">
-              <Phone className="h-4 w-4 shrink-0 text-[#D4AF37]" />
-              <a
-                href="tel:+919448519501"
-                className="hover:text-[#D4AF37] transition-colors"
-              >
-                +91 94485 19501
-              </a>
-            </li>
-            <li className="flex items-center gap-3">
-              <Mail className="h-4 w-4 shrink-0 text-[#D4AF37]" />
-              <a
-                href="mailto:info@chaturmasya.org"
-                className="truncate hover:text-[#D4AF37] transition-colors"
-              >
-                chaturmasyasagara@gmail.com
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        {/* Map */}
-        <div>
-        <h3 className="font-serif text-lg text-[#F5E6C8]">Visit</h3>
-        <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
-
-        <div className="group mt-5 overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-[#D4AF37]/50">
-          
-          {/* MAP */}
-          <div className="h-32 relative">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3868.6564901614256!2d75.02673107433876!3d14.156281787801893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bbb8b003b45f2c9%3A0xa4853c01c6c4484b!2sDaivajna%20Brahmana%20Sabha%20Bhavana%2C%20Sagar!5e0!3m2!1sen!2sin!4v1784288886532!5m2!1sen!2sin"
-              className="w-full h-full"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              title="Daivajna Brahmana Sabha Bhavana, Sagar"
-            />
-          </div>
-        </div>
-      </div>
-      </div>
-
-      {/* Sanskrit blessing */}
-      <div className="relative border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-6 py-6 text-center sm:px-8">
-          <p className="font-serif text-base italic text-[#D4AF37] sm:text-lg">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
+        
+        {/* =========================================
+            TOP BANNER: SANSKRIT BLESSING
+        ========================================= */}
+        <div className="text-center mb-16 md:mb-24 flex flex-col items-center">
+          <p className="font-serif text-3xl md:text-5xl lg:text-6xl text-[#D4AF37] opacity-90 tracking-wide">
             ॥ सर्वे भवन्तु सुखिनः ॥
           </p>
-          <p className="mt-1 text-xs uppercase tracking-[0.3em] text-white/50">
-            Sarveh Bhavantu Sukhinaha
-          </p>
+          <div className="mt-6 flex items-center justify-center gap-4 w-full max-w-md">
+            <div className="h-px bg-gradient-to-r from-transparent to-[#D4AF37]/50 flex-1" />
+            <p className="text-[10px] md:text-xs uppercase tracking-[0.4em] text-[#E8DCC4]/60 font-bold">
+              Sarveh Bhavantu Sukhinaha
+            </p>
+            <div className="h-px bg-gradient-to-l from-transparent to-[#D4AF37]/50 flex-1" />
+          </div>
         </div>
-      </div>
 
-      {/* Bottom bar */}
-      <div className="relative border-t border-white/10 bg-black/30">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 px-6 py-5 text-center text-xs text-white/60 sm:px-8 md:grid-cols-3 md:text-left">
-          <p className="min-w-0">
-            © 2026 Karki Mutt. All rights reserved.
-          </p>
+        {/* =========================================
+            MAIN ARCHITECTURAL GRID
+        ========================================= */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
+          
+          {/* 1. Brand & About (Spans 4 cols on Desktop) */}
+          <div className="lg:col-span-4 flex flex-col lg:pr-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full border border-[#D4AF37] bg-[#D4AF37]/10 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <Sun className="w-6 h-6 text-[#D4AF37]" />
+              </div>
+              <h2 className="font-serif text-3xl text-white tracking-wide">
+                Karki Mutt
+              </h2>
+            </div>
+            <p className="text-sm leading-loose text-[#E8DCC4]/70 mb-8 font-serif italic">
+              The official digital platform connecting devotees worldwide to the
+              sacred traditions, rituals, and teachings during the holy
+              Chaturmasya period.
+            </p>
+            <div className="flex items-center gap-4 mt-auto">
+              {socials.map(({ Icon, href, label }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  className="w-10 h-10 rounded-full border border-[#E8DCC4]/20 flex items-center justify-center text-[#E8DCC4]/80 hover:bg-[#D4AF37] hover:border-[#D4AF37] hover:text-[#110603] transition-all duration-300 hover:-translate-y-1"
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
+          </div>
 
+          {/* 2. Quick Links (Spans 2 cols on Desktop) */}
+          <div className="lg:col-span-2">
+            <h3 className="font-serif text-lg text-white mb-6 uppercase tracking-widest text-[13px]">
+              Discover
+            </h3>
+            <ul className="space-y-4">
+              {quickLinks.map((link) => (
+                <li key={link.name}>
+                  <a
+                    href={link.href}
+                    className="group flex items-center gap-2 text-sm text-[#E8DCC4]/70 hover:text-[#D4AF37] transition-colors"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      {link.name}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* 3. Contact Info (Spans 3 cols on Desktop) */}
+          <div className="lg:col-span-3">
+            <h3 className="font-serif text-lg text-white mb-6 uppercase tracking-widest text-[13px]">
+              Connect
+            </h3>
+            <ul className="space-y-5 text-sm text-[#E8DCC4]/75">
+              <li className="flex items-start gap-4 group">
+                <div className="mt-0.5 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-[#D4AF37]/50 transition-colors">
+                  <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                </div>
+                <span className="leading-relaxed font-serif">
+                  Daivajna Brahmana Sabha Bhavana<br />
+                  Sagara, Karnataka
+                </span>
+              </li>
+              <li className="flex items-center gap-4 group">
+                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-[#D4AF37]/50 transition-colors">
+                  <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
+                </div>
+                <a href="tel:+919448519501" className="hover:text-[#D4AF37] transition-colors font-serif">
+                  +91 94485 19501
+                </a>
+              </li>
+              <li className="flex items-center gap-4 group">
+                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-[#D4AF37]/50 transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-[#D4AF37]" />
+                </div>
+                <a href="mailto:chaturmasyasagara@gmail.com" className="hover:text-[#D4AF37] transition-colors font-serif truncate">
+                  chaturmasyasagara@gmail.com
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* 4. Map Container (Spans 3 cols on Desktop) */}
+          <div className="lg:col-span-3">
+            <h3 className="font-serif text-lg text-white mb-6 uppercase tracking-widest text-[13px] hidden lg:block">
+              Location
+            </h3>
+            <div className="w-full h-[200px] lg:h-full min-h-[180px] rounded-2xl overflow-hidden border border-[#D4AF37]/30 shadow-lg relative group">
+              <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#D4AF37]/50 transition-colors rounded-2xl pointer-events-none z-10" />
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3868.6564901614256!2d75.02673107433876!3d14.156281787801893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bbb8b003b45f2c9%3A0xa4853c01c6c4484b!2sDaivajna%20Brahmana%20Sabha%20Bhavana%2C%20Sagar!5e0!3m2!1sen!2sin!4v1784288886532!5m2!1sen!2sin"
+                className="w-full h-full grayscale-[30%] contrast-125 opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                title="Daivajna Brahmana Sabha Bhavana, Sagar"
+              />
+            </div>
+          </div>
+
+        </div>
+
+        {/* =========================================
+            BOTTOM BAR (Credits & Stats)
+        ========================================= */}
+        <div className="pt-8 border-t border-[#E8DCC4]/10 flex flex-col md:flex-row items-center justify-between gap-6 text-[11px] uppercase tracking-widest text-[#E8DCC4]/50 font-bold">
+          
+          <p>© 2026 Karki Mutt. All rights reserved.</p>
+
+          {/* Visitor Counter */}
           {visitorCount !== null && (
-            <p className="md:text-center">
-              Website Visits{" "}
-              <span className="ml-1 rounded-full bg-[#D4AF37]/15 px-2 py-0.5 font-semibold text-[#D4AF37]">
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full shadow-inner">
+              <span>Devotees Visited</span>
+              <div className="w-1 h-1 rounded-full bg-[#D4AF37]" />
+              <span className="text-[#D4AF37] text-xs">
                 {visitorCount.toLocaleString("en-IN")}
               </span>
-            </p>
+            </div>
           )}
 
-          <p className="inline-flex items-center justify-center gap-1.5 md:justify-end">
-            Crafted with <Heart className="h-3 w-3 fill-[#D4AF37] text-[#D4AF37]" /> by
+          <p className="flex items-center gap-1.5">
+            Crafted with <Heart className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" /> by
             <a
               href="https://elv8.works"
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-[#D4AF37] hover:underline"
+              className="text-[#D4AF37] hover:text-white transition-colors"
             >
               elv8.works
             </a>
           </p>
+
         </div>
       </div>
     </footer>

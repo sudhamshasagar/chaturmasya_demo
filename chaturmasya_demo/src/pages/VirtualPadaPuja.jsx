@@ -263,7 +263,7 @@ const VirtualPadaPuja = () => {
           🙏
         </div>
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-gray-900">
-          Virtual Pada Pooja
+          Virtual Pooja
         </h1>
         <p className="mt-3 text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
           Receive divine blessings from the comfort of your home during the sacred Chaturmasya.
@@ -287,9 +287,9 @@ const VirtualPadaPuja = () => {
               <div className="h-14 w-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-3xl mb-5 group-hover:scale-105 transition-transform">
                 🪔
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Book Virtual Pada Pooja</h3>
+              <h3 className="text-xl font-bold text-gray-900">Book Virtual  Pooja</h3>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Reserve your Virtual Pada Pooja during Chaturmasya and participate from home.
+                Reserve your Virtual  Pooja during Chaturmasya and participate from home.
               </p>
               <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-orange-700">
                 Book now <span aria-hidden>→</span>
@@ -306,9 +306,9 @@ const VirtualPadaPuja = () => {
               <div className="h-14 w-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-3xl mb-5 group-hover:scale-105 transition-transform">
                 🎥
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Join Virtual Pada Pooja</h3>
+              <h3 className="text-xl font-bold text-gray-900">Join Virtual  Pooja</h3>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Already booked? Access your Virtual Pada Pooja and join through Google Meet.
+                Already booked? Access your Virtual  Pooja and join through Google Meet.
               </p>
               <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                 Join meeting <span aria-hidden>→</span>
@@ -329,7 +329,7 @@ const VirtualPadaPuja = () => {
             <p className="mt-2 text-sm text-gray-600">
               {flowType === "book"
                 ? "Enter your mobile number to continue with the booking."
-                : "Enter the mobile number used while booking your Virtual Pada Pooja."}
+                : "Enter the mobile number used while booking your Virtual Pooja."}
             </p>
 
             {error && (
@@ -370,7 +370,7 @@ const VirtualPadaPuja = () => {
         {currentView === "existing_bookings" && (
           <SectionCard className="max-w-2xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Your Virtual Pada Pooja Bookings
+              Your Virtual Pada Bookings
             </h2>
             <p className="mt-1 text-sm text-gray-600">
               We found the following upcoming bookings for +91 {mobileInput}.
@@ -424,7 +424,7 @@ const VirtualPadaPuja = () => {
                 }}
                 className="w-full mt-6 border-2 border-orange-600 text-orange-700 hover:bg-orange-50 font-bold py-3.5 rounded-xl transition-colors"
               >
-                + Book Another Virtual Pada Pooja
+                + Book Another Virtual Pooja
               </button>
             )}
           </SectionCard>
@@ -434,10 +434,10 @@ const VirtualPadaPuja = () => {
         {currentView === "book_form" && (
           <SectionCard className="max-w-2xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Book Virtual Pada Pooja
+              Book Virtual Pooja
             </h2>
             <p className="mt-1 text-sm text-gray-600">
-              Enter the devotee details below to reserve your Virtual Pada Pooja.
+              Enter the devotee details below to reserve your Virtual Pooja.
             </p>
 
             {error && (
@@ -559,7 +559,7 @@ const VirtualPadaPuja = () => {
                 <p className="text-[#800000] text-[11px] font-bold tracking-[0.25em] uppercase mb-2">
                   Karki Mutt Chaturmasya
                 </p>
-                <h2 className="text-2xl font-black text-gray-900">Virtual Pada Pooja</h2>
+                <h2 className="text-2xl font-black text-gray-900">Virtual Pooja</h2>
                 <p className="text-gray-500 text-sm mt-1">Booking Confirmation</p>
               </div>
 
@@ -595,8 +595,8 @@ const VirtualPadaPuja = () => {
 
                 <div className="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
                   <p className="text-sm text-blue-800">
-                    On the day of your Virtual Pada Pooja, return to this page and select{" "}
-                    <strong>"Join Virtual Pada Pooja"</strong>. Enter your registered mobile
+                    On the day of your Virtual Pooja, return to this page and select{" "}
+                    <strong>"Join Virtual Pooja"</strong>. Enter your registered mobile
                     number to access the Google Meet link.
                   </p>
                 </div>
@@ -626,7 +626,7 @@ const VirtualPadaPuja = () => {
             <div className="bg-[#FFFDF8] border-b border-[#E8E2D2] p-5 sm:p-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
               <div className="min-w-0">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                  Virtual Pada Pooja
+                  Virtual Pooja
                 </p>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                   Your Booking
@@ -648,13 +648,13 @@ const VirtualPadaPuja = () => {
               <div className="mt-6 p-6 border-2 border-dashed border-blue-200 bg-blue-50/60 rounded-2xl text-center">
                 <div className="text-4xl mb-3">🎥</div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
-                  Join Virtual Pada Pooja
+                  Join Virtual Pooja
                 </h3>
 
                 {canJoinMeeting(selectedBooking.date) ? (
                   <>
                     <p className="text-sm text-gray-600 mb-5">
-                      Your Virtual Pada Pooja is scheduled for today. Click below to join via
+                      Your Virtual Pooja is scheduled for today. Click below to join via
                       Google Meet.
                     </p>
                     <a

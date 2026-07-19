@@ -15,6 +15,8 @@ import VirtualBookings from "../admin/VirtualBookings";
 import AdminVirtualPuja from "../admin/AdminVirtualPuja";
 import Accounts from "../admin/Accounts";
 import Mantrakshata from "../admin/Mantrakshata";
+import MantrakshataRequest from "../pages/Mantrakshate";
+
 
 const AppRoutes = () => {
   return (
@@ -26,6 +28,10 @@ const AppRoutes = () => {
         <Route path="/book-seva" element={<BookSeva />} />
         <Route path="/virtual-pada-puja" element={<VirtualPadaPuja />} />
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/request-mantrakshata"
+          element={<MantrakshataRequest />}
+        />
 
         {/* Protected Admin Routes */}
         <Route
