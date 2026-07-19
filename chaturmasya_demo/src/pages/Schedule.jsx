@@ -250,9 +250,6 @@ const displayedSchedule = useMemo(() => {
                   Live Now
                 </span>
               </div>
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Udupi Sri Krishna Matha
-              </span>
             </div>
 
             <div className="w-full bg-[#110603] rounded-2xl overflow-hidden shadow-lg border border-[#E8DCC4] aspect-video relative">

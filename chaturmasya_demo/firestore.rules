@@ -43,10 +43,10 @@ service cloud.firestore {
     // DAILY SCHEDULE
     // ============================================================
 
-    match /schedule/{docId} {
+    match /schedules/{docId} {
       allow read, write: if true;
     }
-
+ 
 
     // ============================================================
     // BLOGS
@@ -126,6 +126,10 @@ service cloud.firestore {
     // ============================================================
 
     match /culturalCalendar/{dateId} {
+      allow read, write: if true;
+    }
+    
+    match /settings/{settingId} {
       allow read, write: if true;
     }
   }
