@@ -16,11 +16,11 @@ const staggerContainer = {
 const heroImages = [
   { src: "/hero.jpeg",  caption: "Peace is not the absence of trouble, but the presence of divinity." },
   { src: "/hero2.jpeg", caption: "Devotion is the lamp that lights every inner path." },
-  { src: "/hero3.jpeg", caption: "The vow of silence is the loudest prayer of all." },
+  // { src: "/hero3.jpeg", caption: "The vow of silence is the loudest prayer of all." },
   { src: "/hero4.jpeg", caption: "Where the mind rests, the divine appears." },
   { src: "/hero5.jpeg", caption: "Every chant is a step toward the eternal." },
   { src: "/hero6.jpeg", caption: "Surrender is the shortest road to grace." },
-  { src: "/hero7.jpeg", caption: "The sacred blooms wherever awareness dwells." },
+  // { src: "/hero7.jpeg", caption: "The sacred blooms wherever awareness dwells." },
   { src: "/hero8.jpeg", caption: "In service, the seeker meets the sought." },
   { src: "/hero9.jpeg", caption: "Wisdom flows where the heart is humble." },
 ];
@@ -104,7 +104,7 @@ export default function ChaturmasyaHero() {
   }, [next, prev]);
 
   return (
-    <section className="relative w-full pt-20 lg:pt-10 pb-10 md:pb-24 overflow-hidden z-10">
+    <section className="desktop-scale relative w-full pt-20 lg:pt-30 pb-10 md:pb-24 overflow-hidden z-10">
       {/* Ambient washes */}
       <div className="absolute top-10 -left-40 w-[560px] h-[560px] rounded-full bg-[#D4AF37]/15 blur-[130px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 -right-32 w-[460px] h-[460px] rounded-full bg-[#722013]/15 blur-[110px] pointer-events-none -z-10" />

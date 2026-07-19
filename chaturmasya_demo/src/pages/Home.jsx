@@ -60,56 +60,6 @@ const Home = () => {
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [activeFilter, setActiveFilter] = useState({ type: 'all', value: 'all' });
   const carouselRef = useRef(null);
-  const blogs = [
-    {
-      id: 1,
-      title: "Day 1 Chaturmasya Update",
-      description: "Pujya Sri Swamiji inaugurated the Chaturmasya celebrations with special pooja and pravachana.",
-      content: "The holy period of Chaturmasya commenced today with tremendous spiritual fervor. Devotees from across the globe gathered to witness the sacred Sankalpa. \n\nPujya Sri Swamiji performed the initial poojas at the break of dawn, invoking the blessings of Lord Sri Hari. Following the pooja, a profound Pravachana was delivered, highlighting the significance of Vrata (vow) and inner purification during these four sacred months. \n\nThe atmosphere was filled with divine Vedic chants, setting a serene and spiritually uplifting tone for the journey ahead. All devotees are encouraged to participate in the daily online Parayana.",
-      image: "https://images.pexels.com/photos/8230166/pexels-photo-8230166.jpeg",
-      date: "July 1, 2026",
-      readTime: "3 min read",
-      day: 1,
-      week: 1,
-      month: "July"
-    },
-    {
-      id: 2,
-      title: "Special Laksha Tulasi Archane",
-      description: "Understanding the spiritual benefits and tradition behind the sacred Tulasi Archane.",
-      content: "Tulasi is exceptionally dear to Lord Sri Hari. Offering a single Tulasi leaf with ultimate devotion brings immense spiritual merit. Today, the mutt witnessed the grand Laksha Tulasi Archane, where one lakh sacred leaves were offered at the lotus feet of the deity.\n\nThis tradition dates back centuries and is known to cleanse the mind and bring peace to the surroundings. Devotees participating virtually chanted the Vishnu Sahasranama along with the live stream.",
-      image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800",
-      date: "July 2, 2026",
-      readTime: "2 min read",
-      day: 2,
-      week: 1,
-      month: "July"
-    },
-    {
-      id: 3,
-      title: "Annadana Seva Begins",
-      description: "Devotees are invited to participate in the grand Annadana Seva throughout Chaturmasya.",
-      content: "Anna Daanam Maha Daanam — the offering of food is considered the highest form of charity in our tradition. During Chaturmasya, thousands of visiting devotees, scholars, and students are served prasada daily.\n\nWe invite devotees globally to contribute to this noble cause. By participating in the Annadana Seva, you become an integral part of the daily spiritual functioning of the mutt, receiving the boundless grace of the divine.",
-      image: "https://images.unsplash.com/photo-1464207687429-7505649dae38?w=800",
-      date: "July 8, 2026",
-      readTime: "2 min read",
-      day: 8,
-      week: 2,
-      month: "July"
-    },
-  ];
-
-  // Logic to filter blogs and auto-select the correct one to expand
-  const filteredBlogs = blogs.filter(blog => {
-    if (activeFilter.type === 'all') return true;
-    return blog[activeFilter.type].toString() === activeFilter.value.toString();
-  });
-
-  // Always show a blog in the expanded reader. If the currently selected one is filtered out, default to the first available.
-  const displayBlog = (selectedBlog && filteredBlogs.some(b => b.id === selectedBlog.id)) 
-    ? selectedBlog 
-    : (filteredBlogs[0] || null);
-
   const scrollCarousel = (direction) => {
     if (carouselRef.current) {
       const scrollAmount = direction === 'left' ? -350 : 350;
@@ -121,6 +71,13 @@ const Home = () => {
     if (value === "") setActiveFilter({ type: 'all', value: 'all' });
     else setActiveFilter({ type, value });
   };
+
+  const navItems = [
+  { name: "Home", href: "/" },
+  { name: "Book Seva", href: "/book-seva" },
+  { name: "Virtual Seva", href: "/virtual-pada-puja" },
+  { name: "Cultural Events", href: "/#cultural" },
+];
 
   const dailySchedule = [
     { id: 1, timePre: "06:00", timePost: "AM", title: "Suprabhata Seva", status: "past" },
@@ -638,17 +595,20 @@ useEffect(() => {
           {/* Expanded Desktop Nav (Hidden when scrolled OR on mobile) */}
           <div className={`items-center gap-8 pointer-events-auto ${isScrolled ? 'hidden' : 'hidden lg:flex'}`}>
             <nav className="flex items-center gap-8 text-sm font-medium text-gray-700">
-              {['Home', 'Schedule', 'Live Darshan', 'Cultural Events'].map((item) => (
-                <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="relative group overflow-hidden">
-                  <span className="group-hover:text-[#722013] transition-colors duration-300">{item}</span>
-                  <span className="absolute left-0 bottom-0 w-full h-[1px] bg-[#722013] -translate-x-[101%] group-hover:translate-x-0 transition-transform duration-300 ease-out"></span>
-                </a>
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="relative group overflow-hidden"
+                >
+                  <span className="group-hover:text-[#722013] transition-colors duration-300">
+                    {item.name}
+                  </span>
+
+                  <span className="absolute left-0 bottom-0 w-full h-[1px] bg-[#722013] -translate-x-[101%] group-hover:translate-x-0 transition-transform duration-300 ease-out" />
+                </Link>
               ))}
             </nav>
-
-            <Link to="/book-seva" className="bg-gradient-to-r from-[#D4AF37] to-[#b5952f] text-white px-7 py-2.5 rounded-full font-semibold text-sm hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> Book Seva
-            </Link>
           </div>
 
           {/* Hamburger Menu Icon (Visible when scrolled OR on mobile) */}
@@ -710,7 +670,7 @@ useEffect(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { title: "Book Pada Pooja", desc: "Reserve sacred rituals digitally.", icon: Sparkles, link: "/book-seva" },
-            { title: "Virtual Pada Pooja", desc: "Submit details for participation.", icon: BookHeart, link: "/virtual-pada-puja" },
+            { title: "Virtual Pooja", desc: "Submit details for participation.", icon: BookHeart, link: "/virtual-pada-puja" },
             { title: "Cultural Events", desc: "View & book mutt activities.", icon: CalendarDays, href: "#cultural" },
             { title: "Daily Schedule", desc: "Timings for all rituals.", icon: Clock, href: "#schedule" }
           ].map((item, idx) => (

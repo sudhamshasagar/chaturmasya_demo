@@ -61,9 +61,9 @@ export default function Footer() {
 
   const quickLinks = [
     { name: "Home", href: "/" },
-    { name: "Book Seva", href: "/seva" },
-    { name: "Live Darshana", href: "/live" },
-    { name: "Daily Schedule", href: "/schedule" },
+    { name: "Book Seva", href: "/book-seva" },
+    { name: "Virtual Seva", href: "/virtual-pada-puja" },
+    { name: "Cultural Events", href: "/cultural" },
   ];
 
   const socials = [
@@ -189,33 +189,25 @@ export default function Footer() {
 
         {/* Map */}
         <div>
-          <h3 className="font-serif text-lg text-[#F5E6C8]">Visit</h3>
-          <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
-          <a
-            href="https://maps.google.com/?q=Karki+Mutt+Udupi"
-            target="_blank"
-            rel="noreferrer"
-            className="group mt-5 block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-[#D4AF37]/50"
-          >
-            <div className="h-32 relative">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3868.6564901614256!2d75.02673107433876!3d14.156281787801893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bbb8b003b45f2c9%3A0xa4853c01c6c4484b!2sDaivajna%20Brahmana%20Sabha%20Bhavana%2C%20Sagar!5e0!3m2!1sen!2sin!4v1784288886532!5m2!1sen!2sin"
-                className="w-full h-full"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-                title="Daivajna Brahmana Sabha Bhavana, Sagar"
-              />
-            </div>
-            <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-xs uppercase tracking-wider text-white/70">
-                Open in Maps
-              </span>
-              <ChevronRight className="h-4 w-4 text-[#D4AF37] transition-transform group-hover:translate-x-1" />
-            </div>
-          </a>
+        <h3 className="font-serif text-lg text-[#F5E6C8]">Visit</h3>
+        <span className="mt-2 block h-px w-10 bg-[#D4AF37]" />
+
+        <div className="group mt-5 overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-[#D4AF37]/50">
+          
+          {/* MAP */}
+          <div className="h-32 relative">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3868.6564901614256!2d75.02673107433876!3d14.156281787801893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bbb8b003b45f2c9%3A0xa4853c01c6c4484b!2sDaivajna%20Brahmana%20Sabha%20Bhavana%2C%20Sagar!5e0!3m2!1sen!2sin!4v1784288886532!5m2!1sen!2sin"
+              className="w-full h-full"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              title="Daivajna Brahmana Sabha Bhavana, Sagar"
+            />
+          </div>
         </div>
+      </div>
       </div>
 
       {/* Sanskrit blessing */}

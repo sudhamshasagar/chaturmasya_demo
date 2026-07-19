@@ -20,27 +20,6 @@ import { db } from "../firebase/firebase";
 const START_DATE = new Date(2026, 6, 29); // July 29, 2026 (0-indexed month)
 const END_DATE = new Date(2026, 8, 26);   // September 26, 2026
 
-
-// const snapshot = await getDocs(collection(db, "bookings"));
-
-// const nextNumber = snapshot.size + 1;
-
-// const bookingId = `KM26-${String(nextNumber).padStart(3, "0")}`;
-
-// Dynamic valid slots strictly between 5:30 PM and 7:45 PM
-const generateTimeSlots = (duration) => {
-  switch (duration) {
-    case "30 mins":
-      return ["05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:15 PM"];
-    case "45 mins":
-      return ["05:30 PM", "06:15 PM", "07:00 PM"];
-    case "1 hr":
-      return ["05:30 PM", "06:30 PM"];
-    default:
-      return [];
-  }
-};
-
 // Zero out time for accurate Firestore equality checks
 const normalizeDate = (date) => {
   const d = new Date(date);
@@ -62,17 +41,9 @@ const BookSeva = () => {
     name: "",
     address: "",
     date: null,
-    time: "",
-    duration: "30 mins",
     seva: "Physical Pada Pooja",
     participants: "1",
   });
-
-  const availableSlots = useMemo(
-    () => generateTimeSlots(bookingData.duration),
-    [bookingData.duration]
-  );
-
   // --- HANDLERS ---
   const resetFlow = () => {
     setMobile("");
@@ -84,8 +55,6 @@ const BookSeva = () => {
       name: "",
       address: "",
       date: null,
-      time: "",
-      duration: "30 mins",
       seva: "Physical Pada Pooja",
       participants: "1",
     });
@@ -123,50 +92,36 @@ const BookSeva = () => {
       setIsLoading(false);
     }
   };
-
-  const handleDurationChange = (e) => {
-    setBookingData({ ...bookingData, duration: e.target.value, time: "" });
-  };
-
   const handleBookingSubmit = async () => {
     setIsLoading(true);
     setError("");
 
     try {
       const normalizedBookingDate = normalizeDate(bookingData.date);
+      const dd = String(normalizedBookingDate.getDate()).padStart(2, "0");
+      const mm = String(normalizedBookingDate.getMonth() + 1).padStart(2, "0");
+      const yy = String(normalizedBookingDate.getFullYear()).slice(-2);
 
-      // Check Firestore for duplicate slots on the same date and time
-      const slotQuery = query(
-        collection(db, "bookings"),
-        where("date", "==", Timestamp.fromDate(normalizedBookingDate)),
-        where("time", "==", bookingData.time)
+      const datePrefix = `${dd}${mm}${yy}`;
+
+      const counterRef = doc(
+        db,
+        "counters",
+        `physicalPadaPooja-${datePrefix}`
       );
-
-      const existingSlot = await getDocs(slotQuery);
-
-      if (!existingSlot.empty) {
-        setError("This sacred slot has already been reserved. Please select another time or date.");
-        setIsLoading(false);
-        return;
-      }
-
-      const counterRef = doc(db, "counters", "bookingCounter");
 
       const bookingId = await runTransaction(db, async (transaction) => {
         const counterDoc = await transaction.get(counterRef);
 
-        if (!counterDoc.exists()) {
-          throw new Error("Booking counter does not exist.");
-        }
+        const nextNumber = counterDoc.exists()
+          ? (counterDoc.data().lastNumber || 0) + 1
+          : 1;
 
-        const currentNumber = counterDoc.data().lastNumber || 0;
-        const nextNumber = currentNumber + 1;
-
-        transaction.update(counterRef, {
+        transaction.set(counterRef, {
           lastNumber: nextNumber,
         });
 
-        return `KM26-${String(nextNumber).padStart(3, "0")}`;
+        return `${datePrefix}-${String(nextNumber).padStart(3, "0")}`;
       });
       const newBooking = {
         ...bookingData,
@@ -308,7 +263,11 @@ const BookSeva = () => {
                         </span>
                         <h3 className="text-lg font-bold text-[#333333] mt-3">{booking.seva}</h3>
                         <p className="text-sm text-[#666666] mt-1">
-                          {booking.date?.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} • {booking.time}
+                          {booking.date?.toDate().toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
                         </p>
                       </div>
                       <button
@@ -400,10 +359,18 @@ const BookSeva = () => {
 
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-bold text-[#333333] mb-2">Preferred Date</label>
+                    <label className="block text-sm font-bold text-[#333333] mb-2">
+                      Preferred Date
+                    </label>
+
                     <DatePicker
                       selected={bookingData.date}
-                      onChange={(date) => setBookingData({ ...bookingData, date, time: "" })}
+                      onChange={(date) =>
+                        setBookingData({
+                          ...bookingData,
+                          date,
+                        })
+                      }
                       minDate={START_DATE}
                       maxDate={END_DATE}
                       dateFormat="dd MMMM yyyy"
@@ -411,40 +378,17 @@ const BookSeva = () => {
                       className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none"
                     />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#333333] mb-2">Duration</label>
-                    <select
-                      value={bookingData.duration}
-                      onChange={handleDurationChange}
-                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none appearance-none"
-                    >
-                      <option value="30 mins">30 Minutes</option>
-                      <option value="45 mins">45 Minutes</option>
-                      <option value="1 hr">1 Hour</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#333333] mb-2">Start Time (PM)</label>
-                    <select
-                      value={bookingData.time}
-                      onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
-                      disabled={!bookingData.date}
-                      className="w-full border border-[#E8E2D2] bg-[#FFFDF8] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-50 p-3.5 rounded-xl transition outline-none appearance-none disabled:opacity-50"
-                    >
-                      <option value="" disabled>Select Time</option>
-                      {availableSlots.map((slot) => (
-                        <option key={slot} value={slot}>{slot}</option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
 
                 <div className="pt-6">
                   <button
                     onClick={handleBookingSubmit}
-                    disabled={!bookingData.name || !bookingData.date || !bookingData.time || isLoading}
+                    disabled={
+                      !bookingData.name.trim() ||
+                      !bookingData.address.trim() ||
+                      !bookingData.date ||
+                      isLoading
+                    }
                     className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg transition duration-300 shadow-md hover:shadow-lg flex justify-center items-center gap-2"
                   >
                     {isLoading ? (
@@ -514,12 +458,6 @@ const BookSeva = () => {
                       <span className="text-[#666666] text-sm">Date</span>
                       <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
                         {formattedReceiptDate}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <span className="text-[#666666] text-sm">Time</span>
-                      <span className="font-bold text-[#333333] text-sm border-b border-[#F5F5F5] flex-grow ml-4 text-right pb-1">
-                        {bookingData.time} ({bookingData.duration})
                       </span>
                     </div>
                     <div className="flex justify-between items-end">
