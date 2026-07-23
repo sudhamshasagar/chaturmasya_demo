@@ -45,7 +45,6 @@ export default function ChaturmasyaPortal() {
     { name: "Shri Manjunatha V Varnekar", role: "Working President" },
     { name: "Shri Suryakantha N Raikar", role: "Chief Secretary" },
     { name: "Shri Raghavendra R", role: "Treasurer" },
-    { name: "Shri Chandrashekhara Shet K S", role: "Swagatha Samithi" },
   ];
 
   const subCommittees = [

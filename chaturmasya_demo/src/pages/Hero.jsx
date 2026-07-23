@@ -454,36 +454,6 @@ export default function ChaturmasyaHero() {
               </div>
             </motion.div>
             {/* Invocation */}
-            <motion.div
-              variants={fadeUp}
-              className="
-                mb-4
-                pl-4
-                border-l-2
-                border-[#D4AF37]
-              "
-            >
-
-              <p className="
-                font-serif
-                italic
-                text-[#722013]
-                text-sm
-              ">
-                Jai Jnaneshwari
-              </p>
-
-              <p className="
-                mt-1
-                text-[8px]
-                uppercase
-                tracking-[0.22em]
-                font-bold
-                text-gray-400
-              ">
-                The Sacred Months
-              </p>
-            </motion.div>
             {/* Meta */}
             <motion.div
               variants={fadeUp}
@@ -492,11 +462,9 @@ export default function ChaturmasyaHero() {
                 pt-4
                 border-t
                 border-[#E8DCC4]
-
                 grid
                 grid-cols-3
                 gap-4
-
                 max-w-md
               "
             >

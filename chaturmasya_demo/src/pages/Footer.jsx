@@ -1,13 +1,8 @@
 import { FaInstagram, FaYoutube, FaFacebook } from "react-icons/fa";
 import { Sun, ChevronRight, Phone, Mail, MapPin, Heart } from "lucide-react";
-import {
-  doc,
-  onSnapshot,
-  setDoc,
-  increment,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "../firebase/firebase";
 import { useEffect, useState } from "react";
 
 export default function Footer() {
@@ -15,38 +10,34 @@ export default function Footer() {
 
   useEffect(() => {
     const visitorRef = doc(db, "siteStats", "visitors");
-    const VISITOR_KEY = "chaturmasya_visitor_counted";
+    const VISIT_KEY = "chaturmasya_visit_session";
 
-    const registerUniqueVisitor = async () => {
+    const registerVisit = async () => {
       try {
-        const alreadyCounted = localStorage.getItem(VISITOR_KEY);
+        const alreadyCounted = sessionStorage.getItem(VISIT_KEY);
 
-        // Count this browser only once
         if (!alreadyCounted) {
-          await setDoc(
-            visitorRef,
-            {
-              totalVisits: increment(1),
-              lastVisitAt: serverTimestamp(),
-            },
-            { merge: true }
+          const registerWebsiteVisit = httpsCallable(
+            functions,
+            "registerWebsiteVisit"
           );
 
-          localStorage.setItem(VISITOR_KEY, "true");
+          await registerWebsiteVisit();
+
+          sessionStorage.setItem(VISIT_KEY, "true");
         }
       } catch (error) {
-        console.error("Error registering website visitor:", error);
+        console.error("Error registering website visit:", error);
       }
     };
 
-    registerUniqueVisitor();
+    registerVisit();
 
-    // Keep the displayed total updated
     const unsubscribe = onSnapshot(
       visitorRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          setVisitorCount(snapshot.data().totalVisits || 0);
+          setVisitorCount(snapshot.data()?.totalVisits || 0);
         } else {
           setVisitorCount(0);
         }
@@ -229,15 +220,15 @@ export default function Footer() {
           <p>© 2026 Karki Mutt. All rights reserved.</p>
 
           {/* Visitor Counter */}
-          {visitorCount !== null && (
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full shadow-inner">
-              <span>Devotees Visited</span>
-              <div className="w-1 h-1 rounded-full bg-[#D4AF37]" />
-              <span className="text-[#D4AF37] text-xs">
-                {visitorCount.toLocaleString("en-IN")}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full shadow-inner">
+            <span>Devotees Visited</span>
+            <div className="w-1 h-1 rounded-full bg-[#D4AF37]" />
+            <span className="text-[#D4AF37] text-xs">
+              {visitorCount !== null
+                ? visitorCount.toLocaleString("en-IN")
+                : "Loading..."}
+            </span>
+          </div>
 
           <p className="flex items-center gap-1.5">
             Crafted with <Heart className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" /> by
