@@ -76,7 +76,10 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative bg-[#110603] text-[#E8DCC4] overflow-hidden pt-16 pb-8 border-t-4 border-[#D4AF37]">
+    <footer
+      id="contact"
+      className="relative bg-[#110603] text-[#E8DCC4] overflow-hidden pt-16 pb-8 border-t-4 border-[#D4AF37]"
+    >
       {/* Decorative Glows */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#E86A33]/5 rounded-full blur-[150px] pointer-events-none" />

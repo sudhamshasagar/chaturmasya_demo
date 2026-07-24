@@ -157,10 +157,10 @@ export default function ChaturmasyaPortal() {
               </div>
             )}
             <a
-              href="tel:+919448724275"
+              href="tel:+918749073557"
               className="hidden md:flex items-center gap-1.5 text-xs font-bold text-[#722013]"
             >
-              <Phone size={12} /> 94487 24275
+              <Phone size={12} /> 8749073557
             </a>
           </div>
 

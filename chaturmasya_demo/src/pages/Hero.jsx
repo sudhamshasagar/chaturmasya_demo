@@ -104,7 +104,7 @@ export default function ChaturmasyaHero() {
   }, [next, prev]);
 
   return (
-    <section className="desktop-scale relative w-full pt-20 lg:pt-40 pb-15 md:pb-24 lg:pb-15 overflow-hidden z-10">
+    <section className="desktop-scale relative w-full pt-20 lg:pt-25 pb-15 md:pb-24 lg:pb-15 overflow-hidden z-10" id="home">
       {/* Ambient washes */}
       <div className="absolute top-10 -left-40 w-[560px] h-[560px] rounded-full bg-[#D4AF37]/15 blur-[130px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 -right-32 w-[460px] h-[460px] rounded-full bg-[#722013]/15 blur-[110px] pointer-events-none -z-10" />

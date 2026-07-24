@@ -551,16 +551,7 @@ useEffect(() => {
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] mix-blend-multiply"></div>
       <div className="fixed top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#f8e5cc] to-transparent opacity-40 blur-3xl -z-10"></div>
       {/* --- TOP ADMIN BAR --- */}
-      <div id="top" className="bg-[#FAF6F0] text-[#722013] py-2 px-6 text-[10px] tracking-[0.2em] uppercase font-bold flex justify-between items-center z-50 relative border-b border-[#E8DCC4]">
-        <span className="flex items-center gap-2 opacity-80">
-          {/* <span className="w-1.5 h-1.5 bg-[#E86A33] rounded-full"></span>  */}
-           Jai Jnaneshwari
-        </span>
-        <Link to="/admin" className="flex items-center gap-2 hover:text-[#E86A33] transition-colors">
-          <Users className="w-3.5 h-3.5" />
-          Admin Portal
-        </Link>
-      </div>
+      
       {/* --- PREMIUM FLOATING HEADER --- */}
       <Header/>
 
