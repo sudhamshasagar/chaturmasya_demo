@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Element } from "react-scroll";
-import { Link } from "react-router-dom";
+import { href, Link } from "react-router-dom";
 import {db} from "../firebase/firebase";
 import {
   collection,
@@ -47,6 +47,7 @@ import BlogSection from "./Blogs";
 import Header from "./Header";
 import Bio from "./Bio"
 import { useLanguage } from "../context/LanguageContext";
+import CommitteeSection from "./Committee";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -80,13 +81,6 @@ const Home = () => {
     if (value === "") setActiveFilter({ type: 'all', value: 'all' });
     else setActiveFilter({ type, value });
   };
-
-  const navItems = [
-  { name: "Home", href: "/" },
-  { name: "Book Seva", href: "/book-seva" },
-  { name: "Virtual Seva", href: "/virtual-pada-puja" },
-  { name: "Request Mantrakshate", href: "/request-mantrakshata" },
-];
 
   const dailySchedule = [
     { id: 1, timePre: "06:00", timePost: "AM", title: "Suprabhata Seva", status: "past" },
@@ -564,7 +558,7 @@ useEffect(() => {
       <Element name="top">
         <Hero />
       </Element>
-      <Bio/>
+      
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20 -mt-10 md:-mt-30 mb-20 lg:mb-10">
         {/* Unified Floating Dock Container */}
@@ -695,6 +689,10 @@ useEffect(() => {
           getDurationLabel={getDurationLabel}
         />
         {/* --- 4. LATEST UPDATES (Carousel Top + Expanded Reader Bottom) --- */}
+        {/* <Element name="committee">
+          <CommitteeSection/>
+        </Element> */}
+        <Bio/>
         <Element name="blogs">
           <BlogSection />
         </Element>

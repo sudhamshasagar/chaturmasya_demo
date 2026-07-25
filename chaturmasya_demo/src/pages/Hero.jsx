@@ -15,14 +15,11 @@ const staggerContainer = {
 
 // ---- carousel data ----
 const heroImages = [
-  { src: "/hero.jpeg",  caption: "Peace is not the absence of trouble, but the presence of divinity." },
-  { src: "/hero2.jpeg", caption: "Devotion is the lamp that lights every inner path." },
-  // { src: "/hero3.jpeg", caption: "The vow of silence is the loudest prayer of all." },
-  { src: "/hero4.jpeg", caption: "Where the mind rests, the divine appears." },
-  { src: "/hero5.jpeg", caption: "Every chant is a step toward the eternal." },
-  { src: "/hero6.jpeg", caption: "Surrender is the shortest road to grace." },
-  // { src: "/hero7.jpeg", caption: "The sacred blooms wherever awareness dwells." },
-  { src: "/hero8.jpeg", caption: "In service, the seeker meets the sought." },
+  { src: "/h1.jpeg",  caption: "Peace is not the absence of trouble, but the presence of divinity." },
+  { src: "/h2.jpeg", caption: "Devotion is the lamp that lights every inner path." },
+  { src: "/h3.jpeg", caption: "The vow of silence is the loudest prayer of all." },
+  { src: "/h4.jpeg", caption: "Where the mind rests, the divine appears." },
+  { src: "/h5.jpeg", caption: "Every chant is a step toward the eternal." },
   { src: "/hero9.jpeg", caption: "Wisdom flows where the heart is humble." },
 ];
 
@@ -738,8 +735,6 @@ export default function ChaturmasyaHero() {
                   via-transparent
                   to-transparent
                 " />
-
-
 
                 {/* Play */}
 

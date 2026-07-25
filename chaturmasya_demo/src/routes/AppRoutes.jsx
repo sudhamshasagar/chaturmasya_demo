@@ -4,7 +4,7 @@ import Home from "../pages/Home";
 import AdminLogin from "../pages/AdminLogin";
 import BookSeva from "../pages/BookSeva";
 import VirtualPadaPuja from "../pages/VirtualPadaPuja";
-
+import Committee from "../pages/Committee";
 import ProtectedRoute from "./ProtectedRoute";
 import CulturalRequests from "../admin/CulturalRequests";
 import AdminLayout from "../admin/AdminLayout";
@@ -26,6 +26,7 @@ const AppRoutes = () => {
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/book-seva" element={<BookSeva />} />
+        <Route path="/committee" element={<Committee/>}/>
         <Route path="/virtual-pada-puja" element={<VirtualPadaPuja />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route

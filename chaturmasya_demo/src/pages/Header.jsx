@@ -14,7 +14,7 @@ const headerText = {
     contact: "Contact",
     bookSeva: "Book Seva",
     bookSevaNow: "Book Seva Now",
-
+    committee: "Committee", 
     samaja: "Daivajna Brahmana Samaja",
     vratotsava: "Chaturmasya Vratotsava",
   },
@@ -27,7 +27,6 @@ const headerText = {
     contact: "ಸಂಪರ್ಕಿಸಿ",
     bookSeva: "ಸೇವೆ ಬುಕ್ಕಿಂಗ್",
     bookSevaNow: "ಸೇವೆ ಬುಕ್ಕಿಂಗ್",
-
     samaja: "ದೈವಜ್ಞ ಬ್ರಾಹ್ಮಣ ಸಮಾಜ",
     vratotsava: "ಚಾತುರ್ಮಾಸ್ಯ ವ್ರತೋತ್ಸವ",
   },
@@ -45,12 +44,13 @@ export default function Header() {
   const t = headerText[language];
 
   const navItems = [
-    { name: t.home, href: "top", type: "scroll" },
-    { name: t.schedule, href: "schedule", type: "scroll" },
-    { name: t.events, href: "cultural", type: "scroll" },
-    { name: t.blogs, href: "blogs", type: "scroll" },
-    { name: t.contact, href: "contact", type: "scroll" },
-  ];
+  { name: t.home, href: "top", type: "scroll" },
+  { name: t.schedule, href: "schedule", type: "scroll" },
+  { name: t.events, href: "cultural", type: "scroll" },
+  { name: t.blogs, href: "blogs", type: "scroll" },
+  { name: t.contact, href: "contact", type: "scroll" },
+  { name: t.committee, href: "/committee", type: "route" },
+];
   
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);

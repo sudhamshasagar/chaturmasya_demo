@@ -282,9 +282,7 @@ export default function Biographies() {
                   <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-white shadow-md bg-stone-100">
                     <img src={currentGuru.dp} alt={currentGuru.shortName} className="w-full h-full object-contain bg-stone-100"/>
                   </div>
-                  <div className="absolute bottom-1 right-1 bg-amber-600 rounded-full p-1.5 border-2 border-white shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5 text-white" />
-                  </div>
+                  
                 </div>
 
                 {/* Name & Title */}
@@ -349,7 +347,7 @@ export default function Biographies() {
             
             {/* Epilogue Block */}
             <div className="p-6 md:p-8 flex-1 flex flex-col justify-center border-b border-stone-100">
-              <Heart className="w-6 h-6 text-amber-600 mb-4" />
+              {/* <Heart className="w-6 h-6 text-amber-600 mb-4" /> */}
               <p className="text-stone-800 text-sm md:text-base font-serif leading-relaxed mb-4">
                 {currentGuru.epilogue.text1}
               </p>
