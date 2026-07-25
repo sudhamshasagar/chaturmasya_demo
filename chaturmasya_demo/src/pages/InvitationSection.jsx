@@ -241,7 +241,7 @@ export default function ChaturmasyaPortal() {
               <span className="truncate">{t.footer.booking}</span>
             </span>
             <a
-              href="tel:+919448724275"
+              href="tel:+918749073557"
               className="flex items-center gap-1.5 text-[#722013] font-bold shrink-0 md:hidden"
             >
               <Phone size={12} /> Call

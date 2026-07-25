@@ -60,7 +60,7 @@ export default function Footer() {
   const socials = [
     {
       Icon: FaInstagram,
-      href: "https://instagram.com/chaturmasyasagara2026",
+      href: "https://www.instagram.com/chaturmasya_sagara",
       label: "Instagram",
     },
     {
