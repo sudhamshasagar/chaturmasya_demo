@@ -1,4 +1,5 @@
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Element } from "react-scroll";
 import { Link } from "react-router-dom";
 import {db} from "../firebase/firebase";
 import {
@@ -40,9 +41,12 @@ import CulturalStatusTracker from "./CulturalStatusTracker";
 import Footer from "./Footer";
 import MantrakshataRequest from "./Mantrakshate";
 import LiveDarshanSection from "./LiveDarshan";
+import LiveBroadcast from "./LiveBroadcast"
 import Schedule from "./Schedule"; 
 import BlogSection from "./Blogs";
 import Header from "./Header";
+import Bio from "./Bio"
+import { useLanguage } from "../context/LanguageContext";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -59,6 +63,7 @@ const staggerContainer = {
 };
 
 const Home = () => {
+  const { language } = useLanguage();
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [activeFilter, setActiveFilter] = useState({ type: 'all', value: 'all' });
   const carouselRef = useRef(null);
@@ -68,6 +73,8 @@ const Home = () => {
       carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
+
+  const t = homeText[language];
 
   const handleFilterChange = (type, value) => {
     if (value === "") setActiveFilter({ type: 'all', value: 'all' });
@@ -373,6 +380,7 @@ if (category === "Others" && !finalCategory) {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusSearched, setStatusSearched] = useState(false);
   const [statusError, setStatusError] = useState("");
+  
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -550,23 +558,38 @@ useEffect(() => {
       {/* Decorative Background Elements (Temple Geometry) */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] mix-blend-multiply"></div>
       <div className="fixed top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#f8e5cc] to-transparent opacity-40 blur-3xl -z-10"></div>
-      {/* --- TOP ADMIN BAR --- */}
-      
       {/* --- PREMIUM FLOATING HEADER --- */}
       <Header/>
-
       {/* --- CINEMATIC HERO SECTION --- */}
-      <Hero/>
-
+      <Element name="top">
+        <Hero />
+      </Element>
+      <Bio/>
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20 -mt-10 md:-mt-30 mb-20 lg:mb-10">
         {/* Unified Floating Dock Container */}
         <div className="bg-white/95 backdrop-blur-xl border border-[#E8DCC4] shadow-[0_15px_40px_-15px_rgba(42,11,6,0.1)] rounded-2xl md:rounded-[2rem] p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-2">
           {[
-            { title: "Book Pada Pooja", desc: "Reserve sacred rituals", icon: Sparkles, link: "/book-seva" },
-            { title: "Virtual Pooja", desc: "Submit details online", icon: BookHeart, link: "/virtual-pada-puja" },
-            { title: "Cultural Events", desc: "View & book activities", icon: CalendarDays, href: "#cultural" },
-            { title: "Daily Schedule", desc: "Timings for all rituals", icon: Clock, href: "#schedule" }
+            {
+              ...t.quickActions[0],
+              icon: Sparkles,
+              link: "/book-seva",
+            },
+            {
+              ...t.quickActions[1],
+              icon: BookHeart,
+              link: "/virtual-pada-puja",
+            },
+            {
+              ...t.quickActions[2],
+              icon: CalendarDays,
+              href: "#cultural",
+            },
+            {
+              ...t.quickActions[3],
+              icon: Clock,
+              href: "#schedule",
+            },
           ].map((item, idx) => {
             
             const Interior = () => (
@@ -621,30 +644,35 @@ useEffect(() => {
 
       <main className="max-w-7xl mx-auto px-6 space-y-10 mb-32">
         {/* --- 2. DAILY SCHEDULE (Calendar & Live Highlight) --- */}
-        <Schedule/>
-        <CBookingUser
-          culturalDates={culturalDates}
-          getRemainingSlots={getRemainingSlots}
+        <LiveBroadcast/>
+        <Element name="schedule">
+          <Schedule />
+        </Element>
+        <Element name="cultural">
+          <CBookingUser
+            culturalDates={culturalDates}
+            getRemainingSlots={getRemainingSlots}
 
-          selectedDateId={selectedDateId}
-          setSelectedDateId={setSelectedDateId}
+            selectedDateId={selectedDateId}
+            setSelectedDateId={setSelectedDateId}
 
-          selectedDateData={selectedDateData}
-          selectedDateRemainingSlots={selectedDateRemainingSlots}
+            selectedDateData={selectedDateData}
+            selectedDateRemainingSlots={selectedDateRemainingSlots}
 
-          culturalForm={culturalForm}
-          setCulturalForm={setCulturalForm}
+            culturalForm={culturalForm}
+            setCulturalForm={setCulturalForm}
 
-          bookingType={bookingType}
-          setBookingType={setBookingType}
+            bookingType={bookingType}
+            setBookingType={setBookingType}
 
-          groupCount={groupCount}
-          setGroupCount={setGroupCount}
+            groupCount={groupCount}
+            setGroupCount={setGroupCount}
 
-          isSubmittingCultural={isSubmittingCultural}
+            isSubmittingCultural={isSubmittingCultural}
 
-          handleCulturalSubmit={handleCulturalSubmit}
-        />
+            handleCulturalSubmit={handleCulturalSubmit}
+          />
+        </Element>
         <CulturalStatusTracker
           statusSearch={statusSearch}
           setStatusSearch={setStatusSearch}
@@ -667,11 +695,15 @@ useEffect(() => {
           getDurationLabel={getDurationLabel}
         />
         {/* --- 4. LATEST UPDATES (Carousel Top + Expanded Reader Bottom) --- */}
-        <BlogSection/>
+        <Element name="blogs">
+          <BlogSection />
+        </Element>
       </main>
 
       {/* --- PREMIUM FOOTER --- */}
-      <Footer/>
+      <Element name="contact">
+        <Footer />
+      </Element>
 
       {/* --- CULTURAL BOOKING MODAL (Glassmorphism) --- */}
       <AnimatePresence>
@@ -753,6 +785,49 @@ useEffect(() => {
   );
 };
 
+const homeText = {
+  en: {
+    quickActions: [
+      {
+        title: "Book Pada Pooja",
+        desc: "Reserve sacred rituals",
+      },
+      {
+        title: "Virtual Pooja",
+        desc: "Submit details online",
+      },
+      {
+        title: "Cultural Events",
+        desc: "View & book activities",
+      },
+      {
+        title: "Daily Schedule",
+        desc: "Timings for all rituals",
+      },
+    ],
+  },
+
+  kn: {
+    quickActions: [
+      {
+        title: "ಪಾದ ಪೂಜೆ ಬುಕ್ಕಿಂಗ್",
+        desc: "ಪವಿತ್ರ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಿ",
+      },
+      {
+        title: "ವರ್ಚುವಲ್ ಪೂಜೆ",
+        desc: "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ವಿವರಗಳನ್ನು ಸಲ್ಲಿಸಿ",
+      },
+      {
+        title: "ಕಾರ್ಯಕ್ರಮಗಳು",
+        desc: "ಕಾರ್ಯಕ್ರಮಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ಬುಕ್ ಮಾಡಿ",
+      },
+      {
+        title: "ವೇಳಾಪಟ್ಟಿ",
+        desc: "ಎಲ್ಲಾ ಸೇವೆಗಳ ಸಮಯಗಳು",
+      },
+    ],
+  },
+};
 // Helper component for Quick Action Cards
 const CardContent = ({ item }) => (
   <>

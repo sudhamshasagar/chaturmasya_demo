@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
-
+import { useLanguage } from "../context/LanguageContext";
+import { heroText } from "../translation/heroText";
 // ---- animation presets ----
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -82,6 +83,8 @@ export default function ChaturmasyaHero() {
   
   const [current, setCurrent] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const { language } = useLanguage();
+  const t = heroText[language];
   const total = heroImages.length;
 
   const next = useCallback(() => setCurrent((i) => (i + 1) % total), [total]);
@@ -136,14 +139,18 @@ export default function ChaturmasyaHero() {
                   text-3xl
                   leading-none
                 ">
-                  41
-                  <sup className="
-                    text-sm
-                    text-[#722013]
-                    ml-0.5
-                  ">
-                    st
-                  </sup>
+                  {t.title}
+                  {language === "en" && (
+                    <sup
+                      className="
+                        text-sm
+                        text-[#722013]
+                        ml-0.5
+                      "
+                    >
+                      st
+                    </sup>
+                  )}
                 </p>
               </div>
               <h1 className="
@@ -157,14 +164,14 @@ export default function ChaturmasyaHero() {
                 lg:text-[4.2rem]
                 xl:text-[4.8rem]
               ">
-                Chaturmasya
+                {t.chaturmasya}
                 <span className="
                   block
                   italic
                   font-light
                   text-[#722013]
                 ">
-                  Vratothsava
+                  {t.vratotsava}
                 </span>
 
                 <span className="
@@ -173,7 +180,7 @@ export default function ChaturmasyaHero() {
                   text-4xl
                   lg:text-5xl
                 ">
-                  — 2026
+                  — {t.year}
                 </span>
               </h1>
             </motion.div>
@@ -256,7 +263,7 @@ export default function ChaturmasyaHero() {
                             tracking-[0.22em]
                             text-[#722013]
                           ">
-                            Sacred Beginning In
+                            {t.countdownTitle}
                           </p>
                         </div>
                         <p className="
@@ -266,7 +273,7 @@ export default function ChaturmasyaHero() {
                           text-[11px]
                           text-gray-500
                         ">
-                          Chaturmasya Vratothsava
+                          {t.chaturmasya} {t.vratotsava}
                         </p>
                       </div>
                       {/* Date */}
@@ -299,28 +306,11 @@ export default function ChaturmasyaHero() {
                     ">
 
                       {[
-                        {
-                          value: timeLeft.days,
-                          label: "Days"
-                        },
-
-                        {
-                          value: timeLeft.hours,
-                          label: "Hours"
-                        },
-
-                        {
-                          value: timeLeft.minutes,
-                          label: "Minutes"
-                        },
-
-                        {
-                          value: timeLeft.seconds,
-                          label: "Seconds"
-                        }
-
-                      ].map((item) => (
-
+                        { value: timeLeft.days, label: t.days },
+                        { value: timeLeft.hours, label: t.hours },
+                        { value: timeLeft.minutes, label: t.minutes },
+                        { value: timeLeft.seconds, label: t.seconds },
+                        ].map((item) => (
                         <div
                           key={item.label}
                           className="text-center px-2"
@@ -406,7 +396,7 @@ export default function ChaturmasyaHero() {
 
                         whitespace-nowrap
                       ">
-                        Awaiting the sacred vow
+                        {t.waiting}
                       </p>
                       <span className="
                         flex-1
@@ -470,11 +460,10 @@ export default function ChaturmasyaHero() {
             >
 
               {[
-                ["Duration", "60 Days"],
-                ["Venue", "Sagara"],
-                ["Year", "2026"]
-
-              ].map(([label, value]) => (
+                  [t.duration, t.durationValue],
+                  [t.venue, t.venueValue],
+                  [t.yearLabel, t.yearValue]
+                ].map(([label, value]) => (
 
                 <div key={label}>
 

@@ -11,11 +11,16 @@ import {
   HandHeart,
   ChevronRight,
 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import { portalText } from "../translation/portalText";
+
 
 export default function ChaturmasyaPortal() {
   const [activeMonth, setActiveMonth] = useState("July");
   const [activeTab, setActiveTab] = useState("schedule"); // schedule | seva
   const [isOpen, setIsOpen] = useState(false);
+  const { language } = useLanguage();
+  const t = portalText[language];
 
   const events = [
     { d: "28", m: "Jul", time: "6:30 PM", title: "Arrival of Ubhaya Swamiji", month: "July" },
@@ -65,15 +70,15 @@ export default function ChaturmasyaPortal() {
               <Sparkles size={18} />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#722013]">Chaturmasya 2026</p>
-              <h1 className="text-lg sm:text-xl font-serif text-[#2a0b06] truncate">Sacred 60-Day Sojourn</h1>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#722013]">{t.header.year}</p>
+              <h1 className="text-lg sm:text-xl font-serif text-[#2a0b06] truncate">{t.header.title}</h1>
             </div>
           </div>
           <button
             onClick={() => setIsOpen(true)}
             className="flex items-center gap-2 bg-[#2a0b06] text-white text-sm px-4 py-2 rounded-full hover:bg-[#4a1810] transition shrink-0"
           >
-            <Users size={14} /> Committee
+            <Users size={14} /> {t.header.committee}
           </button>
         </div>
 
@@ -85,7 +90,7 @@ export default function ChaturmasyaPortal() {
               <p className="text-[9px] uppercase tracking-widest text-amber-300 mt-1">Jul</p>
             </div>
             <div className="min-w-0 border-l border-white/15 pl-3">
-              <p className="text-[9px] uppercase tracking-widest text-amber-400">Start</p>
+              <p className="text-[9px] uppercase tracking-widest text-amber-400">{t.start}</p>
               <p className="text-sm font-semibold truncate">Vyasa Pooja</p>
               <p className="text-[10px] text-white/60">10:00 AM</p>
             </div>
@@ -97,7 +102,7 @@ export default function ChaturmasyaPortal() {
               <p className="text-[9px] uppercase tracking-widest text-[#722013] mt-1">Sep</p>
             </div>
             <div className="min-w-0 border-l border-[#E8DCC4] pl-3">
-              <p className="text-[9px] uppercase tracking-widest text-[#722013]">End</p>
+              <p className="text-[9px] uppercase tracking-widest text-[#722013]">{t.end}</p>
               <p className="text-sm font-semibold text-[#2a0b06] truncate">Seemollanghana</p>
               <p className="text-[10px] text-stone-500">8:00 AM</p>
             </div>
@@ -108,9 +113,9 @@ export default function ChaturmasyaPortal() {
               <Flame size={18} />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-widest text-amber-700">Every Monday</p>
-              <p className="text-sm font-semibold text-[#2a0b06] truncate">Rudrabhisheka</p>
-              <p className="text-[10px] text-stone-500">Morning · Contact office</p>
+              <p className="text-[9px] uppercase tracking-widest text-amber-700">{t.weekly.everyMonday}</p>
+              <p className="text-sm font-semibold text-[#2a0b06] truncate">{t.weekly.title}</p>
+              <p className="text-[10px] text-stone-500">{t.weekly.subtitle}</p>
             </div>
           </div>
         </div>
@@ -233,7 +238,7 @@ export default function ChaturmasyaPortal() {
           <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-stone-50 border-t border-stone-100 text-xs">
             <span className="text-stone-500 flex items-center gap-1.5 min-w-0">
               <MapPin size={12} className="text-[#722013] shrink-0" />
-              <span className="truncate">Contact office for bookings & timings</span>
+              <span className="truncate">{t.footer.booking}</span>
             </span>
             <a
               href="tel:+919448724275"
@@ -257,7 +262,7 @@ export default function ChaturmasyaPortal() {
               <div className="sticky top-0 bg-white flex justify-between items-center px-5 py-4 border-b border-stone-100">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#722013]">Chaturmasya 2026</p>
-                  <h2 className="text-lg font-serif font-bold text-[#2a0b06]">Organizing Committee</h2>
+                  <h2 className="text-lg font-serif font-bold text-[#2a0b06]">{t.committee.title}</h2>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
@@ -271,7 +276,7 @@ export default function ChaturmasyaPortal() {
               <div className="p-5 space-y-6">
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#722013] mb-3">
-                    Core Members
+                    {t.committee.core}
                   </h3>
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
                     {mainCommittee.map((m, i) => (
@@ -288,7 +293,7 @@ export default function ChaturmasyaPortal() {
 
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#722013] mb-3">
-                    Sub-Committees
+                    {t.committee.sub}
                   </h3>
                   <div className="space-y-1.5">
                     {subCommittees.map((s, i) => (
@@ -306,7 +311,7 @@ export default function ChaturmasyaPortal() {
                           className="flex items-center gap-1.5 text-xs text-[#722013] font-bold justify-end"
                         >
                           <Phone size={12} /> <span className="hidden sm:inline">{s.phone}</span>
-                          <span className="sm:hidden">Call</span>
+                          <span className="sm:hidden">{t.footer.call}</span>
                         </a>
                         <p className="md:hidden col-span-2 text-[11px] text-stone-500 flex items-center gap-1.5">
                           <User size={11} className="text-amber-600" /> {s.coord}

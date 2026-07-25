@@ -1,22 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
   CalendarDays,
-  Flame,
-  Flower2,
-  Music,
-  BookOpen,
-  Sun,
-  Moon,
   Loader2,
   Calendar,
-  Volume2,
   MapPin,
-  Radio
+  ChevronRight,
+  X,
+  Sparkles
 } from "lucide-react";
 import { collection, onSnapshot, query } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { db } from "../firebase/firebase"; // Ensure correct path
 
 /* ---------- Helpers ---------- */
 const timeToMinutes = (t) => {
@@ -25,29 +20,31 @@ const timeToMinutes = (t) => {
   if (!time || !modifier) return 0;
   let [hours, minutes] = time.split(":").map(Number);
   if (hours === 12) hours = 0;
-  if (modifier === "PM") hours += 12;
+  if (modifier.toUpperCase() === "PM") hours += 12;
   return hours * 60 + minutes;
 };
 
-const getIconForTitle = (title = "") => {
-  const t = title.toLowerCase();
-  if (t.includes("arati") || t.includes("aarti") || t.includes("deepa")) return Flame;
-  if (t.includes("abhisheka") || t.includes("pooja") || t.includes("puja")) return Flower2;
-  if (t.includes("bhajan") || t.includes("music") || t.includes("chanting")) return Music;
-  if (t.includes("pravachana") || t.includes("discourse") || t.includes("katha")) return BookOpen;
-  if (t.includes("suprabhata") || t.includes("morning")) return Sun;
-  if (t.includes("ratri") || t.includes("night") || t.includes("shayana")) return Moon;
-  return Flame;
+// Animation Variants for Mobile List
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
 /* ---------- Component ---------- */
-export default function ScheduleSection() {
+export default function DailySchedule() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  const playerRef = useRef(null);
-  const youtubePlayerRef = useRef(null);
+  const [selectedRitual, setSelectedRitual] = useState(null);
+
+  useEffect(() => {
+  console.log("selectedRitual changed:", selectedRitual);
+}, [selectedRitual]);
 
   /* Live Clock */
   useEffect(() => {
@@ -72,47 +69,6 @@ export default function ScheduleSection() {
     return () => unsub();
   }, []);
 
-  /* YouTube Player Initialization */
-  useEffect(() => {
-    const initializePlayer = () => {
-      if (!window.YT || !window.YT.Player || !playerRef.current || youtubePlayerRef.current) return;
-      youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
-        videoId: "FSLngWAw1Lo",
-        playerVars: { autoplay: 1, mute: 1, playsinline: 1, rel: 0, controls: 1, showinfo: 0, modestbranding: 1 },
-        events: {
-          onReady: (event) => {
-            event.target.mute();
-            event.target.setVolume(80);
-            event.target.playVideo();
-          },
-        },
-      });
-    };
-
-    if (window.YT && window.YT.Player) {
-      initializePlayer();
-    } else {
-      if (!document.getElementById("youtube-iframe-api")) {
-        const tag = document.createElement("script");
-        tag.id = "youtube-iframe-api";
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.body.appendChild(tag);
-      }
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        if (prev) prev();
-        initializePlayer();
-      };
-    }
-
-    return () => {
-      if (youtubePlayerRef.current) {
-        youtubePlayerRef.current.destroy();
-        youtubePlayerRef.current = null;
-      }
-    };
-  }, []);
-
   /* Filter Today's Schedule */
   const displayedSchedule = useMemo(() => {
     const todayStr = currentDate.toDateString();
@@ -122,7 +78,7 @@ export default function ScheduleSection() {
     if (todayItems.length > 0) {
       return [...todayItems].sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
     }
-    // Fallback Date
+    // Fallback logic
     const fallback = schedules.filter((i) => {
       if (!i.date) return false;
       const d = new Date(i.date);
@@ -138,158 +94,297 @@ export default function ScheduleSection() {
     year: "numeric",
   });
 
-  const handleJoinLive = () => {
-    const player = youtubePlayerRef.current;
-    if (!player) return;
-    player.setVolume(80);
-    player.unMute();
-    player.playVideo();
-  };
+  const currentTimeStr = currentDate.toLocaleTimeString("en-IN", {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const closeModal = useCallback(() => {
+    console.log("Closing modal");
+    setSelectedRitual(null);
+  }, []);
 
   return (
-    // RESPONSIVE WRAPPER: Mobile scrolls naturally. Desktop locks to viewport height (100dvh) with no page scroll.
-    <div className="min-h-screen lg:h-[100dvh] flex flex-col bg-[#FDFBF7] text-[#2a0b06] font-sans lg:overflow-hidden selection:bg-[#D4AF37] selection:text-white">
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-
-      {/* --- HEADER --- */}
-      <header className="shrink-0 bg-white border-b border-[#E8E2D2] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 shadow-sm">
-        <div>
-          <h1 className="font-serif text-2xl md:text-3xl font-bold tracking-tight text-[#2a0b06]">
-            Daily Rituals & Broadcast
-          </h1>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#D4AF37] mt-1 flex items-center gap-2">
-            <Radio className="w-3.5 h-3.5" /> Live from the Sanctum
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-[#FCFAF8] border border-[#E8E2D2] rounded-full px-4 py-2 w-fit shadow-inner">
-          <Calendar className="w-4 h-4 text-[#D4AF37]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-[#5a4a3a]">{formattedDate}</span>
+    <div className="w-full min-h-screen bg-stone-50 font-sans text-stone-900 pb-20" id="schedule">
+      
+      {/* HEADER SECTION (Uniform across devices) */}
+      <header className="bg-white border-b border-stone-200 sticky top-0 z-30 px-4 md:px-8 py-5 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold tracking-tight text-stone-900">
+              Daily Itinerary
+            </h1>
+            <p className="text-xs md:text-sm text-stone-500 font-medium mt-1 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-amber-600" /> Timings in Indian Standard Time (IST)
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-amber-50 text-amber-800 px-4 py-2 rounded-xl border border-amber-200/50">
+              <Calendar className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wide">{formattedDate}</span>
+            </div>
+            <div className="hidden sm:block text-right border-l border-stone-200 pl-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Current Time</p>
+              <p className="text-sm font-bold text-stone-700">{currentTimeStr}</p>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* --- MAIN CONTENT (Side-by-Side on Desktop, Stacked on Mobile) --- */}
-      <main className="flex-1 w-full max-w-[90rem] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-6 lg:min-h-0">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
         
-        {/* LEFT: VIDEO BROADCAST (Takes up more visual weight) */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-4 lg:min-h-0 shrink-0 lg:shrink">
-          
-          {/* Main Video Player Container */}
-          {/* aspect-video ensures it doesn't squish. On desktop, flex-1 keeps it large if space permits */}
-          <div className="w-full bg-[#110603] rounded-2xl shadow-xl overflow-hidden relative border border-[#2a0b06] aspect-video flex-shrink-0">
-            {/* Red Live Indicator Overlay */}
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 shadow-lg">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white">Live</span>
-            </div>
-            
-            {/* The actual YouTube iframe */}
-            <div ref={playerRef} className="absolute inset-0 w-full h-full" />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <Loader2 className="w-10 h-10 animate-spin text-amber-600 mb-4" />
+            <p className="text-xs font-bold uppercase tracking-widest text-stone-400">Loading Schedule...</p>
           </div>
-
-          {/* Video Metadata & Controls */}
-          <div className="bg-white border border-[#E8E2D2] rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-1">
-                Currently Broadcasting
-              </p>
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2a0b06] leading-snug break-words">
-                Continuous Sanctum Feed
-              </h2>
-              <p className="text-xs font-medium text-[#8b6f47] mt-1.5 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Main Temple, Sagara
-              </p>
+        ) : displayedSchedule.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center py-32 px-6 bg-white rounded-3xl border border-stone-200 shadow-sm max-w-2xl mx-auto">
+            <div className="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mb-6">
+              <CalendarDays className="w-10 h-10 text-stone-300" />
             </div>
-            
-            <button
-              onClick={handleJoinLive}
-              className="shrink-0 flex items-center justify-center gap-2 bg-gradient-to-b from-[#2a0b06] to-[#4a1810] hover:from-[#4a1810] hover:to-[#5a190f] text-white px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md active:scale-95 w-full sm:w-auto"
+            <p className="font-serif font-bold text-2xl text-stone-900">No Rituals Scheduled</p>
+            <p className="text-base text-stone-500 mt-2">There are no events planned for today. Please check back later.</p>
+          </div>
+        ) : (
+          <>
+            {/* ========================================================================= */}
+            {/* LARGE SCREEN UI: SPLIT-PANE TIMELINE (Hidden on mobile/tablet)            */}
+            {/* ========================================================================= */}
+            <div
+              className={`hidden lg:grid gap-8 items-start relative transition-all duration-500 ${
+                selectedRitual ? "lg:grid-cols-12" : "lg:grid-cols-1"
+              }`}
             >
-              <Volume2 className="w-4 h-4" /> Unmute Stream
-            </button>
-          </div>
-        </div>
+              
+              {/* LEFT COLUMN: Scrollable Timeline */}
+              <div
+                className={`relative transition-all duration-500 ${
+                  selectedRitual ? "col-span-5" : "col-span-12 max-w-5xl mx-auto"
+                }`}
+              >
+                {/* Vertical Line Connector */}
+                <div className="absolute left-[27px] top-4 bottom-8 w-px bg-stone-200" />
+                
+                <div className="flex flex-col gap-6">
+                  {displayedSchedule.map((ritual) => {
+                    const isSelected = selectedRitual?.id === ritual.id;
+                    const [timeVal, ampm] = ritual.time ? ritual.time.split(" ") : ["--:--", ""];
+                    
+                    return (
+                      <button
+                        key={ritual.id}
+                        onClick={() => {
+                          console.log("User clicked:", ritual.title);
+                          setSelectedRitual(ritual);
+                        }}
+                        className={`group relative flex items-start text-left transition-all ${
+                          isSelected ? "opacity-100" : "opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        {/* Timeline Node */}
+                        <div className={`relative z-10 w-14 h-14 shrink-0 rounded-full flex flex-col items-center justify-center border-4 border-stone-50 transition-colors shadow-sm ${
+                          isSelected ? "bg-amber-600 text-white" : "bg-white text-stone-400 group-hover:border-amber-100 group-hover:text-amber-600"
+                        }`}>
+                          <Clock className={`w-5 h-5 ${isSelected ? "text-white" : ""}`} />
+                        </div>
 
-        {/* RIGHT: TIMELINE ITINERARY (Elegant continuous scroll) */}
-        <div className="w-full lg:w-2/5 flex flex-col bg-white border border-[#E8E2D2] rounded-2xl shadow-sm lg:min-h-0 overflow-hidden">
-          
-          <div className="shrink-0 px-6 py-5 border-b border-[#E8E2D2] bg-gradient-to-r from-[#FCFAF8] to-white">
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2a0b06] leading-tight break-words">
-              Today's Sacred Itinerary
-            </h2>
-            <p className="text-xs font-semibold text-[#8b6f47] mt-1">
-              {loading ? "Synchronizing schedule..." : `${displayedSchedule.length} events planned for the day`}
-            </p>
-          </div>
+                        {/* Content Card */}
+                        <div className="ml-6 flex-1 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm group-hover:shadow-md transition-all">
+                          <div className="flex justify-between items-start mb-1">
+                            <p className={`font-serif text-lg font-bold ${isSelected ? "text-amber-700" : "text-stone-900"}`}>
+                              {ritual.title}
+                            </p>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400 bg-stone-50 px-2 py-1 rounded-md shrink-0 ml-2">
+                              {timeVal} {ampm}
+                            </span>
+                          </div>
+                          <p className="text-sm text-stone-500 line-clamp-1">
+                            {ritual.description || "No description provided."}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {selectedRitual && (
+                <div className="col-span-7 sticky top-[104px]">
+                  <div className="bg-white border border-stone-200 rounded-[2rem] shadow-xl overflow-hidden flex flex-col min-h-[500px]">
+                    <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-amber-50 to-white pointer-events-none" />
 
-          {/* Timeline Scroll Area */}
-          <div className="flex-1 overflow-y-auto hide-scrollbar p-6 bg-[#FDFBF7]">
-            {loading ? (
-              <div className="h-full flex flex-col items-center justify-center text-[#8b6f47]">
-                <Loader2 className="w-8 h-8 animate-spin mb-4 text-[#D4AF37]" />
-                <p className="text-xs font-bold uppercase tracking-widest">Loading Itinerary...</p>
-              </div>
-            ) : displayedSchedule.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                <CalendarDays className="w-12 h-12 text-[#E8E2D2] mb-4" />
-                <p className="font-serif font-bold text-xl text-[#2a0b06]">No Rituals Scheduled</p>
-                <p className="text-sm text-[#8b6f47] mt-2">There are no events planned for today's date.</p>
-              </div>
-            ) : (
-              <div className="relative border-l-2 border-[#E8E2D2] ml-4 sm:ml-6 space-y-8 pb-4">
-                {displayedSchedule.map((ritual, idx) => {
-                  const Icon = getIconForTitle(ritual.title);
-                  return (
-                    <motion.div
-                      key={ritual.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="relative pl-8 sm:pl-10"
-                    >
-                      {/* Timeline Dot with Icon */}
-                      <div className="absolute -left-[17px] top-0.5 w-8 h-8 rounded-full bg-white border-2 border-[#D4AF37] flex items-center justify-center shadow-sm">
-                        <Icon className="w-4 h-4 text-[#722013]" />
+                    <div className="relative p-10 flex-1 flex flex-col">
+                      <button
+                        onClick={closeModal}
+                        className="absolute top-6 right-6 w-10 h-10 rounded-full border border-stone-200 bg-white hover:bg-stone-100 flex items-center justify-center transition-colors"
+                      >
+                        <X className="w-5 h-5 text-stone-500" />
+                      </button>
+
+                      <div className="inline-flex items-center gap-2 bg-white border border-stone-200 px-4 py-2 rounded-full shadow-sm mb-6 self-start">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-stone-600">
+                          {selectedRitual.time} IST
+                        </span>
                       </div>
 
-                      {/* Event Content - No truncation, allows wrapping */}
-                      <div className="bg-white border border-[#E8E2D2] p-4 sm:p-5 rounded-xl shadow-sm hover:border-[#D4AF37]/50 transition-colors">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
-                          <span className="text-xs font-bold uppercase tracking-widest text-[#8b6f47]">
-                            {ritual.time} IST
-                          </span>
-                        </div>
-                        
-                        {/* Title allows full visibility and breaks words naturally */}
-                        <h3 className="font-serif text-lg sm:text-xl font-bold text-[#2a0b06] leading-snug break-words">
-                          {ritual.title}
-                        </h3>
-                        
-                        {ritual.description ? (
-                          <p className="text-sm text-[#5a4a3a] mt-2 leading-relaxed break-words">
-                            {ritual.description}
+                      <h3 className="font-serif text-4xl font-bold text-stone-900 leading-tight mb-8">
+                        {selectedRitual.title}
+                      </h3>
+
+                      <div className="flex-1">
+                        <p className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-4 border-b border-stone-100 pb-3">
+                          Event Details & Context
+                        </p>
+
+                        {selectedRitual.description ? (
+                          <p className="text-lg text-stone-600 leading-relaxed whitespace-pre-wrap">
+                            {selectedRitual.description}
                           </p>
                         ) : (
-                          <p className="text-xs text-[#b8a691] mt-2 italic">
-                            No additional details provided.
-                          </p>
+                          <div className="py-12 text-center flex flex-col items-center text-stone-400 bg-stone-50 rounded-2xl">
+                            <Sparkles className="w-8 h-8 mb-3 text-stone-300" />
+                            <p className="italic">
+                              No additional details have been provided for this ritual.
+                            </p>
+                          </div>
                         )}
                       </div>
-                    </motion.div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ========================================================================= */}
+            {/* MOBILE & TABLET UI: CARD LIST (Hidden on large screens)                   */}
+            {/* ========================================================================= */}
+            <div className="lg:hidden">
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 gap-3 md:gap-4"
+              >
+                {displayedSchedule.map((ritual) => {
+                  const [timeVal, ampm] = ritual.time ? ritual.time.split(" ") : ["--:--", ""];
+                  
+                  return (
+                    <motion.button
+                      variants={itemVariants}
+                      key={ritual.id}
+                      onClick={() => {
+                        console.log("User clicked:", ritual.title);
+                        setSelectedRitual(ritual);
+                      }}
+                      className="group flex items-center bg-white border border-stone-200 rounded-2xl p-4 text-left transition-all active:scale-[0.98] shadow-sm hover:border-amber-300 w-full"
+                    >
+                      {/* Left: Time Square */}
+                      <div className="flex flex-col items-center justify-center w-16 h-16 shrink-0 bg-stone-50 rounded-xl border border-stone-100 group-hover:bg-amber-50 group-hover:border-amber-100 transition-colors">
+                        <span className="font-serif text-xl font-bold text-amber-700">
+                          {timeVal}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-stone-400">
+                          {ampm}
+                        </span>
+                      </div>
+
+                      {/* Middle: Content */}
+                      <div className="flex-1 min-w-0 pl-4 pr-2">
+                        <h3 className="font-serif text-lg font-bold text-stone-900 truncate mb-1">
+                          {ritual.title}
+                        </h3>
+                        <p className="text-xs text-stone-500 line-clamp-1">
+                          {ritual.description || <span className="italic">Tap for details</span>}
+                        </p>
+                      </div>
+
+                      {/* Right: Chevron */}
+                      <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-stone-300 group-hover:text-amber-600 transition-colors">
+                        <ChevronRight className="w-5 h-5" />
+                      </div>
+                    </motion.button>
                   );
                 })}
-              </div>
-            )}
-          </div>
-        </div>
-
+              </motion.div>
+            </div>
+          </>
+        )}
       </main>
+
+      {/* ========================================================================= */}
+      {/* MOBILE POP-UP MODAL (Only renders on lg:hidden screens)                   */}
+      {/* ========================================================================= */}
+      <div className="lg:hidden">
+        <AnimatePresence>
+          {selectedRitual && (
+            <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                onClick={closeModal}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+
+              <motion.div
+                initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 100, scale: 0.95 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                className="relative w-full md:max-w-xl bg-white rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+              >
+                <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-amber-50 to-white pointer-events-none" />
+
+                <div className="relative px-6 pt-6 pb-2 flex justify-between items-start gap-4">
+                  <div className="mt-2">
+                    <div className="inline-flex items-center gap-1.5 bg-white border border-stone-200 px-3 py-1.5 rounded-full shadow-sm mb-3">
+                      <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-stone-600">
+                        {selectedRitual.time} IST
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
+                      {selectedRitual.title}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={closeModal}
+                    className="shrink-0 p-2.5 bg-white/50 hover:bg-stone-100 backdrop-blur border border-stone-200 rounded-full text-stone-400 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="relative p-6 overflow-y-auto flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-3 border-b border-stone-100 pb-2">
+                    Details
+                  </p>
+                  {selectedRitual.description ? (
+                    <p className="text-sm md:text-base text-stone-600 leading-relaxed whitespace-pre-wrap">
+                      {selectedRitual.description}
+                    </p>
+                  ) : (
+                    <div className="py-10 text-center text-stone-400 italic bg-stone-50 rounded-xl">
+                      No additional description provided.
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 md:p-6 border-t border-stone-100 bg-white">
+                  <button
+                    onClick={closeModal}
+                    className="w-full bg-stone-900 hover:bg-stone-800 text-white px-4 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors shadow-lg active:scale-[0.98]"
+                  >
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
