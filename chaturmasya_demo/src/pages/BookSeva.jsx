@@ -242,7 +242,7 @@ const BookSeva = () => {
       {currentStep !== "FORM" && (
         <header className="relative z-10 pt-2 sm:pt-10 pb-4 px-4 sm:px-6 text-center flex flex-col items-center shrink-0">
           <p className="text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-[#D4AF37] mb-1">Sacred Reservation</p>
-          <h1 className="text-2xl sm:text-4xl font-serif text-[#F5E6C8] leading-tight">Physical Pada Pooja</h1>
+          <h1 className="text-2xl sm:text-4xl font-serif text-[#F5E6C8] leading-tight">Book Pada Pooja</h1>
           
           <div className="mt-6 flex items-center justify-center gap-2 sm:gap-3">
             {MAIN_STEPS.map((s, i) => (
