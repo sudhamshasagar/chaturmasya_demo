@@ -54,7 +54,7 @@ export default function Footer() {
     { name: "Home", href: "/" },
     { name: "Book Seva", href: "/book-seva" },
     { name: "Virtual Seva", href: "/virtual-pada-puja" },
-    { name: "Cultural Events", href: "/cultural" },
+    { name: "Cultural Events", href: "/#cultural" },
   ];
 
   const socials = [
@@ -65,12 +65,12 @@ export default function Footer() {
     },
     {
       Icon: FaYoutube,
-      href: "https://youtube.com/@chaturmasyasagara2026?si=le6GD49Uu9Cpw2FT",
+      href: "https://www.youtube.com/@ChaturmasyaSagara2026",
       label: "YouTube",
     },
     {
       Icon: FaFacebook,
-      href: "https://facebook.com/chaturmasyasagara2026",
+      href: "https://www.facebook.com/profile.php?id=61590712144590",
       label: "Facebook",
     },
   ];

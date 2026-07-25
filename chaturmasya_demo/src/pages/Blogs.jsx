@@ -472,9 +472,6 @@ const BlogCard = ({ blog, onOpen }) => {
         <h4 className="font-serif font-bold text-stone-900 text-lg md:text-xl leading-snug mb-3 line-clamp-2">
           {blog.title}
         </h4>
-        <p className="text-stone-500 text-sm leading-relaxed font-serif italic mb-6 line-clamp-2">
-          {blog.description}
-        </p>
         <div className="mt-auto pt-4 border-t border-stone-100 flex items-center justify-between">
           <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-1.5"><Clock className="w-3 h-3" />{formatBlogDate(blog)}</span>
           <div className="text-[10px] font-bold uppercase tracking-widest text-stone-900 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">Read <ArrowRight className="w-3 h-3" /></div>
@@ -494,6 +491,16 @@ const BlogSection = () => {
   const [openBlog, setOpenBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [mobileIndex, setMobileIndex] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
+
+  
+  const filteredBlogs = useMemo(() => {
+    const phaseBlogs = blogs.filter((b) => b.phase === activePhase);
+    const search = searchTerm.trim().toLowerCase();
+    if (!search) return phaseBlogs;
+    return phaseBlogs.filter((b) => [b.title, b.description, b.category].filter(Boolean).join(" ").toLowerCase().includes(search));
+  }, [blogs, activePhase, searchTerm]);
 
   useEffect(() => {
     const q = query(collection(db, "blogs"), where("published", "==", true));
@@ -506,18 +513,27 @@ const BlogSection = () => {
   }, []);
 
   useEffect(() => { setPage(0); }, [activePhase, searchTerm]);
+  useEffect(() => {
+  setMobileIndex(0);
+}, [activePhase, searchTerm]);
 
-  const filteredBlogs = useMemo(() => {
-    const phaseBlogs = blogs.filter((b) => b.phase === activePhase);
-    const search = searchTerm.trim().toLowerCase();
-    if (!search) return phaseBlogs;
-    return phaseBlogs.filter((b) => [b.title, b.description, b.category].filter(Boolean).join(" ").toLowerCase().includes(search));
-  }, [blogs, activePhase, searchTerm]);
+useEffect(() => {
+    if (filteredBlogs.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setMobileIndex((prev) =>
+        prev === filteredBlogs.length - 1 ? 0 : prev + 1
+      );
+    }, 5000); // Change every 5 seconds
+
+    return () => clearInterval(timer);
+  }, [filteredBlogs]);
+
 
   // Handle Pagination to avoid excessive scrolling
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / PAGE_SIZE));
   const paginatedBlogs = useMemo(() => filteredBlogs.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE), [filteredBlogs, page]);
-
+  
   return (
     <section className="min-h-screen w-full flex flex-col bg-stone-50 text-stone-900 font-sans" id="blogs">
       
@@ -547,10 +563,31 @@ const BlogSection = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 md:items-center">
             {/* Phase Segmented Control */}
-            <div className="flex p-1 bg-stone-100 rounded-2xl overflow-x-auto hide-scrollbar w-max">
+            <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-2 p-1 bg-stone-100 rounded-2xl w-full md:w-auto">
               {PHASES.map((phase) => (
-                <button key={phase.id} onClick={() => setActivePhase(phase.id)} className={`relative px-4 py-2 text-[10px] md:text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-colors rounded-xl z-10 ${activePhase === phase.id ? "text-stone-900" : "text-stone-500 hover:text-stone-700"}`}>
-                  {activePhase === phase.id && <motion.div layoutId="phasePill" className="absolute inset-0 bg-white rounded-xl shadow-sm border border-stone-200/50 -z-10" transition={{ type: "spring", bounce: 0, duration: 0.4 }} />}
+                <button
+                  key={phase.id}
+                  onClick={() => setActivePhase(phase.id)}
+                  className={`relative
+                    basis-[48%] md:basis-auto
+                    flex-1 md:flex-none
+                    px-4 py-2
+                    text-[10px] md:text-xs
+                    font-bold uppercase tracking-widest
+                    rounded-xl text-center whitespace-nowrap
+                    transition-colors
+                    ${
+                      activePhase === phase.id
+                        ? "text-stone-900"
+                        : "text-stone-500 hover:text-stone-700"
+                    }`}
+                >
+                  {activePhase === phase.id && (
+                    <motion.div
+                      layoutId="phasePill"
+                      className="absolute inset-0 bg-white rounded-xl shadow-sm border border-stone-200/50 -z-10"
+                    />
+                  )}
                   {phase.label}
                 </button>
               ))}
@@ -580,10 +617,78 @@ const BlogSection = () => {
           </div>
         ) : (
           <div className="flex flex-col flex-1 justify-between">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* Mobile Carousel */}
+            <div className="block md:hidden">
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={filteredBlogs[mobileIndex]?.id}
+                  initial={{ opacity: 0, x: 60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -60 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  {filteredBlogs[mobileIndex] && (
+                    <BlogCard
+                      blog={filteredBlogs[mobileIndex]}
+                      onOpen={setOpenBlog}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {filteredBlogs.length > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+
+                  <button
+                    onClick={() =>
+                      setMobileIndex((i) =>
+                        i === 0 ? filteredBlogs.length - 1 : i - 1
+                      )
+                    }
+                    className="p-3 rounded-2xl border border-stone-200 bg-white shadow-sm"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {filteredBlogs.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setMobileIndex(i)}
+                        className={`transition-all rounded-full ${
+                          i === mobileIndex
+                            ? "w-8 h-2 bg-stone-900"
+                            : "w-2 h-2 bg-stone-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setMobileIndex((i) =>
+                        i === filteredBlogs.length - 1 ? 0 : i + 1
+                      )
+                    }
+                    className="p-3 rounded-2xl border border-stone-200 bg-white shadow-sm"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                </div>
+              )}
+
+            </div>
+
+            {/* Tablet & Desktop */}
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {paginatedBlogs.map((b) => (
-                <div key={b.id} className="col-span-1">
-                  <BlogCard blog={b} onOpen={setOpenBlog} />
+                <div key={b.id}>
+                  <BlogCard
+                    blog={b}
+                    onOpen={setOpenBlog}
+                  />
                 </div>
               ))}
             </div>

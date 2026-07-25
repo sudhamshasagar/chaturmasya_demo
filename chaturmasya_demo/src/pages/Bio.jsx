@@ -12,9 +12,9 @@ const GURUS = [
   {
     id: "sachhidanand",
     name: "Sri Sri Sachhidanand Jnaneshwar Bharati Mahaswami",
-    shortName: "Sri Sri Sachhidanand",
+    shortName: "Sri Sri Sachhidanand Jnaneshwar Bharati Mahaswami",
     title: "Present Peethadhipati",
-    dp: "https://images.unsplash.com/photo-1604881991720-f91add269bed?auto=format&fit=crop&q=80&w=300&h=300", // Replace with Swamiji DP
+    dp: "/i66.png",
     epilogue: {
       text1: "Irrespective of caste, all can visit the Math and seek blessings. Whosoever receives a blessing from Sri feels a strange, uncommon divine experience.",
       text2: "\"He is the eternal strength of Divine light descended in human form. Under his heavenly guidance, Sri Math and the community will prosper.\""
@@ -25,7 +25,6 @@ const GURUS = [
         year: "1977 - 1984",
         short: "Divine Spark",
         title: "The Divine Spark",
-        icon: <Sun className="w-4 h-4" />,
         content: (
           <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
             <p>
@@ -42,7 +41,6 @@ const GURUS = [
         year: "1985 - 1986",
         short: "Sanyas",
         title: "Sacred Calling & Sanyas",
-        icon: <Sparkles className="w-4 h-4" />,
         content: (
           <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
             <p>
@@ -59,7 +57,6 @@ const GURUS = [
         year: "1986 - 1994",
         short: "Wisdom",
         title: "Pursuit of Wisdom",
-        icon: <BookOpen className="w-4 h-4" />,
         content: (
           <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
             <p>
@@ -79,7 +76,6 @@ const GURUS = [
         year: "1998 - Present",
         short: "Pattabhishek",
         title: "Pattabhishek & Unification",
-        icon: <Crown className="w-4 h-4" />,
         content: (
           <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
             <p>
@@ -93,60 +89,59 @@ const GURUS = [
       }
     ],
     album: [
-      { id: 101, title: "Divine Darshan", likes: 108, imgSig: 10 },
-      { id: 102, title: "Guiding Devotees", likes: 256, imgSig: 20 },
-      { id: 103, title: "Morning Rituals", likes: 89, imgSig: 30 },
-      { id: 104, title: "Community Address", likes: 432, imgSig: 40 },
-      { id: 105, title: "Special Puja", likes: 156, imgSig: 50 },
-      { id: 106, title: "Evening Aarti", likes: 312, imgSig: 60 },
+      { id: 101, title: "Divine Darshan", img: "/i11.jpg" },
+      { id: 102, title: "Guiding Devotees", img: "/i22.jpg" },
+      { id: 103, title: "Morning Rituals", img: "/i33.jpg" },
+      { id: 104, title: "Community Address", img: "/i44.jpg" },
+      { id: 105, title: "Special Puja", img: "/i55.jpg" },
     ]
   },
-  {
-    id: "previous_swamiji",
-    name: "Sri Sri Second Swamiji (Placeholder)",
-    shortName: "Senior Swamiji",
-    title: "Previous Peethadhipati",
-    dp: "https://images.unsplash.com/photo-1544257121-a47738b812ac?auto=format&fit=crop&q=80&w=300&h=300", // Replace with Swamiji DP
-    epilogue: {
-      text1: "A beacon of infinite compassion, his grace laid the foundation for the flourishing of the Math and its devotees.",
-      text2: "\"His ascetic life and profound penance continue to illuminate our path like an eternal flame.\""
-    },
-    chapters: [
-      {
-        id: "early_life_2",
-        year: "Early Years",
-        short: "Beginnings",
-        title: "The Auspicious Beginning",
-        icon: <Sun className="w-4 h-4" />,
-        content: (
-          <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
-            <p>[Replace with actual biography text for the second Swamiji. This tab is ready for your production data.]</p>
-            <p>His early years were marked by an extraordinary inclination towards spirituality, distancing himself from worldly attachments to seek the ultimate truth.</p>
-          </div>
-        ),
-      },
-      {
-        id: "sanyas_2",
-        year: "Ascetic Era",
-        short: "Renunciation",
-        title: "Embracing Renunciation",
-        icon: <Sparkles className="w-4 h-4" />,
-        content: (
-          <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
-            <p>[Replace with actual text]. He embraced Sanyas Deeksha, dedicating his entire existence to the welfare of humanity and the preservation of Sanatan Dharma.</p>
-          </div>
-        ),
-      }
-    ],
-    album: [
-      { id: 201, title: "Historical Archival Photo", likes: 540, imgSig: 70 },
-      { id: 202, title: "Addressing devotees", likes: 320, imgSig: 80 },
-      { id: 203, title: "Vintage rituals", likes: 410, imgSig: 90 },
-      { id: 204, title: "Old Math Sanctum", likes: 215, imgSig: 100 },
-      { id: 205, title: "Pilgrimage journey", likes: 388, imgSig: 110 },
-      { id: 206, title: "Blessing the crowd", likes: 490, imgSig: 120 },
-    ]
-  }
+  // {
+  //   id: "previous_swamiji",
+  //   name: "Sri Sri Second Swamiji (Placeholder)",
+  //   shortName: "Senior Swamiji",
+  //   title: "Previous Peethadhipati",
+  //   dp: "https://images.unsplash.com/photo-1544257121-a47738b812ac?auto=format&fit=crop&q=80&w=300&h=300", // Replace with Swamiji DP
+  //   epilogue: {
+  //     text1: "A beacon of infinite compassion, his grace laid the foundation for the flourishing of the Math and its devotees.",
+  //     text2: "\"His ascetic life and profound penance continue to illuminate our path like an eternal flame.\""
+  //   },
+  //   chapters: [
+  //     {
+  //       id: "early_life_2",
+  //       year: "Early Years",
+  //       short: "Beginnings",
+  //       title: "The Auspicious Beginning",
+  //       icon: <Sun className="w-4 h-4" />,
+  //       content: (
+  //         <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
+  //           <p>[Replace with actual biography text for the second Swamiji. This tab is ready for your production data.]</p>
+  //           <p>His early years were marked by an extraordinary inclination towards spirituality, distancing himself from worldly attachments to seek the ultimate truth.</p>
+  //         </div>
+  //       ),
+  //     },
+  //     {
+  //       id: "sanyas_2",
+  //       year: "Ascetic Era",
+  //       short: "Renunciation",
+  //       title: "Embracing Renunciation",
+  //       icon: <Sparkles className="w-4 h-4" />,
+  //       content: (
+  //         <div className="space-y-4 text-sm md:text-base text-stone-700 font-serif leading-relaxed">
+  //           <p>[Replace with actual text]. He embraced Sanyas Deeksha, dedicating his entire existence to the welfare of humanity and the preservation of Sanatan Dharma.</p>
+  //         </div>
+  //       ),
+  //     }
+  //   ],
+  //   album: [
+  //     { id: 201, title: "Historical Archival Photo", likes: 540, imgSig: 70 },
+  //     { id: 202, title: "Addressing devotees", likes: 320, imgSig: 80 },
+  //     { id: 203, title: "Vintage rituals", likes: 410, imgSig: 90 },
+  //     { id: 204, title: "Old Math Sanctum", likes: 215, imgSig: 100 },
+  //     { id: 205, title: "Pilgrimage journey", likes: 388, imgSig: 110 },
+  //     { id: 206, title: "Blessing the crowd", likes: 490, imgSig: 120 },
+  //   ]
+  // }
 ];
 
 /* ============================================================
@@ -158,7 +153,7 @@ const AlbumPostModal = ({ album, initialIndex, onClose, guruName, guruDp }) => {
   const [commentText, setCommentText] = useState("");
 
   const post = album[currentIndex];
-  const imageUrl = `https://images.unsplash.com/photo-1590059345914-72a3cb067757?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&sig=${post.imgSig}`;
+  const imageUrl = post.img;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -181,97 +176,44 @@ const AlbumPostModal = ({ album, initialIndex, onClose, guruName, guruDp }) => {
       className="fixed inset-0 z-[100] bg-stone-900/90 backdrop-blur-sm flex items-center justify-center p-0 md:p-6 lg:p-12"
       onClick={onClose}
     >
-      <motion.div 
+      <motion.div
         onClick={(e) => e.stopPropagation()}
-        initial={{ scale: 0.95, y: 20, opacity: 0 }} 
-        animate={{ scale: 1, y: 0, opacity: 1 }} 
-        exit={{ scale: 0.95, y: 20, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full h-full md:h-auto md:max-h-[85vh] max-w-6xl bg-white md:rounded-[2rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative"
+        className="relative max-w-6xl max-h-[90vh] flex items-center justify-center"
       >
-        <button onClick={onClose} className="md:hidden absolute top-4 right-4 z-50 p-2 bg-black/40 backdrop-blur text-white rounded-full">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 p-2 bg-black/40 backdrop-blur text-white rounded-full"
+        >
           <X className="w-5 h-5" />
         </button>
 
-        {/* LEFT: IMAGE VIEWER */}
-        <div className="relative w-full h-[40vh] md:h-[85vh] md:w-[60%] bg-black flex items-center justify-center group shrink-0">
-          <img src={imageUrl} alt={post.title} className="w-full h-full object-contain" />
-          
-          {currentIndex > 0 && (
-            <button onClick={() => setCurrentIndex(prev => prev - 1)} className="absolute left-4 p-2 md:p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-          )}
-          {currentIndex < album.length - 1 && (
-            <button onClick={() => setCurrentIndex(prev => prev + 1)} className="absolute right-4 p-2 md:p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-          )}
-        </div>
+        {currentIndex > 0 && (
+          <button
+            onClick={() => setCurrentIndex((i) => i - 1)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 rounded-full text-white"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        )}
 
-        {/* RIGHT: DETAILS & COMMENTS */}
-        <div className="flex-1 flex flex-col bg-white h-[60vh] md:h-[85vh]">
-          <div className="flex items-center justify-between p-4 md:p-6 border-b border-stone-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border border-stone-200 overflow-hidden shrink-0">
-                <img src={guruDp} alt={guruName} className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h4 className="font-bold text-stone-900 text-sm truncate max-w-[150px] sm:max-w-xs">{guruName}</h4>
-                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">Official Gallery</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="hidden md:flex p-2 text-stone-400 hover:text-stone-900 transition-colors"><X className="w-5 h-5" /></button>
-          </div>
+        <img
+          src={imageUrl}
+          alt={post.title}
+          className="max-w-[95vw] max-h-[90vh] object-contain rounded-xl"
+        />
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 hide-scrollbar space-y-5">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full border border-stone-200 overflow-hidden shrink-0">
-                <img src={guruDp} alt="DP" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <p className="text-sm text-stone-800">
-                  <span className="font-bold mr-2 text-stone-900">Official</span>
-                  {post.title}
-                </p>
-                <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold mt-1.5">Just now</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 md:px-6 md:py-4 border-t border-stone-100">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-4">
-                <button onClick={() => setLiked(!liked)} className="group">
-                  <Heart className={`w-6 h-6 transition-all ${liked ? "fill-red-500 text-red-500 scale-110" : "text-stone-900 group-hover:text-stone-500"}`} />
-                </button>
-                <button className="text-stone-900 hover:text-stone-500 transition-colors"><MessageSquare className="w-6 h-6" /></button>
-                <button className="text-stone-900 hover:text-stone-500 transition-colors"><Share2 className="w-6 h-6" /></button>
-              </div>
-              <div className="flex gap-1.5 flex-wrap max-w-[100px] justify-end">
-                {album.map((_, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === currentIndex ? "bg-amber-600" : "bg-stone-200"}`} />
-                ))}
-              </div>
-            </div>
-            <p className="font-bold text-sm text-stone-900">{liked ? post.likes + 1 : post.likes} likes</p>
-          </div>
-
-          <div className="p-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-3">
-            <div className="relative flex-1">
-              <input 
-                type="text" 
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Add a reflection..." 
-                className="w-full bg-stone-50 border border-stone-200 rounded-full py-2.5 pl-4 pr-10 text-sm outline-none focus:border-stone-900 transition-colors"
-              />
-              <button disabled={!commentText.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-stone-900 disabled:bg-stone-300 text-white rounded-full transition-colors">
-                <Send className="w-3.5 h-3.5 ml-px" />
-              </button>
-            </div>
-          </div>
-        </div>
+        {currentIndex < album.length - 1 && (
+          <button
+            onClick={() => setCurrentIndex((i) => i + 1)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 rounded-full text-white"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -293,19 +235,19 @@ export default function Biographies() {
   const currentChapter = currentGuru.chapters[activeChapterIndex];
 
   return (
-    <div className="w-full min-h-screen bg-stone-50 font-sans text-stone-900 py-6 md:py-12 flex flex-col items-center justify-center selection:bg-amber-100 selection:text-amber-900">
+    <div className="w-full bg-stone-50 font-sans text-stone-900 py-12 md:py-20 my-8 md:my-12 flex flex-col items-center selection:bg-amber-100 selection:text-amber-900">
       
       <div className="max-w-6xl w-full px-4 md:px-8 flex flex-col items-center">
         
         {/* --- MASTER GURU TOGGLE --- */}
-        <div className="flex bg-stone-200/50 p-1.5 rounded-full w-full sm:w-auto overflow-x-auto hide-scrollbar mb-8">
+        <div className="flex flex-wrap justify-center gap-2 bg-stone-200/50 p-2 rounded-3xl w-full mb-8">
           {GURUS.map((guru, idx) => {
             const isActive = activeGuruIndex === idx;
             return (
               <button
                 key={guru.id}
                 onClick={() => setActiveGuruIndex(idx)}
-                className={`relative flex-1 sm:flex-none px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
+                className={`relative w-full sm:w-auto px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors ${
                   isActive ? "text-stone-900" : "text-stone-500 hover:text-stone-700"
                 }`}
               >
@@ -338,7 +280,7 @@ export default function Biographies() {
                 {/* DP / Profile Picture */}
                 <div className="relative shrink-0">
                   <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-white shadow-md bg-stone-100">
-                    <img src={currentGuru.dp} alt={currentGuru.shortName} className="w-full h-full object-cover" />
+                    <img src={currentGuru.dp} alt={currentGuru.shortName} className="w-full h-full object-contain bg-stone-100"/>
                   </div>
                   <div className="absolute bottom-1 right-1 bg-amber-600 rounded-full p-1.5 border-2 border-white shadow-sm">
                     <Sparkles className="w-3.5 h-3.5 text-white" />
@@ -358,14 +300,14 @@ export default function Biographies() {
               </div>
 
               {/* Chapter Tabs */}
-              <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-2 px-2 mt-6">
+              <div className="grid grid-cols-2 lg:flex gap-2 mt-6">
                 {currentGuru.chapters.map((chapter, idx) => {
                   const isActive = activeChapterIndex === idx;
                   return (
                     <button
                       key={chapter.id}
                       onClick={() => setActiveChapterIndex(idx)}
-                      className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all ${
+                      className={`w-full lg:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all ${
                         isActive ? "bg-stone-900 text-white shadow-md" : "bg-stone-100/80 text-stone-500 hover:bg-stone-200"
                       }`}
                     >
@@ -439,7 +381,7 @@ export default function Biographies() {
                     className="group relative w-full aspect-square bg-stone-100 rounded-lg overflow-hidden cursor-pointer"
                   >
                     <img 
-                      src={`https://images.unsplash.com/photo-1590059345914-72a3cb067757?auto=format&fit=crop&q=80&w=400&ixlib=rb-4.0.3&sig=${post.imgSig}`} 
+                      src={post.img}
                       alt={`Album ${post.id}`}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       loading="lazy"
