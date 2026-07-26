@@ -52,16 +52,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
-        <Route
-          path="/admin/v-bookings"
-          element={
-            <ProtectedRoute>
-              <VirtualBookings />
-            </ProtectedRoute>
-          }
-        />
-
         <Route
           path="/admin/blogs"
           element={
