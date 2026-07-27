@@ -246,9 +246,12 @@ export default function DailySchedule() {
   const nextMonth = () => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
 
   const handleDateSelect = (date) => {
+  setShowMobileCalendar(false);
+
+  setTimeout(() => { 
     setSelectedDate(date);
-    setShowMobileCalendar(false);
-  };
+  }, 200);
+};
 
   const openMobileFullSchedule = () => {
     setSelectedDate(today < FESTIVAL_START ? FESTIVAL_START : today); // Reset to today when opening
