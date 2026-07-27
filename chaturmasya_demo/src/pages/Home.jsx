@@ -237,11 +237,27 @@ const Home = () => {
     ).length;
   };
 
+  const parseLocalDate = (value) => {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const getMaxSlotsForDate = (dateId) => {
+  const date = parseLocalDate(dateId);
+  if (!date) return 3;
+
+  // Monday = 1
+  return date.getDay() === 1 ? 2 : 3;
+};
+
   const getRemainingSlots = (dateId) => {
-    return Math.max(
-      0,
-      MAX_BOOKINGS_PER_DAY - getApprovedBookingCount(dateId)
-    );
+      const maxSlots = getMaxSlotsForDate(dateId);
+
+      return Math.max(
+        0,
+        maxSlots - getApprovedBookingCount(dateId)
+      );
   };
 
   const selectedDateData = culturalDates.find(
@@ -558,9 +574,13 @@ useEffect(() => {
       <Element name="top">
         <Hero />
       </Element>
+
+      <Element name="schedule">
+          <Schedule />
+        </Element>
       
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20 -mt-10 md:-mt-30 mb-20 lg:mb-10">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 mb-20 lg:mb-10">
         {/* Unified Floating Dock Container */}
         <div className="bg-white/95 backdrop-blur-xl border border-[#E8DCC4] shadow-[0_15px_40px_-15px_rgba(42,11,6,0.1)] rounded-2xl md:rounded-[2rem] p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-2">
           {[
@@ -639,9 +659,7 @@ useEffect(() => {
       <main className="max-w-7xl mx-auto px-6 space-y-10 mb-32">
         {/* --- 2. DAILY SCHEDULE (Calendar & Live Highlight) --- */}
         <LiveBroadcast/>
-        <Element name="schedule">
-          <Schedule />
-        </Element>
+        
         <Element name="cultural">
           <CBookingUser
             culturalDates={culturalDates}
@@ -693,6 +711,7 @@ useEffect(() => {
           <CommitteeSection/>
         </Element> */}
         <Bio/>
+        {/* <MantrakshataRequest/> */}
         <Element name="blogs">
           <BlogSection />
         </Element>

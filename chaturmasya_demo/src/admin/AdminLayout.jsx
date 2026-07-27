@@ -4,6 +4,8 @@ import {
   query,
   orderBy,
   onSnapshot,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -25,7 +27,8 @@ import {
   CheckCircle,
   AlertCircle,
   Calendar as CalendarIcon,
-  ChevronRight
+  ChevronRight,
+  TruckElectric
 } from "lucide-react";
 
 /* =========================================================
@@ -52,6 +55,7 @@ export default function Dashboard() {
   const [activeTableTab, setActiveTableTab] = useState("mantrakshata"); // 'sevas' or 'mantrakshata'
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [mantraRequests, setMantraRequests] = useState([]);
   
   const [bookings, setBookings] = useState([]);
   const [schedules, setSchedules] = useState([]);
@@ -67,9 +71,29 @@ export default function Dashboard() {
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
     { name: "Bookings", path: "/admin/bookings", icon: CalendarDays },
     { name: "Cultural Programs", path: "/admin/c-programs", icon: Flame },
+    { name: "Mantrakshate Requests", path: "/admin/mantrakshata", icon: TruckElectric },
     { name: "Blogs", path: "/admin/blogs", icon: FileText },
     { name: "Schedule", path: "/admin/schedule", icon: Clock },
   ];
+
+
+  useEffect(() => {
+  const q = query(
+    collection(db, "mantrakshata"),
+    orderBy("createdAt", "desc")
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setMantraRequests(data);
+  });
+
+  return () => unsubscribe();
+}, []);
 
   // --- Data Fetching: Bookings ---
   useEffect(() => {
@@ -111,7 +135,9 @@ export default function Dashboard() {
   const stats = {
     physicalToday,
     virtualToday,
-    mantraPending: 8, // Mocked pending count
+    mantraPending: mantraRequests.filter(
+      r => r.status === "Pending"
+    ).length,
     visitorsToday: 1432, // Mocked traffic
   };
 
@@ -135,13 +161,6 @@ export default function Dashboard() {
       return { ...s, status, minutes: itemMinutes };
     }).sort((a, b) => a.minutes - b.minutes);
   }, [schedules, now, currentMinutes]);
-
-  // Mocked Mantrakshata Data
-  const [mantraRequests, setMantraRequests] = useState([
-    { id: "REQ-849201", name: "Kiran Rao", purpose: "Health & Prosperity", city: "Bengaluru", status: "Pending", tracking: "", date: "05-Jun-2026" },
-    { id: "REQ-293847", name: "Anita Desai", purpose: "Marriage", city: "Pune", status: "Pending", tracking: "", date: "05-Jun-2026" },
-    { id: "REQ-572910", name: "Srinivas Bhat", purpose: "General Well-being", city: "Mumbai", status: "Shipped", tracking: "EK123456789IN", date: "03-Jun-2026" },
-  ]);
 
   const currentDateDisplay = now.toLocaleDateString("en-IN", {
     day: "numeric",
@@ -363,7 +382,7 @@ export default function Dashboard() {
                       {mantraRequests.map((req) => (
                         <tr key={req.id} className="hover:bg-[#FCF8F2] transition-colors">
                           <td className="p-4 pl-6">
-                            <div className="font-bold text-[#2a0b06]">{req.id}</div>
+                            <div className="font-bold text-[#2a0b06]">{req.requestId}</div>
                             <div className="text-[11px] font-medium text-gray-500 mt-1 flex items-center gap-1.5"><CalendarIcon size={12}/> {req.date}</div>
                           </td>
                           <td className="p-4">

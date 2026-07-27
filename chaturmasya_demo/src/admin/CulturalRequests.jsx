@@ -39,6 +39,8 @@ const getMaxBookingsForDate = (dateString) => {
 };
 
 const DURATION_OPTIONS = [
+  { label: "10 Min", value: 10 },
+  { label: "15 Min", value: 15 },
   { label: "30 Min", value: 30 },
   { label: "45 Min", value: 45 },
   { label: "1 Hour", value: 60 },

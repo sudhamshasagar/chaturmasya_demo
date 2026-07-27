@@ -170,7 +170,10 @@ const VideoPlayer = ({ url, title }) => {
 
 const ShareMenu = ({ blog }) => {
   const [copied, setCopied] = useState(false);
-  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}#blog-${blog.id}` : "";
+  const shareUrl =
+  typeof window !== "undefined"
+    ? `${window.location.origin}${window.location.pathname}?blog=${blog.id}`
+    : "";
 
   const copy = async () => {
     try {
@@ -505,9 +508,31 @@ const BlogSection = () => {
   useEffect(() => {
     const q = query(collection(db, "blogs"), where("published", "==", true));
     const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      list.sort((a, b) => (getBlogDate(b)?.getTime() || 0) - (getBlogDate(a)?.getTime() || 0));
-      setBlogs(list); setLoading(false);
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      list.sort(
+        (a, b) =>
+          (getBlogDate(b)?.getTime() || 0) -
+          (getBlogDate(a)?.getTime() || 0)
+      );
+
+      setBlogs(list);
+      setLoading(false);
+
+      // Open blog automatically if URL contains ?blog=<id>
+      const params = new URLSearchParams(window.location.search);
+      const blogId = params.get("blog");
+
+      if (blogId) {
+        const selectedBlog = list.find((b) => b.id === blogId);
+
+        if (selectedBlog) {
+          setOpenBlog(selectedBlog);
+        }
+      }
     }, (err) => { console.error("Blogs error:", err); setLoading(false); });
     return () => unsub();
   }, []);

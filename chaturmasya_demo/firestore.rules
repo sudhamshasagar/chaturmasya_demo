@@ -62,71 +62,27 @@ service cloud.firestore {
 }
 
 
-    // ============================================================
-    // CULTURAL SEVA REQUESTS
-    //
-    // USER:
-    // - Submit request
-    // - Read availability/status
-    // - Search status by Booking ID
-    // - Search status by Mobile Number
-    //
-    // ADMIN:
-    // - Read pending requests
-    // - Read approved requests
-    // - Allocate program duration
-    // - Allocate start/end time
-    // - Approve request
-    // - Reject request
-    // - Add rejection reason
-    // ============================================================
-
     match /culturalRequests/{requestId} {
       allow read, write: if true;
     }
 
 
-    // ============================================================
-    // CULTURAL AVAILABILITY
-    //
-    // Used by:
-    //
-    // ADMIN:
-    // - Firestore transaction
-    // - Check approvedCount
-    // - Increment approvedCount
-    // - Enforce maxSlots = 3
-    //
-    // USER:
-    // - Listen using onSnapshot
-    // - Display:
-    //
-    //      3 slots left
-    //      2 slots left
-    //      1 slot left
-    //      Fully Booked
-    //
-    // ============================================================
 
     match /culturalAvailability/{dateId} {
       allow read, write: if true;
     }
 
 
-    // ============================================================
-    // CULTURAL CALENDAR
-    //
-    // Keep this collection if you are using it for:
-    //
-    // - Opening/closing booking dates
-    // - Special date configuration
-    // - Blocking particular dates
-    // - Calendar metadata
-    //
-    // ============================================================
-
     match /culturalCalendar/{dateId} {
       allow read, write: if true;
+    }
+    
+    match /siteStats/{documentId} {
+  // Public website can display the visitor count
+      allow read: if true;
+
+      // Updates happen only through Cloud Functions/Admin SDK
+      allow write: if false;
     }
     
     match /settings/{settingId} {

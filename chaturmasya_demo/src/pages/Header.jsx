@@ -13,7 +13,7 @@ const headerText = {
     blogs: "Blogs",
     contact: "Contact",
     bookSeva: "Book Seva",
-    bookSevaNow: "Book Seva Now",
+    bookSevaNow: "Book Pada Pooje",
     committee: "Committee", 
     samaja: "Daivajna Brahmana Samaja",
     vratotsava: "Chaturmasya Vratotsava",
@@ -136,12 +136,6 @@ export default function Header() {
       >
         {/* LEFT — Logo mark + wordmark */}
         <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex min-w-0 items-center gap-3">
-          <div className="relative shrink-0">
-            <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#722013] to-[#4a150c] shadow-[0_6px_18px_-6px_rgba(114,32,19,0.6)] ring-1 ring-[#D4AF37]/60">
-              <span className="font-serif text-[18px] font-bold text-[#F7E7B4]">ॐ</span>
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#D4AF37] ring-2 ring-[#FCF8F2]" />
-          </div>
           <div className="min-w-0 leading-tight">
             <h1 className="truncate font-serif text-[13px] sm:text-[15px] font-bold tracking-wide text-[#2a0b06]">
               {t.samaja}
@@ -161,16 +155,22 @@ export default function Header() {
         </nav>
 
         {/* RIGHT — CTA + mobile toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link
-            to="/book-seva"
-            className="group hidden md:inline-flex items-center gap-2 rounded-full bg-[#2a0b06] pl-5 pr-2 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#F7E7B4] shadow-[0_8px_20px_-10px_rgba(42,11,6,0.7)] hover:bg-[#722013] transition-all duration-300"
+            to="/mantrakshate"
+            className="group hidden md:inline-flex items-center gap-2 rounded-full border border-[#722013] bg-white pl-5 pr-2 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#722013] shadow-sm hover:bg-[#722013] hover:text-[#F7E7B4] transition-all duration-300"
           >
-            <Sparkles className="h-3.5 w-3.5 text-[#D4AF37]" />
-            {t.bookSeva}
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-[#D4AF37] text-[#2a0b06] group-hover:rotate-45 transition-transform duration-300">
+            Get Mantrakshate
+            {t.requestMantrakshata}
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-[#722013] text-white group-hover:rotate-45 transition-transform duration-300">
               <ArrowUpRight className="h-3.5 w-3.5" />
             </span>
+          </Link>
+          <Link
+            to="/book-seva"
+            className="group hidden md:inline-flex items-center text-center gap-2 rounded-full bg-[#2a0b06] pl-5 pr-2 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#F7E7B4] shadow-[0_8px_20px_-10px_rgba(42,11,6,0.7)] hover:bg-[#722013] transition-all duration-300"
+          >
+            {t.bookSeva}
           </Link>
 
           <button
@@ -256,6 +256,13 @@ export default function Header() {
                   transition={{ delay: 0.3 }}
                   className="mt-5 mb-3"
                 >
+                  <Link
+                    to="/mantrakshate"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="mt-3 mb-5 flex w-full items-center justify-center gap-2 rounded-full border border-[#722013] bg-white py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-[#722013] hover:bg-[#722013] hover:text-[#F7E7B4] transition-all duration-300"
+                  >
+                    🌸 Get Mantrakshate {t.requestMantrakshata}
+                  </Link>
                   <Link
                     to="/book-seva"
                     onClick={() => setIsMenuOpen(false)}

@@ -43,6 +43,19 @@ const normalizeDate = (date) => {
   return d;
 };
 
+const isBookingOpen = (date) => {
+  if (!date) return false;
+
+  const now = new Date();
+
+  const bookingDate = normalizeDate(date);
+
+  const cutoff = new Date(bookingDate);
+  cutoff.setHours(10, 0, 0, 0);
+
+  return now <= cutoff;
+};
+
 const MAIN_STEPS = [
   { key: "MOBILE", label: "Verify" },
   { key: "FORM", label: "Details" },
@@ -142,6 +155,13 @@ const BookSeva = () => {
   const handleBookingSubmit = async () => {
     setIsLoading(true);
     setError("");
+    if (!isBookingOpen(bookingData.date)) {
+      setError(
+        "Bookings for the selected date close at 10:00 AM on the previous day."
+      );
+      setIsLoading(false);
+      return;
+    }
     try {
       const normalizedBookingDate = normalizeDate(bookingData.date);
       const dd = String(normalizedBookingDate.getDate()).padStart(2, "0");
@@ -588,12 +608,33 @@ const BookSeva = () => {
 
                           <div className="py-6 flex flex-col justify-center items-center">
                             <Field label="Choose your preferred date" className="w-full max-w-sm mx-auto text-center items-center flex flex-col">
+                              <div className="mb-5 bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-blue-900">
+                                <p className="font-semibold">
+                                  ⏰ Booking Cut-off Time
+                                </p>
+
+                                <p className="mt-2">
+                                  Bookings for each day's Pada Pooja close at
+                                  <span className="font-bold"> 10:00 AM on the same day.</span>
+                                </p>
+
+                                <p className="mt-1 text-xs text-blue-700">
+                                  Example: To book for <strong>30 July</strong>, complete your booking before
+                                  <strong> 10:00 AM on 30 July</strong>.
+                                </p>
+                              </div>
                               <DatePicker
                                 selected={bookingData.date}
                                 onChange={handleDateChange}
                                 minDate={START_DATE}
                                 maxDate={END_DATE}
-                                filterDate={(date) => (isLocalPincode ? !isWeekend(date) : true)}
+                                filterDate={(date) => {
+                                  if (!isBookingOpen(date)) return false;
+                                  if (isLocalPincode && isWeekend(date)) {
+                                    return false;
+                                  }
+                                  return true;
+                                }}
                                 dateFormat="dd MMMM yyyy"
                                 placeholderText="Tap to select date"
                                 className={`${inputCls} text-center text-lg font-medium shadow-inner`}

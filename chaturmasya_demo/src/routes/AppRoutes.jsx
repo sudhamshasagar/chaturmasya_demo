@@ -28,12 +28,8 @@ const AppRoutes = () => {
         <Route path="/book-seva" element={<BookSeva />} />
         <Route path="/committee" element={<Committee/>}/>
         <Route path="/virtual-pada-puja" element={<VirtualPadaPuja />} />
+        <Route path="/mantrakshate" element={<MantrakshataRequest/>}/>
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/request-mantrakshata"
-          element={<MantrakshataRequest />}
-        />
-
         {/* Protected Admin Routes */}
         <Route
           path="/admin"
