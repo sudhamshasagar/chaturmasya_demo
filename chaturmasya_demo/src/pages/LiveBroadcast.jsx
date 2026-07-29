@@ -10,7 +10,7 @@ export default function LiveBroadcast() {
     const initializePlayer = () => {
       if (!window.YT || !window.YT.Player || !playerRef.current || youtubePlayerRef.current) return;
       youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
-        videoId: "HaDsGZTVZEw",
+        videoId: "CO6Aeu0SvJU",
         playerVars: { 
           autoplay: 1, 
           mute: 1, 
