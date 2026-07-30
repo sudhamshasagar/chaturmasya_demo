@@ -574,11 +574,6 @@ useEffect(() => {
       <Element name="top">
         <Hero />
       </Element>
-
-      <Element name="schedule">
-          <Schedule />
-        </Element>
-      
       {/* --- QUICK ACTIONS (Premium Feature Cards) --- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 mb-20 lg:mb-10">
         {/* Unified Floating Dock Container */}
@@ -654,12 +649,14 @@ useEffect(() => {
           })}
         </div>
       </section>
-      <InvitationSection />
 
       <main className="max-w-7xl mx-auto px-6 space-y-10 mb-32">
         {/* --- 2. DAILY SCHEDULE (Calendar & Live Highlight) --- */}
         <LiveBroadcast/>
-        
+         <Element name="schedule">
+          <Schedule />
+        </Element>
+      <InvitationSection />
         <Element name="cultural">
           <CBookingUser
             culturalDates={culturalDates}
@@ -706,10 +703,6 @@ useEffect(() => {
           formatCulturalTimestamp={formatCulturalTimestamp}
           getDurationLabel={getDurationLabel}
         />
-        {/* --- 4. LATEST UPDATES (Carousel Top + Expanded Reader Bottom) --- */}
-        {/* <Element name="committee">
-          <CommitteeSection/>
-        </Element> */}
         <Bio/>
         {/* <MantrakshataRequest/> */}
         <Element name="blogs">
@@ -717,6 +710,8 @@ useEffect(() => {
         </Element>
       </main>
 
+     
+      
       {/* --- PREMIUM FOOTER --- */}
       <Element name="contact">
         <Footer />
