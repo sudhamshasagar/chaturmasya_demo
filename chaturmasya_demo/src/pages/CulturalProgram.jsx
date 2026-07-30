@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -27,6 +27,8 @@ const PROGRAM_CATEGORIES = [
   "Group Chanting",
   "Others",
 ];
+
+
 
 const MONTHS = [
   { year: 2026, month: 6 }, // July
@@ -59,6 +61,23 @@ const getMonthLabel = (year, month) =>
     year: "numeric",
   });
 
+
+
+const formatTime = (time) => {
+  if (!time) return "";
+  const [h, m] = time.split(":").map(Number);
+
+  const d = new Date();
+  d.setHours(h, m);
+
+  return d.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+
 /*
   ============================================================
   COMPONENT
@@ -85,6 +104,7 @@ const CBookingUser = ({
 
   isSubmittingCultural,
   handleCulturalSubmit,
+  approvedPrograms = [],
 }) => {
   /*
     ============================================================
@@ -93,7 +113,6 @@ const CBookingUser = ({
   */
 
   const [monthIndex, setMonthIndex] = useState(0);
-
   const selectedCategory = culturalForm?.category || "";
   const otherCategory = culturalForm?.otherCategory || "";
 
@@ -115,6 +134,16 @@ const CBookingUser = ({
       );
     });
   }, [culturalDates, currentMonth.year, currentMonth.month]);
+
+const approvedProgramsForSelectedDate = useMemo(() => {
+  if (!selectedDateId) return [];
+
+  return approvedPrograms
+    .filter((program) => program.date === selectedDateId)
+    .sort((a, b) =>
+      (a.startTime || "").localeCompare(b.startTime || "")
+    );
+}, [approvedPrograms, selectedDateId]);
 
   const firstDayOffset = new Date(
     currentMonth.year,
@@ -173,7 +202,7 @@ const CBookingUser = ({
       culturalForm?.managerName?.trim() &&
       groupCount >= 2);
 
-  const canSubmit =
+const canSubmit =
     selectedDateId &&
     culturalForm?.name?.trim() &&
     culturalForm?.contact?.length === 10 &&
@@ -479,7 +508,45 @@ const CBookingUser = ({
                   <AlertCircle className="w-3.5 h-3.5" /> Please select a date from the calendar.
                 </p>
               )}
+              {/* Existing Programs */}
+              {selectedDateId && (
+                <div className="mb-5 rounded-xl border border-[#E8DCC4] bg-[#FCF8F2] p-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#722013] mb-3">
+                    Existing Programs
+                  </h4>
 
+                  {approvedProgramsForSelectedDate.length === 0 ? (
+                    <p className="text-xs italic text-gray-500">
+                      No programs have been allocated yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {approvedProgramsForSelectedDate.map((program) => (
+                        <div
+                          key={program.id}
+                          className="flex items-center justify-between rounded-lg border border-[#E8DCC4] bg-white px-3 py-2"
+                        >
+                          <div>
+                            <p className="text-xs font-bold text-[#2a0b06]">
+                              {program.category === "Others"
+                                ? program.otherCategory
+                                : program.category}
+                            </p>
+
+                            <p className="text-[10px] text-gray-500">
+                              {program.name}
+                            </p>
+                          </div>
+
+                          <p className="text-xs font-bold text-[#722013]">
+                            {formatTime(program.startTime)} – {formatTime(program.endTime)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={!canSubmit}

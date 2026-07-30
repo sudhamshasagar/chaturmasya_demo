@@ -6,6 +6,11 @@ initializeApp();
 
 const db = getFirestore();
 
+const { getLiveVideo } = require("./youtube");
+
+// Export YouTube function
+exports.getLiveVideo = getLiveVideo;
+
 exports.registerWebsiteVisit = onCall(async () => {
   try {
     const visitorRef = db.collection("siteStats").doc("visitors");

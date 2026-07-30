@@ -16,6 +16,7 @@ import AdminVirtualPuja from "../admin/AdminVirtualPuja";
 import Accounts from "../admin/Accounts";
 import Mantrakshata from "../admin/Mantrakshata";
 import MantrakshataRequest from "../pages/Mantrakshate";
+import JapaSeva from "../pages/JapaSeva";
 
 
 const AppRoutes = () => {
@@ -29,6 +30,12 @@ const AppRoutes = () => {
         <Route path="/committee" element={<Committee/>}/>
         <Route path="/virtual-pada-puja" element={<VirtualPadaPuja />} />
         <Route path="/mantrakshate" element={<MantrakshataRequest/>}/>
+        <Route
+          path="/counter"
+          element={
+              <JapaSeva/>
+          }
+        />
         <Route path="/admin/login" element={<AdminLogin />} />
         {/* Protected Admin Routes */}
         <Route

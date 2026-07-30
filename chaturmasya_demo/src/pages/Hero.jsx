@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { heroText } from "../translation/heroText";
+import JapaModal from "../components/JapaModal";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 // ---- animation presets ----
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -31,6 +34,8 @@ export default function ChaturmasyaHero() {
     seconds: 0,
     hasStarted: false,
   });
+  const [showJapaModal, setShowJapaModal] = useState(false);
+  const [globalTotals, setGlobalTotals] = useState({});
 
   useEffect(() => {
     // July 29, 2026 at 10:00 AM IST
@@ -103,6 +108,23 @@ export default function ChaturmasyaHero() {
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
 
+  useEffect(() => {
+  const unsubscribe = onSnapshot(
+    collection(db, "globalTotals"),
+    (snapshot) => {
+      const totals = {};
+
+      snapshot.forEach((doc) => {
+        totals[doc.id] = doc.data().count || 0;
+      });
+
+      setGlobalTotals(totals);
+    }
+  );
+
+  return () => unsubscribe();
+}, []);
+
   return (
     <section
       className="desktop-scale relative w-full bg-[#FCF8F2] pt-20 lg:pt-25 pb-15 md:pb-24 lg:pb-15 overflow-hidden z-10"
@@ -121,17 +143,17 @@ export default function ChaturmasyaHero() {
           min-h-[calc(100vh-110px)]
         ">
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="order-2 lg:order-1"
-          >
+  initial="hidden"
+  animate="visible"
+  variants={staggerContainer}
+  className="order-2 lg:order-1 flex flex-col items-center lg:items-start text-center lg:text-left"
+>
             {/* TITLE */}
             <motion.div
               variants={fadeUp}
-              className="mb-6"
+              className="mb-6 text-center lg:text-left"
             >
-              <div className="flex items-start gap-2">
+              <div className="flex items-start justify-center lg:justify-start gap-2">
                 <p className="
                   font-serif
                   font-black
@@ -185,264 +207,103 @@ export default function ChaturmasyaHero() {
               </h1>
             </motion.div>
             <motion.div
-              variants={fadeUp}
-              className="
-                relative
-                max-w-[500px]
-                mb-6
-              "
-            >
+  variants={fadeUp}
+  className="relative max-w-[420px] w-full mx-auto lg:mx-0 mb-6 group"
+>
+  <div className="
+    relative overflow-hidden rounded-[1.5rem]
+    bg-white/80 backdrop-blur-md
+    border border-white/60
+    shadow-[0_8px_30px_rgb(114,32,19,0.06)]
+    p-1.5
+  ">
+    {/* Inner colored card area */}
+    <div className="
+      relative rounded-[1.2rem]
+      bg-gradient-to-br from-[#FFFBF0] via-white to-[#FFFBF0]
+      border border-[#D4AF37]/15
+      p-4 sm:p-5
+    ">
+      
+      {/* Header & Live Badge - Modern inline layout */}
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-[15px] sm:text-base font-extrabold text-[#722013] uppercase tracking-wide">
+          Sankalpa Tracker
+        </h3>
+        
+        {/* Sleek Live Indicator */}
+        <div className="flex items-center gap-1.5 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
+          </span>
+          <span className="text-[9px] font-bold tracking-widest text-red-600 uppercase">
+            Live
+          </span>
+        </div>
+      </div>
 
-              <div className="
-                relative
-                overflow-hidden
-                rounded-2xl
-                border
-                border-[#D4AF37]/30
-                bg-gradient-to-br
-                from-white/90
-                via-[#fffaf0]/85
-                to-[#f5e6cf]/70
-                shadow-[0_15px_45px_rgba(114,32,19,0.08)]
-                px-5
-                py-4
-              ">
-                {/* Glow */}
-                <div className="
-                  absolute
-                  -top-20
-                  -right-20
-                  w-44
-                  h-44
-                  rounded-full
-                  bg-[#D4AF37]/10
-                  blur-3xl
-                " />
-                {!timeLeft.hasStarted ? (
-                  <>
-                    {/* Countdown header */}
-                    <div className="
-                      relative
-                      flex
-                      items-center
-                      justify-between
-                      gap-4
-                      mb-4
-                    ">
-                      <div>
-                        <div className="
-                          flex
-                          items-center
-                          gap-2
-                        ">
-                          <span className="relative flex h-2 w-2">
-                            <span className="
-                              absolute
-                              inline-flex
-                              h-full
-                              w-full
-                              rounded-full
-                              bg-[#E86A33]
-                              opacity-60
-                              animate-ping
-                            " />
-                            <span className="
-                              relative
-                              inline-flex
-                              h-2
-                              w-2
-                              rounded-full
-                              bg-[#E86A33]
-                            " />
+      {/* Side-by-Side Counters instead of a list */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        
+        {/* Counter 1 */}
+        <div className="
+          relative flex flex-col items-center justify-center text-center
+          p-4 rounded-2xl bg-gradient-to-b from-white to-[#fffaf0]
+          border border-[#D4AF37]/20 shadow-sm
+        ">
+          <p className="text-3xl font-black text-[#722013] tracking-tighter mb-1">
+            {globalTotals["devale-ashirvadani"] || 1800}
+          </p>
+          <div className="h-[1px] w-8 bg-[#D4AF37]/30 mb-2"></div>
+          <p className="font-bold text-[#722013] text-[11px] sm:text-xs">
+            ದೇವಾಲೆ ಆಶೀರ್ವಾದನಿ
+          </p>
+          <p className="text-[9px] text-[#722013]/50 font-medium mt-0.5">
+            Dēvāle āśīrvādani
+          </p>
+        </div>
 
-                          </span>
-                          <p className="
-                            text-[9px]
-                            font-bold
-                            uppercase
-                            tracking-[0.22em]
-                            text-[#722013]
-                          ">
-                            {t.countdownTitle}
-                          </p>
-                        </div>
-                        <p className="
-                          mt-1
-                          font-serif
-                          italic
-                          text-[11px]
-                          text-gray-500
-                        ">
-                          {t.chaturmasya} {t.vratotsava}
-                        </p>
-                      </div>
-                      {/* Date */}
-                      <div className="
-                        shrink-0
-                        border
-                        border-[#D4AF37]/30
-                        bg-white/60
-                        rounded-full
-                        px-3
-                        py-1.5
-                      ">
-                        <p className="
-                          font-serif
-                          font-bold
-                          text-[10px]
-                          text-[#722013]
-                        ">
-                          29 JUL · 10 AM
-                        </p>
-                      </div>
-                    </div>
-                    {/* Countdown values */}
-                    <div className="
-                      relative
-                      grid
-                      grid-cols-4
-                      divide-x
-                      divide-[#D4AF37]/20
-                    ">
+        {/* Counter 2 */}
+        <div className="
+          relative flex flex-col items-center justify-center text-center
+          p-4 rounded-2xl bg-gradient-to-b from-white to-[#fffaf0]
+          border border-[#D4AF37]/20 shadow-sm
+        ">
+          <p className="text-3xl font-black text-[#722013] tracking-tighter mb-1">
+           {globalTotals["gayatri-japa"] || 0}
+          </p>
+          <div className="h-[1px] w-8 bg-[#D4AF37]/30 mb-2"></div>
+          <p className="font-bold text-[#722013] text-[11px] sm:text-xs">
+            ಗಾಯತ್ರಿ ಜಪ
+          </p>
+          <p className="text-[9px] text-[#722013]/50 font-medium mt-0.5">
+            Gayatri Japa
+          </p>
+        </div>
 
-                      {[
-                        { value: timeLeft.days, label: t.days },
-                        { value: timeLeft.hours, label: t.hours },
-                        { value: timeLeft.minutes, label: t.minutes },
-                        { value: timeLeft.seconds, label: t.seconds },
-                        ].map((item) => (
-                        <div
-                          key={item.label}
-                          className="text-center px-2"
-                        >
+      </div>
 
-                          <motion.p
-                            key={item.value}
+      {/* Pill-shaped CTA */}
+      <button
+        onClick={() => setShowJapaModal(true)}
+        className="
+          w-full flex items-center justify-center gap-2 
+          rounded-full bg-[#722013] hover:bg-[#5d1a0f]
+          text-white py-3 px-4 font-bold text-sm
+          shadow-md shadow-[#722013]/20 
+          transition-all duration-300 active:scale-[0.98]
+        "
+      >
+        <svg className="w-4 h-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Offer Your Japa</span>
+      </button>
 
-                            initial={{
-                              opacity: 0.5,
-                              y: -3
-                            }}
-
-                            animate={{
-                              opacity: 1,
-                              y: 0
-                            }}
-
-                            className="
-                              font-serif
-                              font-bold
-
-                              text-2xl
-                              sm:text-3xl
-
-                              text-[#2a0b06]
-
-                              tabular-nums
-
-                              leading-none
-                            "
-                          >
-
-                            {String(item.value).padStart(2, "0")}
-                          </motion.p>
-                          <p className="
-                            mt-2
-
-                            text-[7px]
-                            sm:text-[8px]
-
-                            uppercase
-
-                            tracking-[0.16em]
-
-                            font-bold
-
-                            text-[#722013]/45
-                          ">
-                            {item.label}
-                          </p>
-
-                        </div>
-                      ))}
-                    </div>
-                    {/* Bottom quote */}
-
-                    <div className="
-                      relative
-                      flex
-                      items-center
-                      gap-3
-                      mt-4
-                    ">
-
-                      <span className="
-                        flex-1
-                        h-px
-
-                        bg-gradient-to-r
-                        from-transparent
-                        to-[#D4AF37]/40
-                      " />
-
-
-                      <p className="
-                        font-serif
-                        italic
-
-                        text-[9px]
-
-                        text-[#722013]/55
-
-                        whitespace-nowrap
-                      ">
-                        {t.waiting}
-                      </p>
-                      <span className="
-                        flex-1
-                        h-px
-
-                        bg-gradient-to-l
-                        from-transparent
-                        to-[#D4AF37]/40
-                      " />
-                    </div>
-                  </>
-                ) : (
-                  <div className="
-                    flex
-                    items-center
-                    gap-3
-                    py-3
-                  ">
-
-                    <Sparkles className="
-                      w-5
-                      h-5
-                      text-[#D4AF37]
-                    " />
-                    <div>
-                      <p className="
-                        text-[8px]
-                        uppercase
-                        tracking-[0.22em]
-                        font-bold
-                        text-[#722013]/50
-                      ">
-                        Sacred Observance
-                      </p>
-                      <p className="
-                        font-serif
-                        font-bold
-                        text-[#722013]
-                      ">
-                        Chaturmasya Vratothsava Has Commenced
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
+    </div>
+  </div>
+</motion.div>
             {/* Invocation */}
             {/* Meta */}
             <motion.div
@@ -456,6 +317,10 @@ export default function ChaturmasyaHero() {
                 grid-cols-3
                 gap-4
                 max-w-md
+                mx-auto
+                lg:mx-0
+                text-center
+                lg:text-left
               "
             >
 
@@ -1047,6 +912,10 @@ export default function ChaturmasyaHero() {
           </motion.div>
         </div>
       </div>
+      <JapaModal
+    open={showJapaModal}
+    onClose={() => setShowJapaModal(false)}
+/>
     </section>
   );
 }

@@ -1,58 +1,100 @@
-import React, { useRef, useEffect } from "react";
-import { Radio, Volume2 } from "lucide-react";
+import React, { useRef, useEffect, useState } from "react";
+import { Volume2 } from "lucide-react";
 
 export default function LiveBroadcast() {
+  const [videoId, setVideoId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  // const [isLive, setIsLive] = useState(false);
   const playerRef = useRef(null);
   const youtubePlayerRef = useRef(null);
 
-  /* YouTube Player Initialization */
-  useEffect(() => {
-    const initializePlayer = () => {
-      if (!window.YT || !window.YT.Player || !playerRef.current || youtubePlayerRef.current) return;
-      youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
-        videoId: "Y3jT7HIw3lI",
-        playerVars: { 
-          autoplay: 1, 
-          mute: 1, 
-          playsinline: 1, 
-          rel: 0, 
-          controls: 1, 
-          showinfo: 0, 
-          modestbranding: 1 
-        },
-        events: {
-          onReady: (event) => {
-            event.target.mute();
-            event.target.setVolume(80);
-            event.target.playVideo();
-          },
-        },
-      });
-    };
+/* YouTube Player Initialization */
+useEffect(() => {
+  const initializePlayer = () => {
+    if (!videoId) return;
 
-    if (window.YT && window.YT.Player) {
-      initializePlayer();
-    } else {
-      if (!document.getElementById("youtube-iframe-api")) {
-        const tag = document.createElement("script");
-        tag.id = "youtube-iframe-api";
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.body.appendChild(tag);
-      }
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        if (prev) prev();
-        initializePlayer();
-      };
+    if (!window.YT || !window.YT.Player || !playerRef.current) return;
+
+    // Destroy any existing player before creating a new one
+    if (youtubePlayerRef.current) {
+      youtubePlayerRef.current.destroy();
+      youtubePlayerRef.current = null;
     }
 
-    return () => {
-      if (youtubePlayerRef.current) {
-        youtubePlayerRef.current.destroy();
-        youtubePlayerRef.current = null;
-      }
+    youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
+      videoId,
+      playerVars: {
+        autoplay: 1,
+        mute: 1,
+        playsinline: 1,
+        rel: 0,
+        controls: 1,
+        modestbranding: 1,
+      },
+      events: {
+        onReady: (event) => {
+          event.target.mute();
+          event.target.setVolume(80);
+          event.target.playVideo();
+        },
+      },
+    });
+  };
+
+  if (window.YT && window.YT.Player) {
+    initializePlayer();
+  } else {
+    if (!document.getElementById("youtube-iframe-api")) {
+      const tag = document.createElement("script");
+      tag.id = "youtube-iframe-api";
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.body.appendChild(tag);
+    }
+
+    const previousCallback = window.onYouTubeIframeAPIReady;
+
+    window.onYouTubeIframeAPIReady = () => {
+      if (previousCallback) previousCallback();
+      initializePlayer();
     };
-  }, []);
+  }
+
+  return () => {
+    if (youtubePlayerRef.current) {
+      youtubePlayerRef.current.destroy();
+      youtubePlayerRef.current = null;
+    }
+  };
+}, [videoId]);
+
+
+  useEffect(() => {
+  async function fetchLiveVideo() {
+    try {
+      const response = await fetch(
+        "https://getlivevideo-7iltpxjlfa-uc.a.run.app"
+      );
+
+      const data = await response.json();
+
+      if (data.live) {
+        setVideoId(data.videoId);
+      } else {
+        setVideoId(null);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchLiveVideo();
+
+  const interval = setInterval(fetchLiveVideo, 60000);
+
+  return () => clearInterval(interval);
+}, []);
 
   const handleJoinLive = () => {
     const player = youtubePlayerRef.current;
@@ -61,6 +103,24 @@ export default function LiveBroadcast() {
     player.unMute();
     player.playVideo();
   };
+
+  if (loading) {
+  return <div className="text-center py-20">Loading Live...</div>;
+}
+
+if (!videoId) {
+  return (
+    <div className="text-center py-20">
+      <h2 className="text-2xl font-bold">
+        🔴 No Live Stream Currently
+      </h2>
+
+      <p className="mt-2 text-gray-600">
+        The live stream will appear automatically when the channel goes live.
+      </p>
+    </div>
+  );
+}
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 font-sans">

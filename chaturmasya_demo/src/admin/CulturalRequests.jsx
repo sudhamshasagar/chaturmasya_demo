@@ -29,14 +29,14 @@ import {
 /* =========================================================
    CONSTANTS & UTILS
 ========================================================= */
-const MAX_BOOKINGS_PER_DAY = 3;
+// const MAX_BOOKINGS_PER_DAY = 3;
 
-const getMaxBookingsForDate = (dateString) => {
-  if (!dateString) return MAX_BOOKINGS_PER_DAY;
-  const [year, month, day] = dateString.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.getDay() === 1 ? 2 : 3;
-};
+// const getMaxBookingsForDate = (dateString) => {
+//   if (!dateString) return MAX_BOOKINGS_PER_DAY;
+//   const [year, month, day] = dateString.split("-").map(Number);
+//   const date = new Date(year, month - 1, day);
+//   return date.getDay() === 1 ? 2 : 3;
+// };
 
 const DURATION_OPTIONS = [
   { label: "10 Min", value: 10 },
@@ -197,59 +197,76 @@ export default function CulturalRequests() {
   };
 
   // ============ QUICK ACTIONS ============
-  const handleApprove = async () => {
-    if (!approvalRequest?.id || !approvalRequest?.date) return;
-    if (!selectedDuration) return alert("Please select the duration.");
-    if (!selectedStartTime) return alert("Please select the start time.");
+ const handleApprove = async () => {
+  if (!approvalRequest?.id || !approvalRequest?.date) return;
 
-    const durationMinutes = Number(selectedDuration);
-    const endTime = calculateEndTime(selectedStartTime, durationMinutes);
+  if (!selectedDuration)
+    return alert("Please select the duration.");
 
-    if (hasTimeConflictExcluding(approvalRequest.date, selectedStartTime, endTime, approvalRequest.id)) {
-      return alert("The selected time overlaps with another approved program.");
-    }
+  if (!selectedStartTime)
+    return alert("Please select the start time.");
 
-    setProcessingId(approvalRequest.id);
-    try {
-      await runTransaction(db, async (transaction) => {
-        const requestRef = doc(db, "culturalRequests", approvalRequest.id);
-        const availabilityRef = doc(db, "culturalAvailability", approvalRequest.date);
-        const requestSnapshot = await transaction.get(requestRef);
-        const availabilitySnapshot = await transaction.get(availabilityRef);
+  const durationMinutes = Number(selectedDuration);
+  const endTime = calculateEndTime(
+    selectedStartTime,
+    durationMinutes
+  );
 
-        if (!requestSnapshot.exists()) throw new Error("REQUEST_NOT_FOUND");
-        const latestRequest = requestSnapshot.data();
-        if (latestRequest.status !== "pending") throw new Error("REQUEST_ALREADY_PROCESSED");
+  if (
+    hasTimeConflictExcluding(
+      approvalRequest.date,
+      selectedStartTime,
+      endTime,
+      approvalRequest.id
+    )
+  ) {
+    return alert(
+      "The selected time overlaps with another approved program."
+    );
+  }
 
-        let approvedCount = availabilitySnapshot.exists() ? (Number(availabilitySnapshot.data().approvedCount) || 0) : 0;
-        const maxSlots = getMaxBookingsForDate(approvalRequest.date);
-        if (approvedCount >= maxSlots) throw new Error("DATE_FULL");
+  setProcessingId(approvalRequest.id);
 
-        transaction.set(availabilityRef, {
-          date: approvalRequest.date,
-          approvedCount: approvedCount + 1,
-          maxSlots,
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
+  try {
+    await runTransaction(db, async (transaction) => {
+      const requestRef = doc(
+        db,
+        "culturalRequests",
+        approvalRequest.id
+      );
 
-        transaction.update(requestRef, {
-          status: "approved",
-          durationMinutes,
-          startTime: selectedStartTime,
-          endTime,
-          approvedAt: serverTimestamp(),
-          rejectionReason: null,
-        });
+      const requestSnapshot =
+        await transaction.get(requestRef);
+
+      if (!requestSnapshot.exists())
+        throw new Error("REQUEST_NOT_FOUND");
+
+      const latestRequest = requestSnapshot.data();
+
+      if (latestRequest.status !== "pending")
+        throw new Error("REQUEST_ALREADY_PROCESSED");
+
+      transaction.update(requestRef, {
+        status: "approved",
+        durationMinutes,
+        startTime: selectedStartTime,
+        endTime,
+        approvedAt: serverTimestamp(),
+        rejectionReason: null,
       });
-      setApprovalRequest(null);
-    } catch (error) {
-      if (error.message === "DATE_FULL") alert("This date already has maximum approved programs.");
-      else if (error.message === "REQUEST_ALREADY_PROCESSED") alert("Request already processed.");
-      else alert("Failed to approve request.");
-    } finally {
-      setProcessingId(null);
+    });
+
+    setApprovalRequest(null);
+  } catch (error) {
+    if (error.message === "REQUEST_ALREADY_PROCESSED") {
+      alert("Request already processed.");
+    } else {
+      alert("Failed to approve request.");
     }
-  };
+  } finally {
+    setProcessingId(null);
+  }
+}; 
 
   const handleReject = async () => {
     if (!rejectionRequest?.id) return;
@@ -280,111 +297,160 @@ export default function CulturalRequests() {
 
   // ============ EDIT (Full Update) ============
   const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    if (!editingRequest) return;
-    setProcessingId(editingRequest.id);
+  e.preventDefault();
 
-    try {
-      const originalReq = allRequests.find((r) => r.id === editingRequest.id);
-      const oldStatus = originalReq.status?.toLowerCase();
-      const newStatus = editingRequest.status?.toLowerCase();
-      const oldDate = originalReq.date;
-      const newDate = editingRequest.date;
-      let finalEndTime = null;
+  if (!editingRequest) return;
 
-      if (newStatus === "approved") {
-        if (!editingRequest.startTime || !editingRequest.durationMinutes) throw new Error("MISSING_ALLOCATION");
-        finalEndTime = calculateEndTime(editingRequest.startTime, editingRequest.durationMinutes);
-        if (hasTimeConflictExcluding(newDate, editingRequest.startTime, finalEndTime, editingRequest.id)) {
-          throw new Error("TIME_CONFLICT");
-        }
+  setProcessingId(editingRequest.id);
+
+  try {
+    const originalReq = allRequests.find(
+      (r) => r.id === editingRequest.id
+    );
+
+    const newStatus =
+      editingRequest.status?.toLowerCase();
+
+    let finalEndTime = null;
+
+    if (newStatus === "approved") {
+      if (
+        !editingRequest.startTime ||
+        !editingRequest.durationMinutes
+      ) {
+        throw new Error("MISSING_ALLOCATION");
       }
 
-      await runTransaction(db, async (transaction) => {
-        const reqRef = doc(db, "culturalRequests", editingRequest.id);
-        const shouldRemoveOldSlot = oldStatus === "approved" && (newStatus !== "approved" || oldDate !== newDate);
-        const shouldAddNewSlot = newStatus === "approved" && (oldStatus !== "approved" || oldDate !== newDate);
+      finalEndTime = calculateEndTime(
+        editingRequest.startTime,
+        editingRequest.durationMinutes
+      );
 
-        const oldAvailRef = shouldRemoveOldSlot ? doc(db, "culturalAvailability", oldDate) : null;
-        const newAvailRef = shouldAddNewSlot ? doc(db, "culturalAvailability", newDate) : null;
-        const oldAvailSnap = oldAvailRef ? await transaction.get(oldAvailRef) : null;
-        const newAvailSnap = newAvailRef ? await transaction.get(newAvailRef) : null;
-
-        if (shouldAddNewSlot) {
-          const currentCount = newAvailSnap?.exists() ? Number(newAvailSnap.data().approvedCount || 0) : 0;
-          if (currentCount >= getMaxBookingsForDate(newDate)) throw new Error("NEW_DATE_FULL");
-        }
-
-        if (shouldRemoveOldSlot && oldAvailRef && oldAvailSnap?.exists()) {
-          const oldCount = Number(oldAvailSnap.data().approvedCount || 0);
-          transaction.update(oldAvailRef, { approvedCount: Math.max(0, oldCount - 1), updatedAt: serverTimestamp() });
-        }
-
-        if (shouldAddNewSlot && newAvailRef) {
-          const currentCount = newAvailSnap?.exists() ? Number(newAvailSnap.data().approvedCount || 0) : 0;
-          transaction.set(newAvailRef, {
-            date: newDate,
-            approvedCount: currentCount + 1,
-            maxSlots: getMaxBookingsForDate(newDate),
-            updatedAt: serverTimestamp(),
-          }, { merge: true });
-        }
-
-        transaction.update(reqRef, {
-          name: editingRequest.name || "",
-          contact: editingRequest.contact || "",
-          date: newDate || "",
-          category: editingRequest.category || "",
-          otherCategory: editingRequest.category === "Others" ? editingRequest.otherCategory || "" : null,
-          participationType: editingRequest.participationType || "solo",
-          groupName: editingRequest.participationType === "group" ? editingRequest.groupName || "" : null,
-          managerName: editingRequest.participationType === "group" ? editingRequest.managerName || "" : null,
-          participantCount: editingRequest.participationType === "group" ? Number(editingRequest.participantCount || 2) : 1,
-          status: newStatus || "pending",
-          startTime: newStatus === "approved" ? editingRequest.startTime || "" : null,
-          durationMinutes: newStatus === "approved" ? Number(editingRequest.durationMinutes || 0) : null,
-          endTime: newStatus === "approved" ? finalEndTime || "" : null,
-          rejectionReason: newStatus === "rejected" ? editingRequest.rejectionReason || "" : null,
-          updatedAt: serverTimestamp(),
-        });
-      });
-      setEditingRequest(null);
-    } catch (error) {
-      if (error.message === "NEW_DATE_FULL") alert("The selected date is already full.");
-      else if (error.message === "TIME_CONFLICT") alert("Time overlaps with an existing program.");
-      else if (error.message === "MISSING_ALLOCATION") alert("Approved programs require Start Time and Duration.");
-      else alert("Failed to update request.");
-    } finally {
-      setProcessingId(null);
+      if (
+        hasTimeConflictExcluding(
+          editingRequest.date,
+          editingRequest.startTime,
+          finalEndTime,
+          editingRequest.id
+        )
+      ) {
+        throw new Error("TIME_CONFLICT");
+      }
     }
-  };
+
+    await runTransaction(db, async (transaction) => {
+      const reqRef = doc(
+        db,
+        "culturalRequests",
+        editingRequest.id
+      );
+
+      transaction.update(reqRef, {
+        name: editingRequest.name || "",
+        contact: editingRequest.contact || "",
+        date: editingRequest.date || "",
+
+        category: editingRequest.category || "",
+
+        otherCategory:
+          editingRequest.category === "Others"
+            ? editingRequest.otherCategory || ""
+            : null,
+
+        participationType:
+          editingRequest.participationType || "solo",
+
+        groupName:
+          editingRequest.participationType === "group"
+            ? editingRequest.groupName || ""
+            : null,
+
+        managerName:
+          editingRequest.participationType === "group"
+            ? editingRequest.managerName || ""
+            : null,
+
+        participantCount:
+          editingRequest.participationType === "group"
+            ? Number(
+                editingRequest.participantCount || 2
+              )
+            : 1,
+
+        status: newStatus,
+
+        startTime:
+          newStatus === "approved"
+            ? editingRequest.startTime
+            : null,
+
+        durationMinutes:
+          newStatus === "approved"
+            ? Number(editingRequest.durationMinutes)
+            : null,
+
+        endTime:
+          newStatus === "approved"
+            ? finalEndTime
+            : null,
+
+        rejectionReason:
+          newStatus === "rejected"
+            ? editingRequest.rejectionReason || ""
+            : null,
+
+        updatedAt: serverTimestamp(),
+      });
+    });
+
+    setEditingRequest(null);
+  } catch (error) {
+    if (error.message === "TIME_CONFLICT") {
+      alert("Time overlaps with an existing program.");
+    } else if (
+      error.message === "MISSING_ALLOCATION"
+    ) {
+      alert(
+        "Approved programs require Start Time and Duration."
+      );
+    } else {
+      alert("Failed to update request.");
+    }
+  } finally {
+    setProcessingId(null);
+  }
+};
 
   // ============ DELETE ============
   const handleDelete = async () => {
-    if (!deleteConfirmId) return;
-    setProcessingId(deleteConfirmId);
-    try {
-      const req = allRequests.find((r) => r.id === deleteConfirmId);
-      if (req) {
-        await runTransaction(db, async (transaction) => {
-          const reqRef = doc(db, "culturalRequests", req.id);
-          if (req.status?.toLowerCase() === "approved") {
-            const availRef = doc(db, "culturalAvailability", req.date);
-            const snap = await transaction.get(availRef);
-            if (snap.exists()) {
-              transaction.update(availRef, { approvedCount: Math.max(0, (snap.data().approvedCount || 1) - 1) });
-            }
-          }
-          transaction.delete(reqRef);
-        });
-      }
-      setDeleteConfirmId(null);
-    } catch (error) {
-      alert("Failed to delete request.");
-    } finally {
-      setProcessingId(null);
+  if (!deleteConfirmId) return;
+
+  setProcessingId(deleteConfirmId);
+
+  try {
+    const req = allRequests.find(
+      (r) => r.id === deleteConfirmId
+    );
+
+    if (req) {
+      await runTransaction(db, async (transaction) => {
+        const reqRef = doc(
+          db,
+          "culturalRequests",
+          req.id
+        );
+
+        transaction.delete(reqRef);
+      });
     }
-  };
+
+    setDeleteConfirmId(null);
+  } catch (error) {
+    alert("Failed to delete request.");
+  } finally {
+    setProcessingId(null);
+  }
+};
 
   // ============ EXPORT ============
   const escapeCSV = (val) => `"${String(val || "").replace(/"/g, '""')}"`;
@@ -962,28 +1028,48 @@ export default function CulturalRequests() {
                       )}
 
                       {/* Date Availability Hint */}
-                      {editingRequest.date && (() => {
-                        const programs = getApprovedProgramsForDate(editingRequest.date).filter((p) => p.id !== editingRequest.id);
-                        const maxSlots = getMaxBookingsForDate(editingRequest.date);
-                        const occupiedSlots = programs.length;
-                        const slotsLeft = Math.max(0, maxSlots - occupiedSlots);
-                        return (
-                          <div className={`rounded-xl border p-4 ${slotsLeft > 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}`}>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-stone-500 mb-1">Date Availability</p>
-                                <p className={`text-xs font-bold ${slotsLeft > 0 ? "text-emerald-700" : "text-rose-700"}`}>
-                                  {slotsLeft > 0 ? `${slotsLeft} of ${maxSlots} slots available` : "Date fully booked"}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-lg font-black text-stone-900 tabular-nums leading-none">{occupiedSlots}/{maxSlots}</p>
-                                <p className="text-[9px] uppercase tracking-widest text-stone-500 mt-1 font-bold">Allocated</p>
-                              </div>
+
+                      {editingRequest.date && (
+                        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-stone-500 mb-3">
+                            Existing Programs on {editingRequest.date}
+                          </p>
+
+                          {getApprovedProgramsForDate(editingRequest.date)
+                            .filter((p) => p.id !== editingRequest.id)
+                            .length === 0 ? (
+                            <p className="text-xs italic text-stone-400">
+                              No other programs allocated for this date.
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {getApprovedProgramsForDate(editingRequest.date)
+                                .filter((p) => p.id !== editingRequest.id)
+                                .map((program) => (
+                                  <div
+                                    key={program.id}
+                                    className="flex items-center justify-between rounded-lg border border-stone-200 bg-white p-3"
+                                  >
+                                    <div>
+                                      <p className="text-xs font-bold text-stone-900">
+                                        {program.name}
+                                      </p>
+                                      <p className="text-[10px] text-stone-500">
+                                        {program.category === "Others"
+                                          ? program.otherCategory
+                                          : program.category}
+                                      </p>
+                                    </div>
+
+                                    <p className="text-xs font-bold text-amber-700">
+                                      {formatTime(program.startTime)} - {formatTime(program.endTime)}
+                                    </p>
+                                  </div>
+                                ))}
                             </div>
-                          </div>
-                        );
-                      })()}
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Participation */}
