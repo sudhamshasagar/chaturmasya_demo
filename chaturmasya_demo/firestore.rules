@@ -88,5 +88,33 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read, write: if true;
     }
+    
+    match /users/{userId} {
+  allow read, write: if true;
+}
+
+// ============================================================
+// JAPA TYPES
+// ============================================================
+
+match /japaTypes/{documentId} {
+  allow read, write: if true;
+}
+
+// ============================================================
+// JAPA / SHLOKA RECORDS
+// ============================================================
+
+match /records/{recordId} {
+  allow read, write: if true;
+}
+
+// ============================================================
+// GLOBAL JAPA / SHLOKA TOTALS
+// ============================================================
+
+match /globalTotals/{documentId} {
+  allow read, write: if true;
+}
   }
 }
