@@ -1,16 +1,18 @@
 import React from "react";
 import JapaSeva from "../pages/JapaSeva"; // Adjust path as needed
 
+
+
 export default function JapaModal({ open, onClose }) {
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 lg:p-8"
+      className="fixed inset-0 z-[9999] bg-black/70 flex items-center justify-center p-4 sm:p-6 lg:p-8"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] lg:h-[80vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-4xl max-h-[90dvh] lg:max-h-[80vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Fixed Header */}

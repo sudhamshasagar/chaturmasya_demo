@@ -1,9 +1,19 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Volume2 } from "lucide-react";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  onSnapshot
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
 export default function LiveBroadcast() {
+  // const [videoId] = useState("EBhl9b6TQk4");
   const [videoId, setVideoId] = useState(null);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(false);
   // const [isLive, setIsLive] = useState(false);
   const playerRef = useRef(null);
   const youtubePlayerRef = useRef(null);
@@ -67,35 +77,21 @@ useEffect(() => {
   };
 }, [videoId]);
 
-
-  useEffect(() => {
-  async function fetchLiveVideo() {
-    try {
-      const response = await fetch(
-        "https://getlivevideo-7iltpxjlfa-uc.a.run.app"
-      );
-
-      const data = await response.json();
-
-      if (data.live) {
-        setVideoId(data.videoId);
-      } else {
-        setVideoId(null);
+useEffect(() => {
+  const unsubscribe = onSnapshot(
+    doc(db, "settings", "livestream"),
+    (snap) => {
+      if (snap.exists()) {
+        setVideoId(snap.data().videoId);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
+
       setLoading(false);
     }
-  }
+  );
 
-  fetchLiveVideo();
-
-  const interval = setInterval(fetchLiveVideo, 60000);
-
-  return () => clearInterval(interval);
+  return unsubscribe;
 }, []);
-
+ 
   const handleJoinLive = () => {
     const player = youtubePlayerRef.current;
     if (!player) return;
