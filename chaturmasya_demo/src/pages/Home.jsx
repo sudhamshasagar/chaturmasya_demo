@@ -64,6 +64,7 @@ const staggerContainer = {
 };
 
 const Home = () => {
+  console.log("HOME");
   const { language } = useLanguage();
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [activeFilter, setActiveFilter] = useState({ type: 'all', value: 'all' });
@@ -527,42 +528,6 @@ const handleCheckCulturalStatus = async (e) => {
     setIsCheckingStatus(false);
   }
 };
-
-const CHATURMASYA_START_DATE = new Date("2026-07-29T00:00:00+05:30");
-
-const calculateTimeLeft = () => {
-  const difference =
-    CHATURMASYA_START_DATE.getTime() - new Date().getTime();
-
-  if (difference <= 0) {
-    return {
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-      hasStarted: true,
-    };
-  }
-
-  return {
-    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((difference / (1000 * 60)) % 60),
-    seconds: Math.floor((difference / 1000) % 60),
-    hasStarted: false,
-  };
-};
-
-const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
-
-useEffect(() => {
-  const countdownTimer = setInterval(() => {
-    setTimeLeft(calculateTimeLeft());
-  }, 1000);
-
-  return () => clearInterval(countdownTimer);
-}, []);
-
   return (
     <div className="min-h-screen bg-[#FCF8F2] font-sans text-gray-900 selection:bg-[#722013] selection:text-[#FCF8F2] overflow-x-hidden">
       {/* Decorative Background Elements (Temple Geometry) */}

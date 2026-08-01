@@ -45,26 +45,39 @@ function AnimatedCount({ value }) {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    const from = display;
-    const to = Number(value) || 0;
-    if (from === to) return;
-    const start = performance.now();
-    const dur = 700;
-    let raf;
-    const tick = (now) => {
-      const p = Math.min((now - start) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(from + (to - from) * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, display]);
+  const from = display;
+  const to = Number(value) || 0;
+
+  if (from === to) return;
+
+  const start = performance.now();
+  const duration = 700;
+
+  let raf;
+
+  const tick = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+
+    setDisplay(Math.round(from + (to - from) * eased));
+
+    if (progress < 1) {
+      raf = requestAnimationFrame(tick);
+    }
+  };
+
+  raf = requestAnimationFrame(tick);
+
+  return () => cancelAnimationFrame(raf);
+
+  // ❌ remove display from dependencies
+}, [value]);
 
   return <>{fmt(display)}</>;
 }
 
 export default function ChaturmasyaHero() {
+  console.log("Hero render");
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -74,36 +87,6 @@ export default function ChaturmasyaHero() {
     hasStarted: false,
   });
   const [globalTotals, setGlobalTotals] = useState({});
-
-  useEffect(() => {
-    // July 29, 2026 at 10:00 AM IST
-    const targetDate = new Date("2026-07-29T10:00:00+05:30");
-    const updateCountdown = () => {
-      const now = new Date();
-      const difference = targetDate.getTime() - now.getTime();
-      if (difference <= 0) {
-        setTimeLeft({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-          hasStarted: true,
-        });
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-        hasStarted: false,
-      });
-    };
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   const [current, setCurrent] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const { language } = useLanguage();
@@ -130,6 +113,7 @@ export default function ChaturmasyaHero() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "globalTotals"), (snapshot) => {
+      console.log("Snapshot received");
       const totals = {};
       snapshot.forEach((doc) => {
         totals[doc.id] = doc.data().count || 0;
@@ -314,14 +298,9 @@ export default function ChaturmasyaHero() {
               {/* IMAGE FRAME */}
               <div className="group relative w-full h-[400px] sm:h-[470px] lg:h-[min(62vh,560px)] xl:h-[min(65vh,600px)] rounded-[2rem] overflow-hidden shadow-2xl shadow-[#722013]/20 ring-1 ring-[#E8DCC4]">
                 <AnimatePresence mode="wait">
-                  <motion.img
-                    key={current}
-                    initial={{ opacity: 0, scale: 1.06 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.02 }}
-                    transition={{ duration: 1.1 }}
+                  <img
                     src={heroImages[current].src}
-                    alt={`Chaturmasya Vratothsava ${current + 1}`}
+                    alt=""
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 </AnimatePresence>
