@@ -122,14 +122,14 @@ export default function Dashboard() {
   };
 
   const navLinks = [
-    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+    // { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
     { name: "Bookings", path: "/admin/bookings", icon: CalendarDays },
     { name: "Cultural Programs", path: "/admin/c-programs", icon: Flame },
     { name: "Mantrakshate", path: "/admin/mantrakshata", icon: TruckElectric },
     { name: "Blogs", path: "/admin/blogs", icon: FileText },
     { name: "Schedule", path: "/admin/schedule", icon: Clock },
     { name: "Japa Tracker", path: "/admin/japa", icon: Navigation2 },
-    { name: "Japa Tracker", path: "/admin/media", icon: Tv},
+    { name: "Media", path: "/admin/media", icon: Tv},
 
 
   ];
