@@ -17,6 +17,7 @@ import AdminJapa from "../admin/JapaTracker";
 import Mantrakshata from "../admin/Mantrakshata";
 import MantrakshataRequest from "../pages/Mantrakshate";
 import JapaSeva from "../pages/JapaSeva";
+import MediaManagement from "../admin/MediaManagement";
 
 
 const AppRoutes = () => {
@@ -103,6 +104,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <Mantrakshata />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/media"
+          element={
+            <ProtectedRoute>
+              <MediaManagement/>
             </ProtectedRoute>
           }
         />

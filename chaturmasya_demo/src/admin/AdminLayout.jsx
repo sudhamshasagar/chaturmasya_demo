@@ -33,6 +33,7 @@ import {
   Calendar1,
   PlayIcon,
   Navigation2,
+  Tv,
 } from "lucide-react";
 
 /* =========================================================
@@ -128,6 +129,8 @@ export default function Dashboard() {
     { name: "Blogs", path: "/admin/blogs", icon: FileText },
     { name: "Schedule", path: "/admin/schedule", icon: Clock },
     { name: "Japa Tracker", path: "/admin/japa", icon: Navigation2 },
+    { name: "Japa Tracker", path: "/admin/media", icon: Tv},
+
 
   ];
 
@@ -312,7 +315,7 @@ export default function Dashboard() {
                 onClick={handleLogout}
                 className="ml-1 hidden items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-rose-600 transition-colors hover:bg-rose-100 sm:flex"
               >
-                <LogOut size={13} /> Logout
+                <LogOut size={13} />
               </button>
 
               <button
@@ -409,29 +412,6 @@ export default function Dashboard() {
             Icon={Package}
             dark
           />
-
-          {/* YouTube manager — compact */}
-          <div className="col-span-2 rounded-2xl border border-[#E8DCC4] bg-white p-4 lg:col-span-1">
-            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              <PlayIcon size={13} className="text-red-600" /> Live Stream
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-              <input
-                type="text"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="Paste YouTube Live URL"
-                className="min-w-0 flex-1 rounded-lg border border-[#E8DCC4] bg-[#FCF8F2] px-3 py-2 text-xs font-medium outline-none transition-colors focus:border-[#D4AF37]"
-              />
-              <button
-                onClick={updateYoutubeLink}
-                disabled={savingYoutube}
-                className="shrink-0 rounded-lg bg-red-600 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:bg-red-700 disabled:opacity-60"
-              >
-                {savingYoutube ? "Updating..." : "Update"}
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Main grid */}
