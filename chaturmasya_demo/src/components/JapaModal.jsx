@@ -1,38 +1,109 @@
-import React from "react";
-import JapaSeva from "../pages/JapaSeva"; // Adjust path as needed
-
-
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
+import JapaSeva from "../pages/JapaSeva";
 
 export default function JapaModal({ open, onClose }) {
-  if (!open) return null;
+  useEffect(() => {
+    if (!open) return;
 
-  return (
+    const scrollY = window.scrollY;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose?.();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Prevent the page behind the modal from scrolling.
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+
+      window.scrollTo(0, scrollY);
+    };
+  }, [open, onClose]);
+
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/70 flex items-center justify-center p-4 sm:p-6 lg:p-8"
-      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="japa-modal-title"
+      className="
+        fixed inset-0 z-[999999]
+        flex items-stretch justify-center
+        bg-slate-950/70 backdrop-blur-sm
+        sm:items-center sm:p-4 lg:p-6
+      "
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      }}
     >
-      <div
-        className="bg-white rounded-2xl w-full max-w-4xl max-h-[90dvh] lg:max-h-[80vh] flex flex-col shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+      <section
+        className="
+          flex h-[100dvh] min-h-0 w-full flex-col
+          overflow-hidden bg-white shadow-2xl
+          sm:h-[calc(100dvh-2rem)]
+          sm:max-h-[920px] sm:max-w-5xl sm:rounded-2xl
+          lg:h-[calc(100dvh-3rem)]
+        "
+        onMouseDown={(event) => event.stopPropagation()}
       >
-        {/* Fixed Header */}
-        <div className="flex justify-between items-center bg-[#FAFAFA] border-b border-slate-200 p-5 lg:px-8 shrink-0 z-10">
-          <h2 className="text-xl font-semibold text-slate-800 tracking-wide">
-            Divine Offering
-          </h2>
+        {/* Fixed header */}
+        <header
+          className="
+            relative z-20 flex shrink-0 items-center justify-between
+            border-b border-slate-200 bg-white
+            px-4 py-3 sm:px-6 sm:py-4
+          "
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+        >
           <button
+            type="button"
+            aria-label="Close japa offering"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors text-2xl pb-1 leading-none"
+            className="
+              grid h-10 w-10 shrink-0 place-items-center rounded-full
+              border border-slate-200 bg-slate-50 text-slate-600
+              transition hover:bg-slate-100 hover:text-slate-950
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500
+            "
           >
-            ×
+            <X className="h-5 w-5" />
           </button>
-        </div>
+        </header>
 
-        {/* Modal Body - Strictly flex to contain internal scrolling */}
-        <div className="flex-1 overflow-hidden flex flex-col bg-white">
-          <JapaSeva onClose={onClose} isModal={true} />
+        {/* This is the only scrolling region */}
+        <div
+          className="
+            min-h-0 flex-1 overflow-x-hidden overflow-y-auto
+            overscroll-contain bg-slate-50
+            [scrollbar-gutter:stable]
+          "
+          style={{
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+        >
+          <JapaSeva onClose={onClose} isModal />
         </div>
-      </div>
-    </div>
+      </section>
+    </div>,
+    document.body
   );
 }

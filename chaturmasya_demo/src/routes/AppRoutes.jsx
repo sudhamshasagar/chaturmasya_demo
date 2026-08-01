@@ -13,7 +13,7 @@ import Blogs from "../admin/Blogs";
 import Schedule from "../admin/Schedule";
 import VirtualBookings from "../admin/VirtualBookings";
 import AdminVirtualPuja from "../admin/AdminVirtualPuja";
-import Accounts from "../admin/Accounts";
+import AdminJapa from "../admin/JapaTracker";
 import Mantrakshata from "../admin/Mantrakshata";
 import MantrakshataRequest from "../pages/Mantrakshate";
 import JapaSeva from "../pages/JapaSeva";
@@ -90,10 +90,10 @@ const AppRoutes = () => {
          }
          />
         <Route
-          path="/admin/accounts"
+          path="/admin/japa"
           element={
             <ProtectedRoute>
-              <Accounts />
+              <AdminJapa/>
             </ProtectedRoute>
           }
         />

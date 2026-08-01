@@ -32,6 +32,7 @@ import {
   TruckElectric,
   Calendar1,
   PlayIcon,
+  Navigation2,
 } from "lucide-react";
 
 /* =========================================================
@@ -126,6 +127,8 @@ export default function Dashboard() {
     { name: "Mantrakshate", path: "/admin/mantrakshata", icon: TruckElectric },
     { name: "Blogs", path: "/admin/blogs", icon: FileText },
     { name: "Schedule", path: "/admin/schedule", icon: Clock },
+    { name: "Japa Tracker", path: "/admin/japa", icon: Navigation2 },
+
   ];
 
   // --- Data Fetching: Mantrakshata ---
