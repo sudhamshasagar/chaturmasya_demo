@@ -48,6 +48,7 @@ import Header from "./Header";
 import Bio from "./Bio"
 import { useLanguage } from "../context/LanguageContext";
 import CommitteeSection from "./Committee";
+import Gallery from "./Gallery";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -669,6 +670,9 @@ const handleCheckCulturalStatus = async (e) => {
           getDurationLabel={getDurationLabel}
         />
         <Bio/>
+        {/* <Element name="gallery">
+          <Gallery/>
+        </Element> */}
         {/* <MantrakshataRequest/> */}
         <Element name="blogs">
           <BlogSection />
@@ -681,11 +685,11 @@ const handleCheckCulturalStatus = async (e) => {
       <Element name="contact">
         <Footer />
       </Element>
-
+ 
       {/* --- CULTURAL BOOKING MODAL (Glassmorphism) --- */}
       <AnimatePresence>
         {isModalOpen && activeSlot && (
-          <motion.div 
+          <motion.div  
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

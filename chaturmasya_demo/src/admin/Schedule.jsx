@@ -29,6 +29,8 @@ import {
   Loader2,
   ArrowLeft,
   FileText,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 /* =========================================================
@@ -49,6 +51,7 @@ export default function ScheduleManager() {
   const [schedules, setSchedules] = useState([]);
   const [previewSchedules, setPreviewSchedules] = useState([]);
   const [approvedProgrammes, setApprovedProgrammes] = useState([]);
+  const [expandedDates, setExpandedDates] = useState({});
   const [formData, setFormData] = useState({
     date: null,
     category: "Ritual",
@@ -117,66 +120,22 @@ const filteredProgrammes = useMemo(() => {
   );
 }, [approvedProgrammes, formData.date]);
 
-  useEffect(() => {
-    if (formData.category === "Cultural Programme" && formData.startTime && formData.durationMinutes) {
-      setFormData((prev) => ({
-        ...prev,
-        endTime: calculateEndTime(prev.startTime, prev.durationMinutes),
-      }));
-    }
-  }, [formData.category, formData.startTime, formData.durationMinutes]);
-
-  // ============ TIME SLOTS ============
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let i = 4; i <= 22; i++) {
-      const hour12 = i > 12 ? i - 12 : i === 0 ? 12 : i;
-      const ampm = i >= 12 ? "PM" : "AM";
-      const h = hour12.toString().padStart(2, "0");
-      slots.push(`${h}:00 ${ampm}`);
-      slots.push(`${h}:30 ${ampm}`);
-    }
-    return slots;
-  };
-  const timeSlots = generateTimeSlots();
-
-  const timeToMinutes = (t) => {
-    if (!t) return 0;
-    const [time, modifier] = t.split(" ");
-    if (!time || !modifier) return 0;
-    let [hours, minutes] = time.split(":").map(Number);
-    if (hours === 12) hours = 0;
-    if (modifier === "PM") hours += 12;
-    return hours * 60 + minutes;
-  };
-
-  const minutesToTime = (totalMinutes) => {
-    const hours24 = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    const modifier = hours24 >= 12 ? "PM" : "AM";
-    let hours12 = hours24 % 12;
-    if (hours12 === 0) hours12 = 12;
-    return `${String(hours12).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${modifier}`;
-  };
-
-  const convert24To12 = (time24) => {
-  if (!time24) return "";
-
-  const [hour, minute] = time24.split(":").map(Number);
-
-  const period = hour >= 12 ? "PM" : "AM";
-
-  let h = hour % 12;
-  if (h === 0) h = 12;
-
-  return `${String(h).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`;
+const toggleDate = (date) => {
+  setExpandedDates((prev) => ({
+    ...prev,
+    [date]: !prev[date],
+  }));
 };
+  const timeToMinutes = (time) => {
+    if (!time) return 0;
 
-  const calculateEndTime = (startTime, durationMinutes) => {
-    if (!startTime || !durationMinutes) return "";
-    const start = timeToMinutes(startTime);
-    return minutesToTime(start + Number(durationMinutes));
+    const [hour, minute] = time.split(":").map(Number);
+
+    return hour * 60 + minute;
   };
+
+
+
 
   // ============ SINGLE ITEM FORM LOGIC ============
   const resetForm = () => {
@@ -219,27 +178,49 @@ const filteredProgrammes = useMemo(() => {
     }
   };
 
+const to12Hour = (time) => {
+  if (!time) return "";
+
+  // Already in 12-hour format
+  if (time.includes("AM") || time.includes("PM")) {
+    return time;
+  }
+
+  const [h, m] = time.split(":").map(Number);
+
+  if (isNaN(h) || isNaN(m)) return time;
+
+  const suffix = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 || 12;
+
+  return `${hour12}:${String(m).padStart(2, "0")} ${suffix}`;
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (
-      !formData.date ||
-      !formData.startTime ||
-      !formData.endTime ||
-      !formData.title.trim() ||
-      (formData.category === "Cultural Programme" && !formData.durationMinutes)
-    ) {
-      alert("Please complete all required fields.");
-      return;
-    }
+        !formData.date ||
+        !formData.startTime ||
+        !formData.endTime ||
+        !formData.title.trim()
+      ) {
+        alert("Please complete all required fields.");
+        return;
+      }
 
     setProcessing(true);
     try {
       const payload = {
         date: formData.date.toISOString(),
         category: formData.category,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        durationMinutes: formData.category === "Cultural Programme" ? Number(formData.durationMinutes) : null,
+
+        startTime: to12Hour(formData.startTime),
+        endTime: to12Hour(formData.endTime),
+
+        durationMinutes: formData.durationMinutes
+          ? Number(formData.durationMinutes)
+          : null,
+
         title: formData.title.trim(),
         description: formData.description.trim(),
         culturalRequestId: formData.culturalRequestId || null,
@@ -381,6 +362,21 @@ const filteredProgrammes = useMemo(() => {
     return Object.entries(groups).sort((a, b) => a[1].dateObj - b[1].dateObj);
   }, [schedules]);
 
+  useEffect(() => {
+  if (groupedSchedules.length === 0) return;
+
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  setExpandedDates({
+    [today]: true,
+  });
+}, [groupedSchedules]);
+
   if (loading) {
     return (
       <div className="h-[100dvh] bg-stone-50 flex items-center justify-center">
@@ -431,17 +427,29 @@ const filteredProgrammes = useMemo(() => {
             groupedSchedules.map(([dateString, group]) => (
               <div key={dateString} className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
                 {/* Date Header Sticky */}
-                <div className="sticky top-0 bg-stone-100/90 backdrop-blur px-5 py-3 border-b border-stone-200 flex justify-between items-center z-10">
+                <div
+                  onClick={() => toggleDate(dateString)}
+                  className="sticky top-0 bg-stone-100/90 backdrop-blur px-5 py-3 border-b border-stone-200 flex justify-between items-center cursor-pointer hover:bg-stone-200/70 transition"
+                >
                   <div className="flex items-center gap-2 text-stone-800">
                     <CalendarDays size={16} className="text-stone-500" />
                     <h2 className="font-bold text-sm uppercase tracking-wide">{dateString}</h2>
                   </div>
-                  <span className="text-xs font-bold bg-white text-stone-600 border border-stone-200 px-2.5 py-1 rounded-md">
-                    {group.items.length} Items
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold bg-white text-stone-600 border border-stone-200 px-2.5 py-1 rounded-md">
+                      {group.items.length} Items
+                    </span>
+
+                    {expandedDates[dateString] ? (
+                      <ChevronDown className="w-5 h-5 text-stone-500" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-stone-500" />
+                    )}
+                  </div>
                 </div>
 
                 {/* Event Rows */}
+                {expandedDates[dateString] && (
                 <div className="divide-y divide-stone-100">
                   {group.items.map((item) => (
                     <div key={item.id} className="group flex flex-col md:flex-row md:items-center gap-4 p-5 hover:bg-amber-50/40 transition-colors">
@@ -485,6 +493,7 @@ const filteredProgrammes = useMemo(() => {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             ))
           ) : (
@@ -585,8 +594,10 @@ const filteredProgrammes = useMemo(() => {
                           setFormData((prev) => ({
                             ...prev,
                             culturalRequestId: prog.id,
-                            startTime: convert24To12(prog.startTime),
+                            startTime: prog.startTime,
+                            endTime: prog.endTime,
                             durationMinutes: String(prog.durationMinutes || ""),
+
                             title: `Cultural Programme by ${prog.name}`,
                             description: prog.description || "",
                           }));
@@ -608,45 +619,30 @@ const filteredProgrammes = useMemo(() => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Start Time *</label>
-                      <select
-                        value={formData.startTime}
-                        onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                        className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:bg-white transition-colors"
-                      >
-                        <option value="">Select</option>
-                        {timeSlots.map((slot) => (<option key={slot} value={slot}>{slot}</option>))}
-                      </select>
+                      <input
+                          type="time"
+                          value={formData.startTime}
+                          onChange={(e) =>
+                            setFormData({ ...formData, startTime: e.target.value })
+                          }
+                          className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5"
+                        />
                     </div>
 
-                    {formData.category === "Cultural Programme" ? (
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Duration *</label>
-                        <select
-                          value={formData.durationMinutes}
-                          onChange={(e) => setFormData({ ...formData, durationMinutes: e.target.value })}
-                          className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:bg-white transition-colors"
-                        >
-                          <option value="">Select</option>
-                          <option value="30">30 Min</option>
-                          <option value="45">45 Min</option>
-                          <option value="60">60 Min</option>
-                          <option value="90">90 Min</option>
-                          <option value="120">120 Min</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">End Time *</label>
-                        <select
-                          value={formData.endTime}
-                          onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                          className="w-full bg-stone-50 border border-stone-200 text-stone-900 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:bg-white transition-colors"
-                        >
-                          <option value="">Select</option>
-                          {timeSlots.map((slot) => (<option key={slot} value={slot}>{slot}</option>))}
-                        </select>
-                      </div>
-                    )}
+                    <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                      End Time *
+                    </label>
+
+                    <input
+                      type="time"
+                      value={formData.endTime}
+                      onChange={(e) =>
+                        setFormData({ ...formData, endTime: e.target.value })
+                      }
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5"
+                    />
+                  </div>
                   </div>
 
                   {/* Title */}

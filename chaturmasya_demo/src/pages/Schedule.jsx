@@ -55,11 +55,16 @@ const generateGoogleCalendarUrl = (event, selectedDate) => {
   const d = selectedDate ? new Date(selectedDate) : new Date();
   let datesStr = "";
 
-  const match = event.time ? event.time.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/) : null;
+  const eventTime = event.startTime || event.time;
+
+  const match = eventTime
+    ? eventTime.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/)
+    : null;
 
   if (match) {
     let [_, h, m, modifier] = match;
     let hour = parseInt(h, 10);
+
     if (modifier) {
       if (modifier.toLowerCase() === "pm" && hour < 12) hour += 12;
       if (modifier.toLowerCase() === "am" && hour === 12) hour = 0;
@@ -85,7 +90,16 @@ const generateGoogleCalendarUrl = (event, selectedDate) => {
 
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${datesStr}`;
 };
+const formatTime = (time) => {
+  if (!time) return "";
 
+  const [hour, minute] = time.split(":").map(Number);
+
+  const h = hour % 12 || 12;
+  const period = hour >= 12 ? "PM" : "AM";
+
+  return `${h}:${String(minute).padStart(2, "0")} ${period}`;
+};
 const formatLongDate = (date) =>
   date.toLocaleDateString("en-IN", {
     weekday: "long",
@@ -116,20 +130,36 @@ const createCalendarDays = (monthDate) => {
 
 const timeToMinutes = (time) => {
   if (!time) return 0;
-  try {
-    const [clock, modifier] = time.split(" ");
-    let [hour, minute] = clock.split(":").map(Number);
-    if (hour === 12) hour = 0;
-    if (modifier === "PM" || modifier === "pm") hour += 12;
+
+  // 24-hour format
+  if (!time.includes("AM") && !time.includes("PM") && !time.includes("am") && !time.includes("pm")) {
+    const [hour, minute] = time.split(":").map(Number);
     return hour * 60 + minute;
-  } catch (e) {
-    return 0;
   }
+
+  // 12-hour format
+  const [clock, modifier] = time.split(" ");
+  let [hour, minute] = clock.split(":").map(Number);
+
+  if (hour === 12) hour = 0;
+  if (modifier.toUpperCase() === "PM") hour += 12;
+
+  return hour * 60 + minute;
 };
 
 const getDateTime = (date, time) => {
   if (!date || !time) return null;
+
   const d = new Date(date);
+
+  // 24-hour format
+  if (!time.includes("AM") && !time.includes("PM") && !time.includes("am") && !time.includes("pm")) {
+    const [hour, minute] = time.split(":").map(Number);
+    d.setHours(hour, minute, 0, 0);
+    return d;
+  }
+
+  // 12-hour format
   const [clock, modifier] = time.split(" ");
   let [hour, minute] = clock.split(":").map(Number);
 
@@ -137,6 +167,7 @@ const getDateTime = (date, time) => {
   if (modifier.toUpperCase() === "AM" && hour === 12) hour = 0;
 
   d.setHours(hour, minute, 0, 0);
+
   return d;
 };
 
@@ -458,7 +489,7 @@ export default function DailySchedule() {
                               >
                                 <div className="w-28 shrink-0 flex flex-col justify-center">
                                   <span className="text-sm font-bold text-amber-700 whitespace-nowrap">
-                                    {event.startTime || event.time || "All Day"}
+                                    {formatTime(event.startTime || event.time) || "All Day"}
                                   </span>
                                 </div>
                                 <div className="flex-1 pl-4 border-l border-stone-200">

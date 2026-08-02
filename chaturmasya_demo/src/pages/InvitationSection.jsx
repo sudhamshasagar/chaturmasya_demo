@@ -25,15 +25,13 @@ export default function ChaturmasyaPortal() {
 
   // Integrated descriptions into the existing events array
   const events = [
-    { d: "28", m: "Jul", time: "6:30 PM", title: "Arrival of Ubhaya Swamiji" },
-    { d: "29", m: "Jul", time: "10:00 AM", title: "Guru Poornima & Vyasa Pooja", star: true },
     { 
       d: "21", m: "Aug", time: "All Day", 
       title: "Kunkumarchane by Matruvarga",
       kanTitle: "ಕುಂಕುಮಾರ್ಚನೆ",
       desc: "ಅಷ್ಟಲಕ್ಷ್ಮೀ ಸ್ವರೂಪಿಣಿಯಾದ ಶ್ರೀ ರಾಜರಾಜೇಶ್ವರಿ ದೇವಿಯ ಆರಾಧನೆಯಾದ ಕುಂಕುಮಾರ್ಚನೆಯು ಭಕ್ತರಿಗೆ ಸರ್ವಮಂಗಳವನ್ನು ಅನುಗ್ರಹಿಸುವ ಪವಿತ್ರ ಸೇವೆಯಾಗಿದೆ. ಈ ಪೂಜೆಯಿಂದ ಮನೆಯಲ್ಲಿನ ಅಮಂಗಲ ದೋಷಗಳ ನಿವಾರಣೆ, ಸನ್ಮಂಗಳದ ವೃದ್ಧಿ, ದೀರ್ಘ ಸೌಭಾಗ್ಯ ಪ್ರಾಪ್ತಿ, ಕುಟುಂಬದಲ್ಲಿ ಸುಖ, ಶಾಂತಿ, ಆರೋಗ್ಯ, ಐಶ್ವರ್ಯ ಹಾಗೂ ಸಂಪತ್ತಿನ ಅಭಿವೃದ್ದಿ ಉಂಟಾಗಿ ದೇವಿಯ ಕೃಪೆಗೆ ಪಾತ್ರರಾಗುತ್ತಾರೆ."
     },
-    { 
+    {  
       d: "31", m: "Aug", time: "All Day", 
       title: "Sankastahara Chaturthi Udyapane",
       kanTitle: "ಸಂಕಷ್ಟಹರ ಚತುರ್ಥಿ ಉದ್ಯಾಪನ",

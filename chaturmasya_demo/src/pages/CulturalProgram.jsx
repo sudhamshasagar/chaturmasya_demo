@@ -112,7 +112,19 @@ const CBookingUser = ({
     ============================================================
   */
 
-  const [monthIndex, setMonthIndex] = useState(0);
+ const getInitialMonthIndex = () => {
+  const today = new Date();
+
+  const index = MONTHS.findIndex(
+    ({ year, month }) =>
+      year === today.getFullYear() &&
+      month === today.getMonth()
+  );
+
+  return index !== -1 ? index : 0;
+};
+
+const [monthIndex, setMonthIndex] = useState(getInitialMonthIndex);
   const selectedCategory = culturalForm?.category || "";
   const otherCategory = culturalForm?.otherCategory || "";
 
