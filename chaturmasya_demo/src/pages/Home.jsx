@@ -678,7 +678,7 @@ const handleCheckCulturalStatus = async (e) => {
           <BlogSection />
         </Element>
       </main>
-
+ 
      
       
       {/* --- PREMIUM FOOTER --- */}

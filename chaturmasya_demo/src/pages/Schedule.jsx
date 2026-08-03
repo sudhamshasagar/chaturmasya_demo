@@ -93,7 +93,19 @@ const generateGoogleCalendarUrl = (event, selectedDate) => {
 const formatTime = (time) => {
   if (!time) return "";
 
+  // Already in 12-hour format
+  if (
+    time.includes("AM") ||
+    time.includes("PM") ||
+    time.includes("am") ||
+    time.includes("pm")
+  ) {
+    return time;
+  }
+
   const [hour, minute] = time.split(":").map(Number);
+
+  if (isNaN(hour) || isNaN(minute)) return time;
 
   const h = hour % 12 || 12;
   const period = hour >= 12 ? "PM" : "AM";

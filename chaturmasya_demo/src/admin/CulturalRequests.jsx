@@ -38,6 +38,8 @@ import {
 //   return date.getDay() === 1 ? 2 : 3;
 // };
 
+const TOTAL_PROGRAM_MINUTES = 180;
+
 const DURATION_OPTIONS = [
   { label: "10 Min", value: 10 },
   { label: "15 Min", value: 15 },
@@ -171,6 +173,13 @@ export default function CulturalRequests() {
       .filter((r) => r.date === date)
       .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
+   const getOccupiedMinutes = (date) => {
+    return getApprovedProgramsForDate(date).reduce(
+      (sum, item) => sum + Number(item.durationMinutes || 0),
+      0
+    );
+  };
+
   const hasTimeConflictExcluding = (date, newStart, newEnd, excludeId = null) => {
     const ns = timeToMinutes(newStart);
     const ne = timeToMinutes(newEnd);
@@ -207,6 +216,21 @@ export default function CulturalRequests() {
     return alert("Please select the start time.");
 
   const durationMinutes = Number(selectedDuration);
+  const occupiedMinutes =
+  getOccupiedMinutes(approvalRequest.date);
+
+if (
+  occupiedMinutes + durationMinutes >
+  TOTAL_PROGRAM_MINUTES
+) {
+  alert(
+    `Only ${
+      TOTAL_PROGRAM_MINUTES - occupiedMinutes
+    } minutes are remaining for this date.`
+  );
+
+  return;
+}
   const endTime = calculateEndTime(
     selectedStartTime,
     durationMinutes
@@ -225,7 +249,8 @@ export default function CulturalRequests() {
     );
   }
 
-  setProcessingId(approvalRequest.id);
+
+    setProcessingId(approvalRequest.id);
 
   try {
     await runTransaction(db, async (transaction) => {
@@ -833,6 +858,52 @@ export default function CulturalRequests() {
                 <div className={`p-5 space-y-5 overflow-y-auto ${hideScrollbar}`}>
                   {/* Existing Programs */}
                   <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200">
+                    {(() => {
+                    const occupiedMinutes = getOccupiedMinutes(approvalRequest.date);
+                    const remainingMinutes = TOTAL_PROGRAM_MINUTES - occupiedMinutes;
+                    const percentage =
+                      (occupiedMinutes / TOTAL_PROGRAM_MINUTES) * 100;
+
+                    return (
+                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 mb-3">
+                          Day Capacity
+                        </p>
+
+                        <div className="flex justify-between text-sm font-semibold mb-2">
+                          <span>Total</span>
+                          <span>{TOTAL_PROGRAM_MINUTES} mins</span>
+                        </div>
+
+                        <div className="flex justify-between text-sm font-semibold mb-2">
+                          <span>Occupied</span>
+                          <span>{occupiedMinutes} mins</span>
+                        </div>
+
+                        <div className="flex justify-between text-sm font-bold">
+                          <span>Remaining</span>
+                          <span
+                            className={
+                              remainingMinutes > 0
+                                ? "text-emerald-600"
+                                : "text-red-600"
+                            }
+                          >
+                            {remainingMinutes} mins
+                          </span>
+                        </div>
+
+                        <div className="mt-4 h-3 bg-white rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-600 transition-all"
+                            style={{
+                              width: `${Math.min(percentage, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
                     <p className="text-[9px] font-bold uppercase tracking-widest text-stone-500 mb-2">Existing Programs on {approvalRequest.date}</p>
                     {getApprovedProgramsForDate(approvalRequest.date).length === 0 ? (
                       <p className="text-xs italic text-stone-400">No programs allocated yet.</p>

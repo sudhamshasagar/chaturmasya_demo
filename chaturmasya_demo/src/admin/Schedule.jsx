@@ -289,22 +289,22 @@ const to12Hour = (time) => {
         const cols = parseCSVRow(row);
         if (cols.length >= 3) {
           const [dateStr, category, startTime, endTime, durationMinutes, title, description] = cols;
-          const [year, month, day] = dateStr.split("-").map(Number);
-          if (!year || !month || !day) continue;
-          
-          const dateObj = new Date(year, month - 1, day);
-          if (!isNaN(dateObj) && startTime?.trim() && title?.trim()) {
-            parsed.push({
-              id: `prev-${Date.now()}-${i}`,
-              date: dateObj,
-              category: category || "Ritual",
-              startTime,
-              endTime,
-              durationMinutes: durationMinutes ? Number(durationMinutes) : null,
-              title,
-              description: description || "",
-            });
+          const parts = dateStr.split("-").map(Number);
+
+          let year, month, day;
+
+          // YYYY-MM-DD
+          if (parts[0] > 1000) {
+            [year, month, day] = parts;
           }
+          // DD-MM-YYYY
+          else {
+            [day, month, year] = parts;
+          }
+
+          const dateObj = new Date(year, month - 1, day);
+
+          if (isNaN(dateObj.getTime())) continue;
         }
       }
       if (parsed.length > 0) setPreviewSchedules(parsed);
@@ -324,8 +324,10 @@ const to12Hour = (time) => {
         batch.set(ref, {
           date: item.date.toISOString(),
           category: item.category,
-          startTime: item.startTime,
-          endTime: item.endTime,
+
+          startTime: to12Hour(item.startTime),
+          endTime: to12Hour(item.endTime),
+
           durationMinutes: item.durationMinutes,
           title: item.title,
           description: item.description,
@@ -457,7 +459,7 @@ const to12Hour = (time) => {
                       {/* Time Block */}
                       <div className="w-36 shrink-0 flex flex-col">
                         <span className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
-                          <Clock size={14} className="text-amber-500" /> {item.startTime || item.time}
+                          <Clock size={14} className="text-amber-500" /> {to12Hour(item.startTime || item.time)}
                         </span>
                         {item.endTime && <span className="text-[11px] font-semibold text-stone-500 ml-5 mt-0.5 uppercase tracking-wider">to {item.endTime}</span>}
                       </div>
@@ -760,7 +762,7 @@ const to12Hour = (time) => {
                             {previewSchedules.map((item) => (
                               <tr key={item.id} className="hover:bg-stone-50/50">
                                 <td className="px-5 py-3 font-semibold text-stone-900">{item.date.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
-                                <td className="px-5 py-3 text-stone-600 text-xs font-bold">{item.startTime || item.time} {item.endTime && `- ${item.endTime}`}</td>
+                                <td className="px-5 py-3 text-stone-600 text-xs font-bold">{item.startTime || item.time} {item.endTime && ` - ${to12Hour(item.endTime)}`}</td>
                                 <td className="px-5 py-3 font-medium text-stone-900 truncate max-w-[250px]">{item.title}</td>
                               </tr>
                             ))}
