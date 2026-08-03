@@ -304,7 +304,24 @@ const to12Hour = (time) => {
 
           const dateObj = new Date(year, month - 1, day);
 
-          if (isNaN(dateObj.getTime())) continue;
+            if (
+              isNaN(dateObj.getTime()) ||
+              !startTime?.trim() ||
+              !title?.trim()
+            ) {
+              continue;
+            }
+
+            parsed.push({
+              id: `prev-${Date.now()}-${i}`,
+              date: dateObj,
+              category: category || "Ritual",
+              startTime,
+              endTime,
+              durationMinutes: durationMinutes ? Number(durationMinutes) : null,
+              title,
+              description: description || "",
+            });
         }
       }
       if (parsed.length > 0) setPreviewSchedules(parsed);
