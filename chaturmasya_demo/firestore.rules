@@ -88,6 +88,9 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read, write: if true;
     }
+    match /kathopadeshaVideos/{videoId} {
+  allow read, write: if true;
+}
     
     match /users/{userId} {
   allow read, write: if true;
@@ -115,6 +118,21 @@ match /records/{recordId} {
 
 match /globalTotals/{documentId} {
   allow read, write: if true;
+}
+
+match /reviews/{reviewId} {
+
+  // Anyone can read reviews
+  allow read: if true;
+
+  // Anyone can create a review
+  allow create: if true;
+
+  // Anyone can update (edit review / add comments)
+  allow update: if true;
+
+  // Anyone can delete (Admin app currently performs deletes)
+  allow delete: if true;
 }
   }
 }
