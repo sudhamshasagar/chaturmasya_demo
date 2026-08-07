@@ -130,6 +130,7 @@ export default function Dashboard() {
     { name: "Schedule", path: "/admin/schedule", icon: Clock },
     { name: "Japa Tracker", path: "/admin/japa", icon: Navigation2 },
     { name: "Media", path: "/admin/media", icon: Tv},
+    { name: "Reviews", path: "/admin/reviews", icon: Calendar1}
 
 
   ];

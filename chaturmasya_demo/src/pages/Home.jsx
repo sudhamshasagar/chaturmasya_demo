@@ -49,6 +49,7 @@ import Bio from "./Bio"
 import { useLanguage } from "../context/LanguageContext";
 import CommitteeSection from "./Committee";
 import Gallery from "./Gallery";
+import ReviewSection from "./ReviewSection";
 
 // --- Framer Motion Variants ---
 const fadeUp = {
@@ -679,7 +680,7 @@ const handleCheckCulturalStatus = async (e) => {
         </Element>
       </main>
  
-     
+     <ReviewSection/>
       
       {/* --- PREMIUM FOOTER --- */}
       <Element name="contact">

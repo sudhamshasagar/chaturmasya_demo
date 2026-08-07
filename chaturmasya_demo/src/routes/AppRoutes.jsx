@@ -18,6 +18,7 @@ import Mantrakshata from "../admin/Mantrakshata";
 import MantrakshataRequest from "../pages/Mantrakshate";
 import JapaSeva from "../pages/JapaSeva";
 import MediaManagement from "../admin/MediaManagement";
+import AdminFeedbackPage from "../admin/AdminFeedbackPage";
 
 
 const AppRoutes = () => {
@@ -112,6 +113,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <MediaManagement/>
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/admin/reviews"
+          element={
+            <ProtectedRoute>
+              <AdminFeedbackPage/>
             </ProtectedRoute>
           }
         />
