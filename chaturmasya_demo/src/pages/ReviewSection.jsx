@@ -138,7 +138,7 @@ export default function ReviewSection() {
   };
 
   return (
-    <section className="py-20 bg-[#FFFDF8] relative overflow-hidden">
+    <section id="feedback" className="py-20 bg-[#FFFDF8] relative overflow-hidden">
       {/* Decorative background elements matching light elegant theme */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent" />
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />

@@ -9,8 +9,8 @@ const headerText = {
   en: {
     home: "Home",
     schedule: "Schedule",
-    events: "Events",
     blogs: "Blogs",
+    feedback: "Feedback",
     contact: "Contact",
     bookSeva: "Book Seva",
     bookSevaNow: "Book Pada Pooje",
@@ -46,8 +46,8 @@ export default function Header() {
   const navItems = [
   { name: t.home, href: "top", type: "scroll" },
   { name: t.schedule, href: "schedule", type: "scroll" },
-  { name: t.events, href: "cultural", type: "scroll" },
   { name: t.blogs, href: "blogs", type: "scroll" },
+  { name: t.feedback, href: "feedback", type: "scroll" },
   { name: t.contact, href: "contact", type: "scroll" },
   { name: t.committee, href: "/committee", type: "route" },
 ];
@@ -160,11 +160,8 @@ export default function Header() {
             to="/mantrakshate"
             className="group hidden md:inline-flex items-center gap-2 rounded-full border border-[#722013] bg-white pl-5 pr-2 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#722013] shadow-sm hover:bg-[#722013] hover:text-[#F7E7B4] transition-all duration-300"
           >
-            Get Mantrakshate
+            Mantrakshate
             {t.requestMantrakshata}
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-[#722013] text-white group-hover:rotate-45 transition-transform duration-300">
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </span>
           </Link>
           <Link
             to="/book-seva"
